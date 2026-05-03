@@ -1,4 +1,6 @@
 CLAUDE.md
+.venv
+.python-version
 /prompts
 /frontend/node_modules
 /frontend/dist
