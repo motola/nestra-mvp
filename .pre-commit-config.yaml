@@ -42,7 +42,7 @@ repos:
       - id: prettier-frontend
         name: Prettier (frontend)
         language: system
-        entry: bash -c 'cd frontend && npx prettier --write "$@"' --
+        entry: bash -c 'cd frontend && npx prettier --write "${@#frontend/}"' --
         files: ^frontend/.*\.(ts|tsx|js|mjs|cjs|json|css)$
         pass_filenames: true
 
