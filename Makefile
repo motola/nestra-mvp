@@ -25,7 +25,7 @@ dev-services:
 
 ## Start backend with hot reload (after: make dev-services)
 dev-backend:
-	cd backend && uvicorn alphacon.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## Start frontend with hot reload (after: make dev-services)
 dev-frontend:
@@ -69,7 +69,7 @@ format-frontend:
 type-check: type-check-backend type-check-frontend
 
 type-check-backend:
-	cd backend && mypy alphacon
+	cd backend && mypy src
 
 type-check-frontend:
 	cd frontend && npm run type-check
