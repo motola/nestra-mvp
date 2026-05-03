@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "alphacon"
+name = "backend"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -25,12 +25,17 @@ dependencies = [
 dev = [
     "ruff>=0.4",
     "mypy>=1.10",
+    "httpx>=0.27",
     "types-passlib",
     "types-python-jose",
 ]
 
+[tool.poetry]
+package-mode = false
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/shared"]
+include = ["src/**"]
+sources = {"src" = ""}
 
 [tool.ruff]
 target-version = "py312"
