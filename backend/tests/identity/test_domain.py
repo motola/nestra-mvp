@@ -26,37 +26,36 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OrgRole.BILLING.value, "BILLING")
 
     def test_portfolio_role_values(self) -> None:
-        roles = {r.value for r in PortfolioRole}
-        self.assertIn("PORTFOLIO_ADMIN", roles)
-        self.assertIn("PORTFOLIO_VIEWER", roles)
+        self.assertEqual(PortfolioRole.PORTFOLIO_ADMIN.value, "PORTFOLIO_ADMIN")
+        self.assertEqual(PortfolioRole.PORTFOLIO_MANAGER.value, "PORTFOLIO_MANAGER")
+        self.assertEqual(PortfolioRole.PORTFOLIO_MEMBER.value, "PORTFOLIO_MEMBER")
+        self.assertEqual(PortfolioRole.PORTFOLIO_VIEWER.value, "PORTFOLIO_VIEWER")
 
     def test_property_role_values(self) -> None:
-        roles = {r.value for r in PropertyRole}
-        self.assertIn("PROPERTY_MANAGER", roles)
-        self.assertIn("CONTRACTOR", roles)
+        self.assertEqual(PropertyRole.PROPERTY_MANAGER.value, "PROPERTY_MANAGER")
+        self.assertEqual(PropertyRole.OPERATOR.value, "OPERATOR")
+        self.assertEqual(PropertyRole.CONTRACTOR.value, "CONTRACTOR")
+        self.assertEqual(PropertyRole.PROPERTY_VIEWER.value, "PROPERTY_VIEWER")
 
     def test_tenant_role_values(self) -> None:
         self.assertEqual(TenantRole.PRIMARY_TENANT.value, "PRIMARY_TENANT")
         self.assertEqual(TenantRole.CO_TENANT.value, "CO_TENANT")
 
     def test_auth_method_values(self) -> None:
-        methods = {m.value for m in AuthMethod}
-        self.assertIn("PASSWORD", methods)
-        self.assertIn("MAGIC_LINK", methods)
-        self.assertIn("GOOGLE_SSO", methods)
-        self.assertIn("APPLE_SSO", methods)
+        self.assertEqual(AuthMethod.PASSWORD.value, "PASSWORD")
+        self.assertEqual(AuthMethod.MAGIC_LINK.value, "MAGIC_LINK")
+        self.assertEqual(AuthMethod.GOOGLE_SSO.value, "GOOGLE_SSO")
+        self.assertEqual(AuthMethod.APPLE_SSO.value, "APPLE_SSO")
 
     def test_org_status_values(self) -> None:
-        statuses = {s.value for s in OrgStatus}
-        self.assertIn("ACTIVE", statuses)
-        self.assertIn("SUSPENDED", statuses)
-        self.assertIn("CANCELLED", statuses)
+        self.assertEqual(OrgStatus.ACTIVE.value, "ACTIVE")
+        self.assertEqual(OrgStatus.SUSPENDED.value, "SUSPENDED")
+        self.assertEqual(OrgStatus.CANCELLED.value, "CANCELLED")
 
     def test_subscription_tier_values(self) -> None:
-        tiers = {t.value for t in SubscriptionTier}
-        self.assertIn("STARTER", tiers)
-        self.assertIn("PROFESSIONAL", tiers)
-        self.assertIn("ENTERPRISE", tiers)
+        self.assertEqual(SubscriptionTier.STARTER.value, "STARTER")
+        self.assertEqual(SubscriptionTier.PROFESSIONAL.value, "PROFESSIONAL")
+        self.assertEqual(SubscriptionTier.ENTERPRISE.value, "ENTERPRISE")
 
     def test_roles_are_str_enums(self) -> None:
         self.assertIsInstance(OrgRole.OWNER, str)
