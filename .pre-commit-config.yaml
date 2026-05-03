@@ -36,6 +36,16 @@ repos:
         entry: python3 .github/scripts/validate_commit_msg.py
         stages: [commit-msg]
 
+  # ── Frontend format (Prettier) ────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: prettier-frontend
+        name: Prettier (frontend)
+        language: system
+        entry: bash -c 'cd frontend && npx prettier --write "$@"' --
+        files: ^frontend/.*\.(ts|tsx|js|mjs|cjs|json|css)$
+        pass_filenames: true
+
   # ── TypeScript lint (frontend) ─────────────────────────────────────────────
   - repo: local
     hooks:
