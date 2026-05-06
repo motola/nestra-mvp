@@ -81,7 +81,10 @@ async def set_power(provider: str, device_id: str, body: PowerBody) -> dict[str,
                 detail="Govee power requires model — use /demo/devices/govee/{id}/power-with-model",
             )
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=exc.response.text) from exc
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail="Device provider returned an error.",
+        ) from exc
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=f"Unknown provider: {provider}",
@@ -94,7 +97,10 @@ async def set_govee_power(device_id: str, body: PowerBody, model: str) -> dict[s
     try:
         return await govee.set_power(device_id, model, on=body.on)
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=exc.response.text) from exc
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail="Device provider returned an error.",
+        ) from exc
 
 
 @router.post("/devices/lifx/{device_id}/brightness", response_model=dict[str, object])
@@ -103,4 +109,7 @@ async def set_lifx_brightness(device_id: str, body: BrightnessBody) -> dict[str,
     try:
         return await lifx.set_brightness(device_id, body.brightness)
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=exc.response.text) from exc
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail="Device provider returned an error.",
+        ) from exc
