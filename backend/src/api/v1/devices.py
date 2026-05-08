@@ -1,6 +1,7 @@
 """Device endpoints — live vendor devices and Supabase registry."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -9,6 +10,8 @@ from pydantic import BaseModel
 from api.dependencies import SettingsDep
 from models.device import AlphaconDevice
 from services import device_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 

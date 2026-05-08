@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Bell, CheckCircle, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAlerts, useDismissAlert } from "@/hooks/useAlerts";
 import type { AlertSeverity } from "@/lib/types";
