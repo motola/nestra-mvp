@@ -136,3 +136,39 @@ async def delete_device(device_id: str, settings: Settings) -> None:
             params={"id": f"eq.{device_id}"},
         )
         r.raise_for_status()
+
+
+async def move_devices_to_null_room(room_id: str, settings: Settings) -> None:
+    """Bulk-set room_id = null for all devices currently in a room."""
+    if not _configured(settings):
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.patch(
+                _base_url(settings),
+                headers=_headers(settings),
+                params={"room_id": f"eq.{room_id}"},
+                json={"room_id": None},
+            )
+            if r.status_code not in (200, 204):
+                logger.warning("move_devices_to_null_room %s: %s", r.status_code, r.text[:200])
+    except Exception as exc:
+        logger.error("move_devices_to_null_room failed: %s", exc)
+
+
+async def assign_device_room(
+    device_id: str, room_id: str | None, settings: Settings
+) -> dict[str, Any]:
+    """Update a device's room_id. Returns the updated device row."""
+    if not _configured(settings):
+        raise RuntimeError("Supabase not configured")
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.patch(
+            _base_url(settings),
+            headers={**_headers(settings), "Prefer": "return=representation"},
+            params={"id": f"eq.{device_id}"},
+            json={"room_id": room_id},
+        )
+        r.raise_for_status()
+        rows = r.json()
+        return rows[0] if isinstance(rows, list) and rows else {"id": device_id}

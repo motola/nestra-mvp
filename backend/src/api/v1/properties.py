@@ -1,4 +1,4 @@
-"""Property endpoints — portfolio, property detail, and room management."""
+"""Property endpoints — portfolio, property detail, room management, and property deletion."""
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
@@ -25,11 +25,21 @@ async def get_property(property_id: str, settings: SettingsDep) -> Property:
     return prop
 
 
+@router.delete("/{property_id}")
+async def delete_property(property_id: str, settings: SettingsDep) -> dict:
+    """Permanently delete a property and all its rooms, devices, and state history."""
+    prop = await property_service.get_property(property_id, settings)
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    try:
+        await property_service.delete_property(property_id, settings)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return {"deleted": property_id}
+
+
 @router.get("/{property_id}/rooms", response_model=list[Room])
 async def list_property_rooms(property_id: str, settings: SettingsDep) -> list[Room]:
-    if settings.demo_mode and property_id.startswith("demo-"):
-        from demo.data import get_demo_rooms
-        return [Room(**r) for r in get_demo_rooms(property_id)]
     return await room_service.list_rooms(property_id, settings)
 
 
@@ -37,7 +47,19 @@ async def list_property_rooms(property_id: str, settings: SettingsDep) -> list[R
 async def create_property_room(
     property_id: str, data: RoomCreate, settings: SettingsDep
 ) -> Room:
-    return await room_service.create_room(property_id, data, settings)
+    name = data.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Room name cannot be empty")
+
+    existing_rooms = await room_service.list_rooms(property_id, settings)
+    if any(r.name.lower() == name.lower() for r in existing_rooms):
+        raise HTTPException(
+            status_code=409,
+            detail=f"A room named '{name}' already exists in this property",
+        )
+
+    from models.room import RoomCreate as RC
+    return await room_service.create_room(property_id, RC(name=name, floor=data.floor), settings)
 
 
 @router.get("/{property_id}/devices", response_model=list[AlphaconDevice])

@@ -1,132 +1,20 @@
 "use client";
 
-import { use, useState, useRef, useEffect } from "react";
+import { use, useState } from "react";
 import {
   ArrowLeft,
-  Check,
-  Pencil,
-  SlidersHorizontal,
-  Wifi,
-  WifiOff,
-  X,
   XCircle,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useProperty } from "@/hooks/useProperty";
 import { DeviceCard, PageWrapper, SkeletonCard, AlertCard, PropertyIllustration } from "@/themes";
 import { propertiesApi, provisioningApi, roomsApi } from "@/lib/api";
+import { RoomManagement } from "@/components/property/RoomManagement";
 import type { AlphaconDevice, Room, SavedDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-// ── Vendor badge ──────────────────────────────────────────────────────────────
-
-const VENDOR_COLOURS: Record<string, string> = {
-  shelly: "bg-amber-bg text-amber border-amber/20",
-  govee: "bg-surface-2 text-text-2 border-border",
-  lifx: "bg-surface-2 text-text-2 border-border",
-  matter: "bg-green-bg text-green border-green/20",
-  demo: "bg-surface-2 text-text-3 border-border",
-};
-
-function VendorBadge({ vendor }: { vendor: string }) {
-  const cls = VENDOR_COLOURS[vendor.toLowerCase()] ?? "bg-surface-2 text-text-3 border-border";
-  return (
-    <span className={`inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full capitalize border ${cls}`}>
-      {vendor}
-    </span>
-  );
-}
-
-// ── Saved device card ─────────────────────────────────────────────────────────
-
-function SavedDeviceCard({ device, propertyId }: { device: SavedDevice; propertyId: string }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(device.name);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (editing) inputRef.current?.focus();
-  }, [editing]);
-
-  const renameMut = useMutation({
-    mutationFn: (name: string) => provisioningApi.renameDevice(device.id, name),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-devices", propertyId] });
-      setEditing(false);
-    },
-    onError: () => setEditing(false),
-  });
-
-  function commitRename() {
-    const trimmed = draft.trim();
-    if (trimmed && trimmed !== device.name) {
-      renameMut.mutate(trimmed);
-    } else {
-      setDraft(device.name);
-      setEditing(false);
-    }
-  }
-
-  const cardHref = `/properties/${propertyId}/devices/${device.id}`;
-
-  return (
-    <div className="bg-surface border border-border rounded-xl px-4 py-3 space-y-2 hover:border-border-strong transition-colors">
-      <div className="flex items-start justify-between gap-2">
-        {editing ? (
-          <div className="flex items-center gap-1.5 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitRename();
-                if (e.key === "Escape") { setDraft(device.name); setEditing(false); }
-              }}
-              className="flex-1 min-w-0 bg-surface-2 border border-border-strong rounded px-2 py-0.5 text-sm text-text font-body focus:outline-none"
-            />
-            <button onClick={commitRename} disabled={renameMut.isPending} className="text-green shrink-0">
-              <Check size={13} />
-            </button>
-            <button onClick={() => { setDraft(device.name); setEditing(false); }} className="text-text-3 shrink-0">
-              <X size={13} />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <Link href={cardHref} className="font-body text-sm text-text leading-snug truncate hover:text-text-2 transition-colors">
-              {draft}
-            </Link>
-            <button onClick={(e) => { e.preventDefault(); setEditing(true); }} className="text-text-3 hover:text-text-2 shrink-0 transition-colors">
-              <Pencil size={11} />
-            </button>
-          </div>
-        )}
-        <span className="flex items-center gap-1 font-mono text-xs text-text-3 shrink-0 mt-0.5">
-          {device.vendor === "demo" ? (
-            <Wifi size={7} className="text-green" />
-          ) : (
-            <WifiOff size={7} />
-          )}
-          {device.vendor === "demo" ? "Online" : "Saved"}
-        </span>
-      </div>
-      <Link href={cardHref} className="flex items-center justify-between gap-2 flex-wrap group">
-        <div className="flex items-center gap-2 flex-wrap">
-          <VendorBadge vendor={device.vendor} />
-          {device.model && (
-            <span className="font-body font-light text-xs text-text-3">{device.model}</span>
-          )}
-        </div>
-        <SlidersHorizontal size={11} className="text-text-3 group-hover:text-text-2 transition-colors shrink-0" />
-      </Link>
-    </div>
-  );
-}
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
@@ -201,9 +89,6 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     (acc[key] ??= []).push(d);
     return acc;
   }, {});
-
-  const savedRoomsWithDevices = rooms.filter((r) => (savedByRoom[r.id] ?? []).length > 0);
-  const savedUnassigned = savedByRoom["__unassigned__"] ?? [];
 
   const totalDeviceCount = isDemo ? alphaDevices.length : savedDevices.length;
 
@@ -436,64 +321,12 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
               )}
 
               {!isLoading && !isDemo && (
-                <>
-                  {savedDevices.length === 0 && (
-                    <div className="py-12 text-center">
-                      <p className="font-body font-light text-sm text-text-3">No devices linked to this property yet.</p>
-                      <p className="font-body font-light text-xs text-text-3 mt-1">
-                        Add devices from the{" "}
-                        <Link href="/integrations" className="text-text-2 hover:text-text underline">
-                          Integrations
-                        </Link>{" "}
-                        page.
-                      </p>
-                    </div>
-                  )}
-
-                  {savedDevices.length > 0 && (
-                    <div className="space-y-8">
-                      {savedRoomsWithDevices.map((room) => (
-                        <div key={room.id}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <h3 className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
-                              {room.name}
-                              {room.floor != null && (
-                                <span className="ml-2 normal-case font-light">· Floor {room.floor}</span>
-                              )}
-                            </h3>
-                            <div className="flex-1 border-t border-border" />
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {(savedByRoom[room.id] ?? []).map((d) => (
-                              <SavedDeviceCard key={d.id} device={d} propertyId={id} />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-
-                      {savedUnassigned.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-3 mb-3">
-                            <h3 className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
-                              Unassigned
-                            </h3>
-                            <div className="flex-1 border-t border-border" />
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {savedUnassigned.map((d) => (
-                              <SavedDeviceCard key={d.id} device={d} propertyId={id} />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-1.5 text-text-3 font-mono text-xs pt-2">
-                        <Zap size={11} />
-                        <span>{savedDevices.length} registered device{savedDevices.length !== 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <RoomManagement
+                  propertyId={id}
+                  propertyName={property?.name ?? ""}
+                  rooms={rooms}
+                  savedDevices={savedDevices}
+                />
               )}
             </>
           )}

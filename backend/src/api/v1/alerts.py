@@ -15,8 +15,8 @@ async def list_alerts(settings: SettingsDep) -> list[Alert]:
     """Return all active (non-dismissed) alerts, newest first."""
     alerts = await alert_service.list_active_alerts(settings)
     if settings.demo_mode:
-        from demo.alerts import DEMO_ALERTS
-        demo_alerts = [Alert(**a) for a in DEMO_ALERTS if not a.get("dismissed")]
+        from demo.alerts import get_demo_alerts
+        demo_alerts = [Alert(**a) for a in get_demo_alerts() if not a.get("dismissed")]
         return alerts + demo_alerts
     return alerts
 

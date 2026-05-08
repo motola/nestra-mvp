@@ -64,10 +64,10 @@ def _row_to_property(row: dict[str, Any], device_count: int = 0, alert_count: in
 
 def _demo_properties(alert_counts: dict[str, int]) -> list[Property]:
     from demo.data import DEMO_PROPERTIES, get_demo_devices_for_property
-    from demo.alerts import DEMO_ALERTS
+    from demo.alerts import get_demo_alerts
 
     demo_alert_counts: dict[str, int] = {}
-    for a in DEMO_ALERTS:
+    for a in get_demo_alerts():
         pid = a.get("property_id")
         if pid and not a.get("dismissed"):
             demo_alert_counts[pid] = demo_alert_counts.get(pid, 0) + 1
@@ -95,6 +95,10 @@ async def list_properties(settings: Settings) -> list[Property]:
                 )
                 if r.status_code == 200:
                     rows = r.json()
+                    # Demo properties are added separately with in-memory device counts
+                    if settings.demo_mode:
+                        from demo.data import is_demo_property
+                        rows = [row for row in rows if not is_demo_property(row["id"])]
                     if rows:
                         device_counts, alert_counts = await asyncio.gather(
                             _fetch_device_counts(settings),
@@ -116,15 +120,16 @@ async def list_properties(settings: Settings) -> list[Property]:
 async def get_property(property_id: str, settings: Settings) -> Property | None:
     from services.alert_service import get_alert_counts
 
-    if settings.demo_mode and property_id.startswith("demo-"):
-        from demo.data import DEMO_PROPERTIES, get_demo_devices_for_property
-        from demo.alerts import DEMO_ALERTS
-        for p in DEMO_PROPERTIES:
-            if p["id"] == property_id:
-                devices = get_demo_devices_for_property(property_id)
-                ac = sum(1 for a in DEMO_ALERTS if a["property_id"] == property_id and not a.get("dismissed"))
-                return _row_to_property(p, len(devices), ac, is_demo=True)
-        return None
+    if settings.demo_mode:
+        from demo.data import is_demo_property, DEMO_PROPERTIES, get_demo_devices_for_property
+        if is_demo_property(property_id):
+            from demo.alerts import get_demo_alerts
+            p = next((p for p in DEMO_PROPERTIES if p["id"] == property_id), None)
+            if not p:
+                return None
+            devices = get_demo_devices_for_property(property_id)
+            ac = sum(1 for a in get_demo_alerts() if a["property_id"] == property_id and not a.get("dismissed"))
+            return _row_to_property(p, len(devices), ac, is_demo=True)
 
     if not _configured(settings):
         return None
@@ -148,6 +153,41 @@ async def get_property(property_id: str, settings: Settings) -> Property | None:
         logger.error("Supabase get_property failed: %s", exc)
 
     return None
+
+
+async def delete_property(property_id: str, settings: Settings) -> None:
+    """Cascade-delete a property: state_history → devices → rooms → property."""
+    if not _configured(settings):
+        raise RuntimeError("Supabase not configured")
+
+    h = _headers(settings)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        # 1. State history (property_id column exists on this table)
+        await client.delete(
+            f"{settings.supabase_url}/rest/v1/state_history",
+            headers=h,
+            params={"property_id": f"eq.{property_id}"},
+        )
+        # 2. Devices
+        await client.delete(
+            f"{settings.supabase_url}/rest/v1/devices",
+            headers=h,
+            params={"property_id": f"eq.{property_id}"},
+        )
+        # 3. Rooms
+        await client.delete(
+            f"{settings.supabase_url}/rest/v1/rooms",
+            headers=h,
+            params={"property_id": f"eq.{property_id}"},
+        )
+        # 4. Property
+        r = await client.delete(
+            f"{settings.supabase_url}/rest/v1/properties",
+            headers=h,
+            params={"id": f"eq.{property_id}"},
+        )
+        if r.status_code not in (200, 204):
+            raise RuntimeError(f"Failed to delete property: {r.status_code} {r.text[:200]}")
 
 
 async def create_property(data: PropertyCreate, settings: Settings) -> Property:

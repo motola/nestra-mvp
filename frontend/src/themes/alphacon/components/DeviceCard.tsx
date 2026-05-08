@@ -78,7 +78,7 @@ export function DeviceCard({
       <div
         className={cn(
           "bg-surface border border-border rounded-xl p-4 cursor-pointer",
-          "hover:border-border-strong hover:-translate-y-0.5 transition-all duration-200",
+          "hover:border-border-strong hover:bg-surface-2 hover:-translate-y-0.5 transition-all duration-150",
           sensorTint && `border-l-4 ${sensorTint}`
         )}
         style={{ ...gradientStyle, ...borderStyle, transition: "background 0.3s ease, border-color 0.3s ease" }}

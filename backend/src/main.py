@@ -51,12 +51,8 @@ async def lifespan(_app: FastAPI):
     logger.info("Alphacon API starting — mode=%s", mode)
 
     if settings.demo_mode:
-        from demo.data import DEMO_PROPERTIES, DEMO_DEVICES
-        logger.info(
-            "Demo data loaded — %d properties, %d devices",
-            len(DEMO_PROPERTIES),
-            len(DEMO_DEVICES),
-        )
+        from demo.data import ensure_demo_seeded
+        await ensure_demo_seeded(settings)
 
     # Verify Supabase connectivity
     if settings.supabase_url and settings.supabase_service_role_key:
@@ -82,6 +78,27 @@ async def lifespan(_app: FastAPI):
         logger.warning(
             "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — "
             "registry and alert features will be disabled"
+        )
+
+    # Verify Upstash Redis connectivity
+    if settings.upstash_redis_rest_url and settings.upstash_redis_rest_token:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                headers = {"Authorization": f"Bearer {settings.upstash_redis_rest_token}"}
+                base = settings.upstash_redis_rest_url
+                await client.get(f"{base}/set/startup_test/ok/ex/60", headers=headers)
+                r = await client.get(f"{base}/get/startup_test", headers=headers)
+                val = r.json().get("result") if r.status_code == 200 else None
+            if val == "ok":
+                logger.info("✓ Redis connected — Upstash")
+            else:
+                logger.warning("Redis ping returned unexpected value: %r", val)
+        except Exception as exc:
+            logger.warning("Upstash Redis unreachable on startup: %s", exc)
+    else:
+        logger.warning(
+            "UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN not set — "
+            "insight caching is disabled"
         )
 
     yield

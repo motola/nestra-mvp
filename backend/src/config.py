@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://localhost/alphacon"
-    redis_url: str = "redis://localhost:6379"
     secret_key: str = "dev-secret-key-change-in-production"
     debug: bool = False
 
@@ -28,9 +27,9 @@ class Settings(BaseSettings):
     # AI
     anthropic_api_key: str = ""
 
-    # Upstash Redis (optional, for background workers)
-    upstash_redis_url: str = ""
-    upstash_redis_token: str = ""
+    # Upstash Redis REST API
+    upstash_redis_rest_url: str = ""
+    upstash_redis_rest_token: str = ""
 
 
 @lru_cache

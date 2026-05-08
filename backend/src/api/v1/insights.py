@@ -16,12 +16,14 @@ async def get_device_insight(device_id: str, settings: SettingsDep) -> Insight:
     Return a plain English AI insight for a device.
     Demo devices return pre-written insights. Real devices are cached in Redis for 15 minutes.
     """
-    if settings.demo_mode and device_id.startswith("demo-"):
-        from demo.insights import get_demo_insight
-        insight = get_demo_insight(device_id)
-        if not insight:
-            raise HTTPException(status_code=404, detail="Device not found")
-        return Insight(**insight)
+    if settings.demo_mode:
+        from demo.data import is_demo_device
+        if is_demo_device(device_id):
+            from demo.insights import get_demo_insight
+            insight = get_demo_insight(device_id)
+            if not insight:
+                raise HTTPException(status_code=404, detail="Device not found")
+            return Insight(**insight)
 
     device = await device_service.get_device(device_id, settings)
     if not device:

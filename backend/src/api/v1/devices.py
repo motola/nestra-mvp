@@ -142,8 +142,10 @@ async def control_device(
     device_id: str, payload: ControlPayload, settings: SettingsDep
 ) -> dict:
     """Send turn_on / turn_off to a Shelly device using its saved IP address."""
-    if settings.demo_mode and device_id.startswith("demo-"):
-        return {"success": True, "state": payload.command == "turn_on"}
+    if settings.demo_mode:
+        from demo.data import is_demo_device
+        if is_demo_device(device_id):
+            return {"success": True, "state": payload.command == "turn_on"}
 
     from services.device_registry import get_device_by_id
     from services.state_history_service import record_state_change
@@ -185,12 +187,13 @@ async def control_device(
 @router.get("/{device_id}/state")
 async def device_state(device_id: str, settings: SettingsDep) -> dict:
     """Return live on/off + power draw for a locally-reachable Shelly device."""
-    if settings.demo_mode and device_id.startswith("demo-"):
-        from demo.data import get_demo_device, demo_device_state as _demo_state
-        d = get_demo_device(device_id)
-        if not d:
-            raise HTTPException(status_code=404, detail="Device not found")
-        return _demo_state(d)
+    if settings.demo_mode:
+        from demo.data import is_demo_device, get_demo_device, demo_device_state as _demo_state
+        if is_demo_device(device_id):
+            d = get_demo_device(device_id)
+            if not d:
+                raise HTTPException(status_code=404, detail="Device not found")
+            return _demo_state(d)
 
     from services.device_registry import get_device_by_id
     from services.state_history_service import record_state_change
@@ -228,9 +231,11 @@ async def device_state(device_id: str, settings: SettingsDep) -> dict:
 @router.get("/{device_id}/power-history")
 async def device_power_history(device_id: str, settings: SettingsDep) -> list[dict]:
     """Return power readings for the last 24 hours for charting."""
-    if settings.demo_mode and device_id.startswith("demo-"):
-        from demo.history import get_demo_power_history
-        return get_demo_power_history(device_id)
+    if settings.demo_mode:
+        from demo.data import is_demo_device
+        if is_demo_device(device_id):
+            from demo.history import get_demo_power_history
+            return get_demo_power_history(device_id)
     from services.state_history_service import get_power_history
     return await get_power_history(device_id, settings)
 
@@ -238,11 +243,44 @@ async def device_power_history(device_id: str, settings: SettingsDep) -> list[di
 @router.get("/{device_id}/history")
 async def device_history(device_id: str, settings: SettingsDep) -> list[dict]:
     """Return the last 50 state change events for a device, newest first."""
-    if settings.demo_mode and device_id.startswith("demo-"):
-        from demo.history import get_demo_history
-        return get_demo_history(device_id, limit=50)
+    if settings.demo_mode:
+        from demo.data import is_demo_device
+        if is_demo_device(device_id):
+            from demo.history import get_demo_history
+            return get_demo_history(device_id, limit=50)
     from services.state_history_service import get_device_history
     return await get_device_history(device_id, settings, limit=50)
+
+
+# ── Room assignment ───────────────────────────────────────────────────────────
+
+class AssignRoomPayload(BaseModel):
+    room_id: str | None
+
+
+@router.patch("/{device_id}")
+async def assign_device_room(
+    device_id: str, payload: AssignRoomPayload, settings: SettingsDep
+) -> dict:
+    """Update a device's room assignment. Validates the room belongs to the same property."""
+    from services.device_registry import get_device_by_id, assign_device_room as _assign
+    from services.room_service import get_room_by_id
+
+    device_row = await get_device_by_id(device_id, settings)
+    if not device_row:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    if payload.room_id is not None:
+        room_row = await get_room_by_id(payload.room_id, settings)
+        if not room_row:
+            raise HTTPException(status_code=404, detail="Room not found")
+        if room_row.get("property_id") != device_row.get("property_id"):
+            raise HTTPException(
+                status_code=422,
+                detail="Cannot move device to a room in a different property",
+            )
+
+    return await _assign(device_id, payload.room_id, settings)
 
 
 # ── Delete device ─────────────────────────────────────────────────────────────
