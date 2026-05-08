@@ -31,7 +31,7 @@ import { DeviceStateHistory } from "@/components/device/DeviceStateHistory";
 import { DeviceControls } from "@/components/device/DeviceControls";
 import { useDevice } from "@/hooks/useDevices";
 import { useProperty } from "@/hooks/useProperty";
-import { matterApi, shellyDeviceApi, roomsApi, provisioningApi } from "@/lib/api";
+import { matterApi, shellyDeviceApi, roomsApi } from "@/lib/api";
 import type {
   MatterDeviceState,
   PowerHistoryPoint,

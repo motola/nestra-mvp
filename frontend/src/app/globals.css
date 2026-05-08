@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@theme {
+  /* ── Fonts ─────────────────────────────────────────────────────────────── */
+  --font-display: var(--font-instrument-serif), "Georgia", serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), "Courier New", monospace;
+
+  /* ── Colours ───────────────────────────────────────────────────────────── */
+  --color-bg: #f4f1eb;
+  --color-surface: #fbf9f4;
+  --color-surface-2: #efebe2;
+
+  --color-text: #1a1814;
+  --color-text-2: #5a564e;
+  --color-text-3: #a39d8e;
+
+  --color-graphite: #28241e;
+  --color-graphite-2: #3a3530;
+
+  --color-border: #e0dbcf;
+  --color-border-strong: #cdc6b8;
+
+  --color-green: #2d6b2d;
+  --color-green-bg: #eef5ee;
+
+  --color-amber: #9a5e15;
+  --color-amber-bg: #fbf2e3;
+
+  --color-red: #8b2020;
+  --color-red-bg: #fdf0f0;
+}
+
+/* ── Base resets ───────────────────────────────────────────────────────────── */
+html,
+body {
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

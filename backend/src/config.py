@@ -13,6 +13,25 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-key-change-in-production"
     debug: bool = False
 
+    # Supabase
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+
+    # Demo mode
+    demo_mode: bool = False
+
+    # Vendor integrations
+    govee_api_key: str = ""
+    lifx_api_token: str = ""
+    shelly_auth_key: str = ""
+
+    # AI
+    anthropic_api_key: str = ""
+
+    # Upstash Redis (optional, for background workers)
+    upstash_redis_url: str = ""
+    upstash_redis_token: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:
