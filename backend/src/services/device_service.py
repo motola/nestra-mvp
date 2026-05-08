@@ -64,10 +64,11 @@ async def list_all_devices(settings: Settings) -> list[AlphaconDevice]:
 
 async def get_device(device_id: str, settings: Settings) -> AlphaconDevice | None:
     """Return current state for a single device. Checks vendor APIs first, falls back to Supabase."""
-    if settings.demo_mode and device_id.startswith("demo-"):
-        from demo.data import get_demo_device, demo_device_as_alphacon
-        d = get_demo_device(device_id)
-        return AlphaconDevice(**demo_device_as_alphacon(d)) if d else None
+    if settings.demo_mode:
+        from demo.data import is_demo_device, get_demo_device, demo_device_as_alphacon
+        if is_demo_device(device_id):
+            d = get_demo_device(device_id)
+            return AlphaconDevice(**demo_device_as_alphacon(d)) if d else None
 
     all_devices = await list_all_devices(settings)
     for device in all_devices:
@@ -96,9 +97,10 @@ async def get_device(device_id: str, settings: Settings) -> AlphaconDevice | Non
 
 async def get_saved_devices(property_id: str, settings: Settings) -> list[AlphaconDevice]:
     """Return devices from the Supabase registry for a specific property."""
-    if settings.demo_mode and property_id.startswith("demo-"):
-        from demo.data import get_demo_devices_for_property, demo_device_as_alphacon
-        return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in get_demo_devices_for_property(property_id)]
+    if settings.demo_mode:
+        from demo.data import is_demo_property, get_demo_devices_for_property, demo_device_as_alphacon
+        if is_demo_property(property_id):
+            return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in get_demo_devices_for_property(property_id)]
     from services.device_registry import list_devices
     rows = await list_devices(settings, property_id=property_id)
     return [_row_to_alphacon(row) for row in rows]

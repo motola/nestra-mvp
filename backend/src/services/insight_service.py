@@ -146,13 +146,13 @@ def _parse_response(device_id: str, text: str, model: str) -> Insight:
 # ── Upstash Redis REST helpers ────────────────────────────────────────────────
 
 async def _cache_get(key: str, settings: Settings) -> str | None:
-    if not settings.upstash_redis_url or not settings.upstash_redis_token:
+    if not settings.upstash_redis_rest_url or not settings.upstash_redis_rest_token:
         return None
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             r = await client.get(
-                f"{settings.upstash_redis_url}/get/{key}",
-                headers={"Authorization": f"Bearer {settings.upstash_redis_token}"},
+                f"{settings.upstash_redis_rest_url}/get/{key}",
+                headers={"Authorization": f"Bearer {settings.upstash_redis_rest_token}"},
             )
             if r.status_code == 200:
                 return r.json().get("result")
@@ -164,13 +164,13 @@ async def _cache_get(key: str, settings: Settings) -> str | None:
 async def _cache_set(
     key: str, value: str, ttl: int, settings: Settings
 ) -> None:
-    if not settings.upstash_redis_url or not settings.upstash_redis_token:
+    if not settings.upstash_redis_rest_url or not settings.upstash_redis_rest_token:
         return
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             await client.get(
-                f"{settings.upstash_redis_url}/set/{key}/{value}/ex/{ttl}",
-                headers={"Authorization": f"Bearer {settings.upstash_redis_token}"},
+                f"{settings.upstash_redis_rest_url}/set/{key}/{value}/ex/{ttl}",
+                headers={"Authorization": f"Bearer {settings.upstash_redis_rest_token}"},
             )
     except Exception as exc:
         logger.debug("Cache set failed: %s", exc)

@@ -37,6 +37,8 @@ export const propertiesApi = {
   list: () => apiFetch<Property[]>("/api/v1/properties/"),
   get: (id: string) => apiFetch<Property>(`/api/v1/properties/${id}`),
   devices: (id: string) => apiFetch<AlphaconDevice[]>(`/api/v1/properties/${id}/devices`),
+  delete: (id: string) =>
+    apiFetch<{ deleted: string }>(`/api/v1/properties/${id}`, { method: "DELETE" }),
 };
 
 // ── Rooms ─────────────────────────────────────────────────────────────────────
@@ -49,6 +51,13 @@ export const roomsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  rename: (roomId: string, name: string) =>
+    apiFetch<Room>(`/api/v1/rooms/${roomId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    }),
+  delete: (roomId: string) =>
+    apiFetch<{ deleted: string }>(`/api/v1/rooms/${roomId}`, { method: "DELETE" }),
 };
 
 // ── Devices ───────────────────────────────────────────────────────────────────
@@ -56,6 +65,11 @@ export const roomsApi = {
 export const devicesApi = {
   list: () => apiFetch<AlphaconDevice[]>("/api/v1/devices/"),
   get: (id: string) => apiFetch<AlphaconDevice>(`/api/v1/devices/${id}`),
+  assignRoom: (deviceId: string, roomId: string | null) =>
+    apiFetch<SavedDevice>(`/api/v1/devices/${deviceId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ room_id: roomId }),
+    }),
 };
 
 // ── Alerts ────────────────────────────────────────────────────────────────────

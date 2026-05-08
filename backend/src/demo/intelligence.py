@@ -3,6 +3,15 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+_PROP_VID_MAP = {
+    "demo-prop-001": "Maple Court",
+    "demo-prop-002": "Brunswick House",
+    "demo-prop-003": "Cedar Lodge",
+    "demo-prop-004": "The Annexe",
+    "demo-prop-005": "Oak House",
+    "demo-prop-006": "Riverside Flat",
+}
+
 
 def _ts(hours_ago: float = 0) -> str:
     return (datetime.utcnow() - timedelta(hours=hours_ago)).isoformat() + "Z"
@@ -138,3 +147,14 @@ DEMO_INTELLIGENCE: list[dict] = [
         "unit": "W",
     },
 ]
+
+
+def get_demo_intelligence() -> list[dict]:
+    """Return DEMO_INTELLIGENCE with property_id resolved to real UUIDs."""
+    from demo.data import _demo_id_map
+    result = []
+    for item in DEMO_INTELLIGENCE:
+        prop_name = _PROP_VID_MAP.get(item["property_id"])
+        prop_id = _demo_id_map.get(f"prop:{prop_name}", item["property_id"]) if prop_name else item["property_id"]
+        result.append({**item, "property_id": prop_id})
+    return result

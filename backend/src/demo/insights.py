@@ -58,7 +58,12 @@ _INSIGHTS: dict[str, dict] = {
 
 
 def get_demo_insight(device_id: str) -> dict | None:
-    base = _INSIGHTS.get(device_id)
+    from demo.data import get_demo_device
+    d = get_demo_device(device_id)
+    if not d:
+        return None
+    vid = d.get("vendor_id", device_id)
+    base = _INSIGHTS.get(vid)
     if not base:
         return None
     return {
