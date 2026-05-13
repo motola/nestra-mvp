@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import os
-
 import httpx
+
+from config import get_settings
 
 _BASE = "https://api.lifx.com/v1"
 
 
 def _headers() -> dict[str, str]:
-    token = os.getenv("LIFX_API_TOKEN", "")
+    token = get_settings().lifx_api_token
+    if not token:
+        raise RuntimeError("LIFX_API_TOKEN is not configured")
     return {"Authorization": f"Bearer {token}"}
 
 
