@@ -46,6 +46,7 @@ class ScannedDevice:
     address: str
     name: str
     device_type: str
+    rssi: int | None = None
 
 
 @dataclass
@@ -65,6 +66,7 @@ async def scan() -> list[ScannedDevice]:
             address=d.address,
             name=d.name or "Unknown device",
             device_type=detect_type(d.name),
+            rssi=d.rssi,
         )
         for d in found
         if d.name

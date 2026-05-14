@@ -126,6 +126,7 @@ class BLEScannedDevice(BaseModel):
     address: str
     name: str
     device_type: str
+    rssi: int | None = None
 
 
 class BLEProbeResult(BaseModel):
@@ -143,7 +144,7 @@ async def ble_scan() -> list[BLEScannedDevice]:
     try:
         devices = await ble_general.scan()
         return [
-            BLEScannedDevice(address=d.address, name=d.name, device_type=d.device_type)
+            BLEScannedDevice(address=d.address, name=d.name, device_type=d.device_type, rssi=d.rssi)
             for d in devices
         ]
     except Exception as exc:
