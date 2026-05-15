@@ -8,6 +8,7 @@ interface ScannedDevice {
   address: string;
   name: string;
   device_type: "light" | "speaker" | "phone" | "unknown";
+  rssi: number | null;
 }
 
 interface Characteristic {
@@ -27,6 +28,22 @@ interface ProbeResult {
   connectable: boolean;
   services: Service[];
   error: string | null;
+}
+
+function signalLabel(rssi: number | null): string {
+  if (rssi === null) return "–";
+  if (rssi >= -60) return "Strong";
+  if (rssi >= -75) return "Good";
+  if (rssi >= -85) return "Weak";
+  return "Poor";
+}
+
+function signalStyle(rssi: number | null): string {
+  if (rssi === null) return "text-text-3";
+  if (rssi >= -60) return "text-green";
+  if (rssi >= -75) return "text-text-2";
+  if (rssi >= -85) return "text-amber";
+  return "text-red";
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -199,6 +216,16 @@ export default function BLEScannerPage() {
                                 className={`shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] px-2 py-0.5 rounded-tag ${TYPE_STYLES[device.device_type]}`}
                               >
                                 {TYPE_LABELS[device.device_type]}
+                              </span>
+                              <span
+                                className={`shrink-0 font-mono text-[10px] ${signalStyle(device.rssi)}`}
+                                title={
+                                  device.rssi !== null
+                                    ? `${device.rssi} dBm`
+                                    : "No signal data"
+                                }
+                              >
+                                {signalLabel(device.rssi)}
                               </span>
                               <button
                                 onClick={() => runProbe(device.address)}
