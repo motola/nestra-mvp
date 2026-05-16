@@ -22,7 +22,3 @@ export function formatRelativeTime(date: Date): string {
   if (minutes < 60) return `${minutes}m ago`;
   return `${Math.floor(minutes / 60)}h ago`;
 }
-
-export function providerLabel(provider: DemoDevice["provider"]): string {
-  return provider === "lifx" ? "LIFX" : "Govee";
-}
