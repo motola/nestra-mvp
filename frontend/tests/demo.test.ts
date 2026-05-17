@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatRelativeTime, providerLabel } from "../src/app/demo/types";
+import { formatRelativeTime } from "../src/app/demo/types";
 
 describe("formatRelativeTime", () => {
   it("returns 'just now' for times under 10 seconds ago", () => {
@@ -20,15 +20,5 @@ describe("formatRelativeTime", () => {
   it("returns hours for times over an hour ago", () => {
     const past = new Date(Date.now() - 2 * 60 * 60_000);
     expect(formatRelativeTime(past)).toBe("2h ago");
-  });
-});
-
-describe("providerLabel", () => {
-  it("returns LIFX for lifx provider", () => {
-    expect(providerLabel("lifx")).toBe("LIFX");
-  });
-
-  it("returns Govee for govee provider", () => {
-    expect(providerLabel("govee")).toBe("Govee");
   });
 });

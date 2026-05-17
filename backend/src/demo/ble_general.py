@@ -62,16 +62,21 @@ class ProbeResult:
 
 async def scan() -> list[ScannedDevice]:
     found = await BleakScanner.discover(timeout=_SCAN_TIMEOUT)
-    devices = [
-        ScannedDevice(
-            address=d.address,
-            name=d.name or "Unknown device",
-            device_type=detect_type(d.name),
-            rssi=d.rssi,
+    devices: list[ScannedDevice] = []
+    for d in found:
+        if not d.name:
+            continue
+        rssi: int | None = getattr(d, "rssi", None)
+        if rssi is not None and rssi < _RSSI_FLOOR:
+            continue
+        devices.append(
+            ScannedDevice(
+                address=d.address,
+                name=d.name,
+                device_type=detect_type(d.name),
+                rssi=rssi,
+            )
         )
-        for d in found
-        if d.name and (d.rssi is None or d.rssi >= _RSSI_FLOOR)
-    ]
     devices.sort(key=lambda d: (d.device_type != "unknown", d.name.lower()))
     return devices
 

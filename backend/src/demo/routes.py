@@ -163,6 +163,6 @@ async def ble_probe(address: str) -> BLEProbeResult:
         name=result.name,
         device_type=result.device_type,
         connectable=result.connectable,
-        services=result.services,  # type: ignore[arg-type]
+        services=result.services,
         error=result.error,
     )
