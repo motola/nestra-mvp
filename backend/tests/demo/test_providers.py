@@ -5,6 +5,15 @@ import httpx
 
 
 class TestLifxClient(unittest.TestCase):
+    def setUp(self) -> None:
+        settings = MagicMock()
+        settings.lifx_api_token = "test-token"
+        self._patch = patch("demo.lifx.get_settings", return_value=settings)
+        self._patch.start()
+
+    def tearDown(self) -> None:
+        self._patch.stop()
+
     def _make_response(self, payload: object, status_code: int = 200) -> MagicMock:
         mock = MagicMock(spec=httpx.Response)
         mock.status_code = status_code
@@ -71,6 +80,15 @@ class TestLifxClient(unittest.TestCase):
 
 
 class TestGoveeClient(unittest.TestCase):
+    def setUp(self) -> None:
+        settings = MagicMock()
+        settings.govee_api_key = "test-key"
+        self._patch = patch("demo.govee.get_settings", return_value=settings)
+        self._patch.start()
+
+    def tearDown(self) -> None:
+        self._patch.stop()
+
     def _make_response(self, payload: object) -> MagicMock:
         mock = MagicMock(spec=httpx.Response)
         mock.status_code = 200
@@ -84,16 +102,14 @@ class TestGoveeClient(unittest.TestCase):
         from demo.govee import list_devices
 
         payload = {
-            "data": {
-                "devices": [
-                    {
-                        "device": "AA:BB",
-                        "model": "H6076",
-                        "deviceName": "Strip",
-                        "controllable": True,
-                    }  # noqa: E501
-                ]
-            }
+            "data": [
+                {
+                    "device": "AA:BB",
+                    "model": "H6076",
+                    "deviceName": "Strip",
+                    "controllable": True,
+                }
+            ]
         }
         mock_client = AsyncMock()
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -117,7 +133,7 @@ class TestGoveeClient(unittest.TestCase):
         mock_client = AsyncMock()
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
-        mock_client.put = AsyncMock(return_value=self._make_response({"message": "Success"}))
+        mock_client.post = AsyncMock(return_value=self._make_response({"message": "Success"}))
 
         with patch("demo.govee.httpx.AsyncClient", return_value=mock_client):
             asyncio.run(set_power("AA:BB", "H6076", on=True))
@@ -135,7 +151,7 @@ class TestGoveeClient(unittest.TestCase):
         mock_client = AsyncMock()
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
-        mock_client.put = AsyncMock(return_value=self._make_response({"message": "Success"}))
+        mock_client.post = AsyncMock(return_value=self._make_response({"message": "Success"}))
 
         with patch("demo.govee.httpx.AsyncClient", return_value=mock_client):
             asyncio.run(set_power("AA:BB", "H6076", on=False))
