@@ -25,11 +25,11 @@ dev-services:
 
 ## Start backend with hot reload (after: make dev-services)
 dev-backend:
-	cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && PYTHONPATH=src uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## Start frontend with hot reload (after: make dev-services)
 dev-frontend:
-	cd frontend && npm run dev
+	cd frontend && PYTHONPATH=src npm run dev
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
 

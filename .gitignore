@@ -1,4 +1,9 @@
 CLAUDE.md
+.venv
+.python-version
+**/__pycache__/
+**/*.pyc
+**/*.pyo
 /prompts
 /frontend/node_modules
 /frontend/dist
@@ -9,3 +14,34 @@ CLAUDE.md
 /backend/SKILL.md
 /frontend/SKILL.md
 .claude
+
+# Environment files
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
+
+# Secrets
+*.key
+*.pem
+*.p12
+*.pfx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Python lock files (not committed — use pyproject.toml only)
+poetry.lock
