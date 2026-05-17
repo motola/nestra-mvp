@@ -6,6 +6,7 @@ from bleak import BleakClient, BleakScanner
 
 _SCAN_TIMEOUT = 8.0
 _PROBE_TIMEOUT = 10.0
+_RSSI_FLOOR = -90
 
 _TYPE_PATTERNS: dict[str, list[str]] = {
     "light": ["govee", "ihoment", "lifx", "hue", "sengled", "wyze", "cree", "wiz"],
@@ -69,7 +70,7 @@ async def scan() -> list[ScannedDevice]:
             rssi=d.rssi,
         )
         for d in found
-        if d.name
+        if d.name and (d.rssi is None or d.rssi >= _RSSI_FLOOR)
     ]
     devices.sort(key=lambda d: (d.device_type != "unknown", d.name.lower()))
     return devices
