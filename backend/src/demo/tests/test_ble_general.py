@@ -50,6 +50,24 @@ class TestScan(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(results[0].name, "Govee_H617C_475E")
         self.assertEqual(results[0].device_type, "light")
 
+    async def test_filters_ghost_devices_below_rssi_floor(self) -> None:
+        strong = MagicMock()
+        strong.name = "Govee_H617C_475E"
+        strong.address = "AA:BB:CC:DD:EE:FF"
+        strong.rssi = -55
+
+        ghost = MagicMock()
+        ghost.name = "Mystery Device"
+        ghost.address = "11:22:33:44:55:66"
+        ghost.rssi = -95
+
+        mock_discover = AsyncMock(return_value=[strong, ghost])
+        with patch("demo.ble_general.BleakScanner.discover", new=mock_discover):
+            results = await scan()
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].address, "AA:BB:CC:DD:EE:FF")
+
     async def test_returns_correct_types(self) -> None:
         govee = MagicMock()
         govee.name = "Govee_H617C"
