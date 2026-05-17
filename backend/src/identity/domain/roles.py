@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+from enum import StrEnum
+
+
+class OrgRole(StrEnum):
+    OWNER = "OWNER"
+    ORG_ADMIN = "ORG_ADMIN"
+    BILLING = "BILLING"
+
+
+class PortfolioRole(StrEnum):
+    PORTFOLIO_ADMIN = "PORTFOLIO_ADMIN"
+    PORTFOLIO_MANAGER = "PORTFOLIO_MANAGER"
+    PORTFOLIO_MEMBER = "PORTFOLIO_MEMBER"
+    PORTFOLIO_VIEWER = "PORTFOLIO_VIEWER"
+
+
+class PropertyRole(StrEnum):
+    PROPERTY_MANAGER = "PROPERTY_MANAGER"
+    OPERATOR = "OPERATOR"
+    CONTRACTOR = "CONTRACTOR"
+    PROPERTY_VIEWER = "PROPERTY_VIEWER"
+
+
+class TenantRole(StrEnum):
+    PRIMARY_TENANT = "PRIMARY_TENANT"
+    CO_TENANT = "CO_TENANT"
+
+
+class AuthMethod(StrEnum):
+    PASSWORD = "PASSWORD"
+    MAGIC_LINK = "MAGIC_LINK"
+    GOOGLE_SSO = "GOOGLE_SSO"
+    APPLE_SSO = "APPLE_SSO"
+
+
+class OrgStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    SUSPENDED = "SUSPENDED"
+    CANCELLED = "CANCELLED"
+
+
+class SubscriptionTier(StrEnum):
+    STARTER = "STARTER"
+    PROFESSIONAL = "PROFESSIONAL"
+    ENTERPRISE = "ENTERPRISE"

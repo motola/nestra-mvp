@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_INSECURE_SECRET = "dev-secret-key-change-in-production"
 
 
 class Settings(BaseSettings):
@@ -10,8 +13,21 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://localhost/alphacon"
     redis_url: str = "redis://localhost:6379"
-    secret_key: str = "dev-secret-key-change-in-production"
+    secret_key: str = _INSECURE_SECRET
     debug: bool = False
+
+    lifx_api_token: str = ""
+    govee_api_key: str = ""
+    govee_ble_address: str = ""
+
+    @model_validator(mode="after")
+    def _reject_insecure_secret_in_production(self) -> Settings:
+        if not self.debug and self.secret_key == _INSECURE_SECRET:
+            raise ValueError(
+                "SECRET_KEY must be set to a secure value when debug=False. "
+                "Set the SECRET_KEY environment variable."
+            )
+        return self
 
 
 @lru_cache
