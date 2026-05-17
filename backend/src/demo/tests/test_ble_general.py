@@ -37,10 +37,12 @@ class TestScan(unittest.IsolatedAsyncioTestCase):
         named = MagicMock()
         named.name = "Govee_H617C_475E"
         named.address = "AA:BB:CC:DD:EE:FF"
+        named.rssi = -65
 
         unnamed = MagicMock()
         unnamed.name = None
         unnamed.address = "11:22:33:44:55:66"
+        unnamed.rssi = -65
 
         mock_discover = AsyncMock(return_value=[named, unnamed])
         with patch("demo.ble_general.BleakScanner.discover", new=mock_discover):
@@ -72,10 +74,12 @@ class TestScan(unittest.IsolatedAsyncioTestCase):
         govee = MagicMock()
         govee.name = "Govee_H617C"
         govee.address = "AA:00:00:00:00:01"
+        govee.rssi = -70
 
         jbl = MagicMock()
         jbl.name = "JBL Charge 5"
         jbl.address = "AA:00:00:00:00:02"
+        jbl.rssi = -70
 
         mock_discover = AsyncMock(return_value=[govee, jbl])
         with patch("demo.ble_general.BleakScanner.discover", new=mock_discover):

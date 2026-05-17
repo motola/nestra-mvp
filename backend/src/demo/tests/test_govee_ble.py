@@ -36,6 +36,12 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt[2], 0x00)
 
 
+def _settings_no_ble() -> MagicMock:
+    s = MagicMock()
+    s.govee_ble_address = ""
+    return s
+
+
 class TestListDevices(unittest.IsolatedAsyncioTestCase):
     async def test_filters_h617c_only(self) -> None:
         govee_ble._cache = []
@@ -50,7 +56,10 @@ class TestListDevices(unittest.IsolatedAsyncioTestCase):
         mock_other.address = "11:22:33:44:55:66"
 
         mock_discover = AsyncMock(return_value=[mock_h617c, mock_other])
-        with patch("demo.govee_ble.BleakScanner.discover", new=mock_discover):
+        with (
+            patch("demo.govee_ble.get_settings", return_value=_settings_no_ble()),
+            patch("demo.govee_ble.BleakScanner.discover", new=mock_discover),
+        ):
             devices = await govee_ble.list_devices()
 
         self.assertEqual(len(devices), 1)
@@ -62,7 +71,10 @@ class TestListDevices(unittest.IsolatedAsyncioTestCase):
         govee_ble._cache_time = 9999999999.0
 
         mock_discover = AsyncMock(return_value=[])
-        with patch("demo.govee_ble.BleakScanner.discover", new=mock_discover) as mock_scan:
+        with (
+            patch("demo.govee_ble.get_settings", return_value=_settings_no_ble()),
+            patch("demo.govee_ble.BleakScanner.discover", new=mock_discover) as mock_scan,
+        ):
             devices = await govee_ble.list_devices()
 
         mock_scan.assert_not_awaited()
