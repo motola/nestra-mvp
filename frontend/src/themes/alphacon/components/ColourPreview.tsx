@@ -5,11 +5,7 @@ export function kelvinToRgb(kelvin: number): [number, number, number] {
   const t = Math.max(1000, Math.min(12000, kelvin));
   if (t <= 4000) {
     const factor = (t - 1000) / 3000;
-    return [
-      255,
-      Math.round(100 + factor * 128),
-      Math.round(40 + factor * 103),
-    ];
+    return [255, Math.round(100 + factor * 128), Math.round(40 + factor * 103)];
   }
   if (t <= 6500) {
     const factor = (t - 4000) / 2500;

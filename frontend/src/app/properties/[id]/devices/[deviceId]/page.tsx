@@ -50,9 +50,13 @@ const VENDOR_COLOURS: Record<string, string> = {
 };
 
 function VendorBadge({ vendor }: { vendor: string }) {
-  const cls = VENDOR_COLOURS[vendor.toLowerCase()] ?? "bg-surface-2 text-text-3 border-border";
+  const cls =
+    VENDOR_COLOURS[vendor.toLowerCase()] ??
+    "bg-surface-2 text-text-3 border-border";
   return (
-    <span className={`inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full capitalize border ${cls}`}>
+    <span
+      className={`inline-flex items-center font-mono text-xs px-2 py-0.5 rounded-full capitalize border ${cls}`}
+    >
       {vendor}
     </span>
   );
@@ -77,10 +81,14 @@ function MetricCard({
     <div className="bg-surface-2 border border-border rounded-xl p-4 flex flex-col gap-2">
       <div className="flex items-center gap-1.5 text-text-3">
         <Icon size={13} />
-        <span className="font-body font-normal text-xs uppercase tracking-wide">{label}</span>
+        <span className="font-body font-normal text-xs uppercase tracking-wide">
+          {label}
+        </span>
       </div>
       <div className="flex items-baseline gap-1.5">
-        <span className={`font-mono text-2xl tabular-nums ${highlight ? "text-amber" : "text-text"}`}>
+        <span
+          className={`font-mono text-2xl tabular-nums ${highlight ? "text-amber" : "text-text"}`}
+        >
           {value}
         </span>
         <span className="font-mono text-xs text-text-3">{unit}</span>
@@ -104,7 +112,9 @@ function ChartTooltip({
   return (
     <div className="bg-surface border border-border rounded-lg px-3 py-2 text-xs">
       <p className="font-mono text-text-3 mb-0.5">{label}</p>
-      <p className="font-mono text-text font-medium">{payload[0].value.toFixed(1)} W</p>
+      <p className="font-mono text-text font-medium">
+        {payload[0].value.toFixed(1)} W
+      </p>
     </div>
   );
 }
@@ -140,14 +150,20 @@ function DeleteDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <p className="font-body font-normal text-sm text-text">Delete {deviceName}?</p>
-          <button onClick={onCancel} className="text-text-3 hover:text-text-2 transition-colors">
+          <p className="font-body font-normal text-sm text-text">
+            Delete {deviceName}?
+          </p>
+          <button
+            onClick={onCancel}
+            className="text-text-3 hover:text-text-2 transition-colors"
+          >
             <X size={14} />
           </button>
         </div>
         <div className="px-5 py-5">
           <p className="font-body font-light text-sm text-text-2 leading-relaxed">
-            This will remove the device and all its history from your portfolio. This cannot be undone.
+            This will remove the device and all its history from your portfolio.
+            This cannot be undone.
           </p>
         </div>
         <div className="px-5 py-4 border-t border-border flex items-center justify-end gap-3">
@@ -248,45 +264,81 @@ function ShellyPanel({
       {/* Live readings */}
       <div className="bg-surface border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-body font-normal text-sm text-text">Live Readings</h3>
+          <h3 className="font-body font-normal text-sm text-text">
+            Live Readings
+          </h3>
           <button
             onClick={() => refetch()}
             disabled={isRefetching}
             className="p-1.5 text-text-3 hover:text-text-2 transition-colors disabled:opacity-40"
             title="Refresh"
           >
-            <RefreshCw size={13} className={isRefetching ? "animate-spin" : ""} />
+            <RefreshCw
+              size={13}
+              className={isRefetching ? "animate-spin" : ""}
+            />
           </button>
         </div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-surface-2 border border-border rounded-xl h-20 animate-pulse" />
+              <div
+                key={i}
+                className="bg-surface-2 border border-border rounded-xl h-20 animate-pulse"
+              />
             ))}
           </div>
         ) : isError ? (
           <p className="font-body font-light text-xs text-red">
-            Could not reach device — check it is powered on and reachable on your local network.
+            Could not reach device — check it is powered on and reachable on
+            your local network.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard icon={Zap} label="Power" value={(state?.power ?? 0).toFixed(1)} unit="W" highlight={(state?.power ?? 0) > 0} />
-            <MetricCard icon={Activity} label="Voltage" value={(state?.voltage ?? 0).toFixed(1)} unit="V" />
-            <MetricCard icon={Gauge} label="Current" value={(state?.current ?? 0).toFixed(2)} unit="A" />
-            <MetricCard icon={Battery} label="Today" value={(state?.energy ?? 0).toFixed(0)} unit="Wh" />
+            <MetricCard
+              icon={Zap}
+              label="Power"
+              value={(state?.power ?? 0).toFixed(1)}
+              unit="W"
+              highlight={(state?.power ?? 0) > 0}
+            />
+            <MetricCard
+              icon={Activity}
+              label="Voltage"
+              value={(state?.voltage ?? 0).toFixed(1)}
+              unit="V"
+            />
+            <MetricCard
+              icon={Gauge}
+              label="Current"
+              value={(state?.current ?? 0).toFixed(2)}
+              unit="A"
+            />
+            <MetricCard
+              icon={Battery}
+              label="Today"
+              value={(state?.energy ?? 0).toFixed(0)}
+              unit="Wh"
+            />
           </div>
         )}
       </div>
 
       {/* Controls — always visible for Shelly */}
       <div className="bg-surface border border-border rounded-xl p-5">
-        <h3 className="font-body font-normal text-sm text-text mb-4">Controls</h3>
+        <h3 className="font-body font-normal text-sm text-text mb-4">
+          Controls
+        </h3>
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-body font-light text-sm text-text-2">Power</span>
+            <span className="font-body font-light text-sm text-text-2">
+              Power
+            </span>
             {state && (state.power ?? 0) > 0 && (
-              <span className="ml-2 font-mono text-xs text-text-3">{state.power.toFixed(1)} W</span>
+              <span className="ml-2 font-mono text-xs text-text-3">
+                {state.power.toFixed(1)} W
+              </span>
             )}
           </div>
           <button
@@ -296,7 +348,7 @@ function ShellyPanel({
               "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-body transition-all disabled:opacity-50",
               isOn
                 ? "bg-green text-surface hover:opacity-90"
-                : "bg-graphite text-surface hover:bg-graphite-2"
+                : "bg-graphite text-surface hover:bg-graphite-2",
             )}
           >
             {controlMut.isPending ? (
@@ -312,26 +364,43 @@ function ShellyPanel({
       {/* Power chart */}
       {chartData.length > 1 && (
         <div className="bg-surface border border-border rounded-xl p-5">
-          <p className="font-body font-normal text-sm text-text mb-4">Power — last 24 h</p>
+          <p className="font-body font-normal text-sm text-text mb-4">
+            Power — last 24 h
+          </p>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <AreaChart
+                data={chartData}
+                margin={{ top: 4, right: 8, left: -20, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="powerGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#9a5e15" stopOpacity={0.15} />
                     <stop offset="95%" stopColor="#9a5e15" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0dbcf" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e0dbcf"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="time"
-                  tick={{ fill: "#a39d8e", fontSize: 10, fontFamily: "var(--font-dm-mono)" }}
+                  tick={{
+                    fill: "#a39d8e",
+                    fontSize: 10,
+                    fontFamily: "var(--font-dm-mono)",
+                  }}
                   tickLine={false}
                   axisLine={false}
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  tick={{ fill: "#a39d8e", fontSize: 10, fontFamily: "var(--font-dm-mono)" }}
+                  tick={{
+                    fill: "#a39d8e",
+                    fontSize: 10,
+                    fontFamily: "var(--font-dm-mono)",
+                  }}
                   tickLine={false}
                   axisLine={false}
                   unit="W"
@@ -372,12 +441,14 @@ function MatterControls({ deviceId }: { deviceId: string }) {
   });
 
   const onOffMut = useMutation({
-    mutationFn: (value: boolean) => matterApi.command(deviceId, "on_off", value),
+    mutationFn: (value: boolean) =>
+      matterApi.command(deviceId, "on_off", value),
     onSuccess: () => refetch(),
   });
 
   const brightnessMut = useMutation({
-    mutationFn: (value: number) => matterApi.command(deviceId, "brightness", value),
+    mutationFn: (value: number) =>
+      matterApi.command(deviceId, "brightness", value),
     onSuccess: () => refetch(),
   });
 
@@ -402,7 +473,9 @@ function MatterControls({ deviceId }: { deviceId: string }) {
         <h3 className="font-body font-normal text-sm text-text">Controls</h3>
         <div className="flex items-center gap-2">
           {state && (
-            <span className={`font-mono text-xs ${state.online ? "text-green" : "text-text-3"}`}>
+            <span
+              className={`font-mono text-xs ${state.online ? "text-green" : "text-text-3"}`}
+            >
               {state.online ? "Online" : "Offline"}
             </span>
           )}
@@ -411,7 +484,10 @@ function MatterControls({ deviceId }: { deviceId: string }) {
             disabled={isRefetching}
             className="p-1.5 text-text-3 hover:text-text-2 transition-colors disabled:opacity-40"
           >
-            <RefreshCw size={13} className={isRefetching ? "animate-spin" : ""} />
+            <RefreshCw
+              size={13}
+              className={isRefetching ? "animate-spin" : ""}
+            />
           </button>
         </div>
       </div>
@@ -425,7 +501,7 @@ function MatterControls({ deviceId }: { deviceId: string }) {
             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body transition-colors disabled:opacity-50",
             isOn
               ? "bg-green text-surface hover:opacity-90"
-              : "bg-graphite text-surface hover:bg-graphite-2"
+              : "bg-graphite text-surface hover:bg-graphite-2",
           )}
         >
           <Power size={14} />
@@ -435,7 +511,9 @@ function MatterControls({ deviceId }: { deviceId: string }) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="font-body font-light text-sm text-text-2">Brightness</span>
+          <span className="font-body font-light text-sm text-text-2">
+            Brightness
+          </span>
           <span className="font-mono text-xs text-text-3">
             {Math.round((currentBrightness / 254) * 100)}%
           </span>
@@ -446,8 +524,12 @@ function MatterControls({ deviceId }: { deviceId: string }) {
           max={254}
           value={currentBrightness}
           onChange={(e) => setBrightness(Number(e.target.value))}
-          onMouseUp={(e) => brightnessMut.mutate(Number((e.target as HTMLInputElement).value))}
-          onTouchEnd={(e) => brightnessMut.mutate(Number((e.target as HTMLInputElement).value))}
+          onMouseUp={(e) =>
+            brightnessMut.mutate(Number((e.target as HTMLInputElement).value))
+          }
+          onTouchEnd={(e) =>
+            brightnessMut.mutate(Number((e.target as HTMLInputElement).value))
+          }
           disabled={brightnessMut.isPending}
           className="w-full disabled:opacity-50"
         />
@@ -483,13 +565,18 @@ export default function DeviceDetailPage({
   const [menuOpen, setMenuOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const room = device?.room_id ? rooms.find((r) => r.id === device.room_id) : null;
+  const room = device?.room_id
+    ? rooms.find((r) => r.id === device.room_id)
+    : null;
 
   const deleteMut = useMutation({
     mutationFn: () => {
-      return fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/devices/${deviceId}`, {
-        method: "DELETE",
-      }).then((r) => {
+      return fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/devices/${deviceId}`,
+        {
+          method: "DELETE",
+        },
+      ).then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
       });
     },
@@ -508,7 +595,10 @@ export default function DeviceDetailPage({
         <div className="h-4 w-48 bg-surface-2 rounded animate-pulse mb-6" />
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-surface border border-border rounded-xl animate-pulse" />
+            <div
+              key={i}
+              className="h-32 bg-surface border border-border rounded-xl animate-pulse"
+            />
           ))}
         </div>
       </div>
@@ -518,7 +608,9 @@ export default function DeviceDetailPage({
   if (!device) {
     return (
       <div className="p-8">
-        <p className="font-body font-light text-sm text-text-3">Device not found.</p>
+        <p className="font-body font-light text-sm text-text-3">
+          Device not found.
+        </p>
       </div>
     );
   }
@@ -527,7 +619,8 @@ export default function DeviceDetailPage({
   const isShelly = device.vendor === "shelly" || device.vendor === "demo";
 
   // Use live-resolved online status for Shelly; fall back to device.online for others
-  const resolvedOnline = isShelly && liveOnline !== null ? liveOnline : device.online;
+  const resolvedOnline =
+    isShelly && liveOnline !== null ? liveOnline : device.online;
 
   return (
     <motion.div
@@ -553,7 +646,7 @@ export default function DeviceDetailPage({
                 "inline-flex items-center font-mono text-xs px-2.5 py-0.5 rounded-full border",
                 resolvedOnline
                   ? "bg-green-bg text-green border-green/20"
-                  : "bg-surface-2 text-text-3 border-border"
+                  : "bg-surface-2 text-text-3 border-border",
               )}
             >
               {resolvedOnline ? "Online" : "Offline"}
@@ -570,7 +663,10 @@ export default function DeviceDetailPage({
               <AnimatePresence>
                 {menuOpen && (
                   <>
-                    <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setMenuOpen(false)}
+                    />
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95, y: -4 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -598,17 +694,23 @@ export default function DeviceDetailPage({
 
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           <VendorBadge vendor={device.vendor} />
-          <span className="font-body font-light text-xs text-text-3 capitalize">{device.type}</span>
+          <span className="font-body font-light text-xs text-text-3 capitalize">
+            {device.type}
+          </span>
           {room && (
             <>
               <span className="text-border-strong">·</span>
-              <span className="font-body font-light text-xs text-text-3">{room.name}</span>
+              <span className="font-body font-light text-xs text-text-3">
+                {room.name}
+              </span>
             </>
           )}
           {property && (
             <>
               <span className="text-border-strong">·</span>
-              <span className="font-body font-light text-xs text-text-3">{property.name}</span>
+              <span className="font-body font-light text-xs text-text-3">
+                {property.name}
+              </span>
             </>
           )}
         </div>

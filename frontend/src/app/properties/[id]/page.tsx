@@ -1,16 +1,19 @@
 "use client";
 
 import { use, useState } from "react";
-import {
-  ArrowLeft,
-  XCircle,
-} from "lucide-react";
+import { ArrowLeft, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useProperty } from "@/hooks/useProperty";
-import { DeviceCard, PageWrapper, SkeletonCard, AlertCard, PropertyIllustration } from "@/themes";
+import {
+  DeviceCard,
+  PageWrapper,
+  SkeletonCard,
+  AlertCard,
+  PropertyIllustration,
+} from "@/themes";
 import { propertiesApi, provisioningApi, roomsApi } from "@/lib/api";
 import { RoomManagement } from "@/components/property/RoomManagement";
 import type { AlphaconDevice, Room, SavedDevice } from "@/lib/types";
@@ -18,10 +21,20 @@ import { cn } from "@/lib/utils";
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+}) {
   return (
     <div className="bg-surface/60 border border-white/20 rounded-xl p-3 backdrop-blur-sm">
-      <p className="font-body font-normal text-xs uppercase tracking-widest text-white/60 mb-1">{label}</p>
+      <p className="font-body font-normal text-xs uppercase tracking-widest text-white/60 mb-1">
+        {label}
+      </p>
       <p className="font-mono text-xl text-white">{value}</p>
       {sub && <p className="font-mono text-xs text-white/50 mt-0.5">{sub}</p>}
     </div>
@@ -30,7 +43,11 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PropertyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const { data: property } = useProperty(id);
   const [activeTab, setActiveTab] = useState("overview");
@@ -40,13 +57,17 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     queryFn: () => roomsApi.list(id),
   });
 
-  const { data: alphaDevices = [], isLoading: alphaLoading } = useQuery<AlphaconDevice[]>({
+  const { data: alphaDevices = [], isLoading: alphaLoading } = useQuery<
+    AlphaconDevice[]
+  >({
     queryKey: ["property-devices", id],
     queryFn: () => propertiesApi.devices(id),
     enabled: Boolean(property?.is_demo),
   });
 
-  const { data: savedDevices = [], isLoading: savedLoading } = useQuery<SavedDevice[]>({
+  const { data: savedDevices = [], isLoading: savedLoading } = useQuery<
+    SavedDevice[]
+  >({
     queryKey: ["saved-devices", id],
     queryFn: () => provisioningApi.listDevices(id),
     enabled: !property?.is_demo,
@@ -67,28 +88,38 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     return roomMap[roomId] ?? roomMap[String(roomId)] ?? null;
   };
 
-  const propertyAlerts = alerts.filter((a) => !a.dismissed && a.property_id === id);
+  const propertyAlerts = alerts.filter(
+    (a) => !a.dismissed && a.property_id === id,
+  );
   const hasCritical = propertyAlerts.some((a) => a.severity === "critical");
 
   const onlineCount = alphaDevices.filter((d) => d.online).length;
   const totalPower = alphaDevices.reduce((s, d) => s + (d.power_draw ?? 0), 0);
 
-  const demoByRoom = alphaDevices.reduce<Record<string, AlphaconDevice[]>>((acc, d) => {
-    const room = getRoomForDevice(d.room_id);
-    const key = room ? room.id : "__unassigned__";
-    (acc[key] ??= []).push(d);
-    return acc;
-  }, {});
+  const demoByRoom = alphaDevices.reduce<Record<string, AlphaconDevice[]>>(
+    (acc, d) => {
+      const room = getRoomForDevice(d.room_id);
+      const key = room ? room.id : "__unassigned__";
+      (acc[key] ??= []).push(d);
+      return acc;
+    },
+    {},
+  );
 
-  const demoRoomsWithDevices = rooms.filter((r) => (demoByRoom[r.id] ?? []).length > 0);
+  const demoRoomsWithDevices = rooms.filter(
+    (r) => (demoByRoom[r.id] ?? []).length > 0,
+  );
   const demoUnassigned = demoByRoom["__unassigned__"] ?? [];
 
-  const savedByRoom = savedDevices.reduce<Record<string, SavedDevice[]>>((acc, d) => {
-    const room = getRoomForDevice(d.room_id);
-    const key = room ? room.id : "__unassigned__";
-    (acc[key] ??= []).push(d);
-    return acc;
-  }, {});
+  const savedByRoom = savedDevices.reduce<Record<string, SavedDevice[]>>(
+    (acc, d) => {
+      const room = getRoomForDevice(d.room_id);
+      const key = room ? room.id : "__unassigned__";
+      (acc[key] ??= []).push(d);
+      return acc;
+    },
+    {},
+  );
 
   const totalDeviceCount = isDemo ? alphaDevices.length : savedDevices.length;
 
@@ -121,9 +152,13 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                 <span className="text-white/40">
                   <PropertyIllustration name={property?.name ?? ""} />
                 </span>
-                <h2 className="font-display italic text-3xl text-white">{property?.name ?? "Property"}</h2>
+                <h2 className="font-display italic text-3xl text-white">
+                  {property?.name ?? "Property"}
+                </h2>
               </div>
-              <p className="font-body font-light text-sm text-white/50 ml-[92px]">{property?.address}</p>
+              <p className="font-body font-light text-sm text-white/50 ml-[92px]">
+                {property?.address}
+              </p>
             </div>
 
             {/* Quick stats */}
@@ -131,10 +166,18 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
               <div className="hidden sm:grid grid-cols-4 gap-2 flex-shrink-0">
                 <StatCard label="Devices" value={alphaDevices.length} />
                 <StatCard label="Rooms" value={rooms.length} />
-                <StatCard label="Online" value={onlineCount} sub={`of ${alphaDevices.length}`} />
+                <StatCard
+                  label="Online"
+                  value={onlineCount}
+                  sub={`of ${alphaDevices.length}`}
+                />
                 <StatCard
                   label="Live Power"
-                  value={totalPower >= 1000 ? `${(totalPower / 1000).toFixed(1)} kW` : `${Math.round(totalPower)} W`}
+                  value={
+                    totalPower >= 1000
+                      ? `${(totalPower / 1000).toFixed(1)} kW`
+                      : `${Math.round(totalPower)} W`
+                  }
                 />
               </div>
             )}
@@ -150,17 +193,19 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                   "flex items-center gap-2 px-4 py-3 text-sm font-body border-b-2 transition-colors",
                   activeTab === tab.value
                     ? "border-white text-white"
-                    : "border-transparent text-white/50 hover:text-white/70"
+                    : "border-transparent text-white/50 hover:text-white/70",
                 )}
               >
                 {tab.label}
                 {tab.count != null && tab.count > 0 && (
-                  <span className={cn(
-                    "font-mono text-xs px-1.5 py-0.5 rounded-full",
-                    activeTab === tab.value
-                      ? "bg-white/20 text-white"
-                      : "bg-white/10 text-white/50"
-                  )}>
+                  <span
+                    className={cn(
+                      "font-mono text-xs px-1.5 py-0.5 rounded-full",
+                      activeTab === tab.value
+                        ? "bg-white/20 text-white"
+                        : "bg-white/10 text-white/50",
+                    )}
+                  >
                     {tab.count}
                   </span>
                 )}
@@ -171,16 +216,25 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
 
         {/* Tab content */}
         <div className="p-6 md:p-8 max-w-7xl mx-auto">
-
           {/* Critical alert banner */}
           {hasCritical && (
             <div className="mb-6 bg-red-bg border border-red/20 rounded-xl p-4 flex items-center gap-3">
               <XCircle size={16} className="text-red flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="font-body font-normal text-sm text-text">Critical alerts active</p>
+                <p className="font-body font-normal text-sm text-text">
+                  Critical alerts active
+                </p>
                 <p className="font-body font-light text-xs text-text-3 mt-0.5">
-                  {propertyAlerts.filter((a) => a.severity === "critical").length} critical issue
-                  {propertyAlerts.filter((a) => a.severity === "critical").length !== 1 ? "s" : ""} require attention
+                  {
+                    propertyAlerts.filter((a) => a.severity === "critical")
+                      .length
+                  }{" "}
+                  critical issue
+                  {propertyAlerts.filter((a) => a.severity === "critical")
+                    .length !== 1
+                    ? "s"
+                    : ""}{" "}
+                  require attention
                 </p>
               </div>
               <Link
@@ -196,13 +250,21 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
           {isDemo && !isLoading && alphaDevices.length > 0 && (
             <div className="sm:hidden grid grid-cols-2 gap-3 mb-6">
               <div className="bg-surface border border-border rounded-xl p-3">
-                <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">Devices</p>
-                <p className="font-mono text-xl text-text">{alphaDevices.length}</p>
+                <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">
+                  Devices
+                </p>
+                <p className="font-mono text-xl text-text">
+                  {alphaDevices.length}
+                </p>
               </div>
               <div className="bg-surface border border-border rounded-xl p-3">
-                <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">Online</p>
+                <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">
+                  Online
+                </p>
                 <p className="font-mono text-xl text-text">{onlineCount}</p>
-                <p className="font-mono text-xs text-text-3">of {alphaDevices.length}</p>
+                <p className="font-mono text-xs text-text-3">
+                  of {alphaDevices.length}
+                </p>
               </div>
             </div>
           )}
@@ -212,14 +274,18 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-6">
               {rooms.length > 0 && (
                 <div>
-                  <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-3">Rooms</p>
+                  <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-3">
+                    Rooms
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {rooms.map((room) => {
                       const roomDevices = isDemo
                         ? (demoByRoom[room.id] ?? [])
                         : (savedByRoom[room.id] ?? []);
                       const roomOnline = isDemo
-                        ? roomDevices.filter((d) => (d as AlphaconDevice).online).length
+                        ? roomDevices.filter(
+                            (d) => (d as AlphaconDevice).online,
+                          ).length
                         : 0;
                       return (
                         <div
@@ -227,15 +293,24 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                           className="bg-surface border border-border rounded-xl p-4 hover:border-border-strong transition-colors"
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <p className="font-body font-normal text-sm text-text">{room.name}</p>
+                            <p className="font-body font-normal text-sm text-text">
+                              {room.name}
+                            </p>
                             {room.floor != null && (
-                              <span className="font-mono text-xs text-text-3">Floor {room.floor}</span>
+                              <span className="font-mono text-xs text-text-3">
+                                Floor {room.floor}
+                              </span>
                             )}
                           </div>
                           <div className="flex items-center gap-3 font-mono text-xs text-text-3">
-                            <span>{roomDevices.length} device{roomDevices.length !== 1 ? "s" : ""}</span>
+                            <span>
+                              {roomDevices.length} device
+                              {roomDevices.length !== 1 ? "s" : ""}
+                            </span>
                             {isDemo && roomDevices.length > 0 && (
-                              <span className="text-green">{roomOnline} online</span>
+                              <span className="text-green">
+                                {roomOnline} online
+                              </span>
                             )}
                           </div>
                         </div>
@@ -264,7 +339,9 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                     <div key={i}>
                       <div className="h-3 w-24 bg-surface-2 rounded mb-3 animate-pulse" />
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {[1, 2].map((j) => <SkeletonCard key={j} />)}
+                        {[1, 2].map((j) => (
+                          <SkeletonCard key={j} />
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -285,7 +362,9 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                           <h3 className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
                             {room.name}
                             {room.floor != null && (
-                              <span className="ml-2 normal-case font-light">· Floor {room.floor}</span>
+                              <span className="ml-2 normal-case font-light">
+                                · Floor {room.floor}
+                              </span>
                             )}
                           </h3>
                           <div className="flex-1 border-t border-border" />
@@ -336,8 +415,12 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               {propertyAlerts.length === 0 ? (
                 <div className="py-16 text-center">
-                  <p className="font-display italic text-xl text-text mb-2">No active alerts</p>
-                  <p className="font-body font-light text-sm text-text-3">This property is running normally.</p>
+                  <p className="font-display italic text-xl text-text mb-2">
+                    No active alerts
+                  </p>
+                  <p className="font-body font-light text-sm text-text-3">
+                    This property is running normally.
+                  </p>
                 </div>
               ) : (
                 propertyAlerts.map((alert, i) => (

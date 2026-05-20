@@ -1,4 +1,5 @@
 """Alert model — an anomaly or issue detected by the alert service."""
+
 from __future__ import annotations
 
 from datetime import datetime

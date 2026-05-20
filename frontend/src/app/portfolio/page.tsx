@@ -20,7 +20,10 @@ export default function PortfolioPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [filter, setFilter] = useState<PropertyStatus | "all">("all");
 
-  const filtered = filter === "all" ? properties : properties.filter((p) => p.status === filter);
+  const filtered =
+    filter === "all"
+      ? properties
+      : properties.filter((p) => p.status === filter);
 
   return (
     <PageWrapper>
@@ -28,9 +31,13 @@ export default function PortfolioPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="font-display italic text-2xl text-text">Portfolio</h1>
+            <h1 className="font-display italic text-2xl text-text">
+              Portfolio
+            </h1>
             <p className="font-body font-light text-sm text-text-3 mt-1">
-              {isLoading ? "Loading…" : `${properties.length} propert${properties.length !== 1 ? "ies" : "y"}`}
+              {isLoading
+                ? "Loading…"
+                : `${properties.length} propert${properties.length !== 1 ? "ies" : "y"}`}
             </p>
           </div>
           {/* View toggle */}
@@ -39,7 +46,9 @@ export default function PortfolioPage() {
               onClick={() => setView("grid")}
               className={cn(
                 "p-1.5 rounded-md transition-colors",
-                view === "grid" ? "bg-surface text-text shadow-sm" : "text-text-3 hover:text-text-2"
+                view === "grid"
+                  ? "bg-surface text-text shadow-sm"
+                  : "text-text-3 hover:text-text-2",
               )}
             >
               <LayoutGrid size={14} />
@@ -48,7 +57,9 @@ export default function PortfolioPage() {
               onClick={() => setView("list")}
               className={cn(
                 "p-1.5 rounded-md transition-colors",
-                view === "list" ? "bg-surface text-text shadow-sm" : "text-text-3 hover:text-text-2"
+                view === "list"
+                  ? "bg-surface text-text shadow-sm"
+                  : "text-text-3 hover:text-text-2",
               )}
             >
               <List size={14} />
@@ -66,7 +77,7 @@ export default function PortfolioPage() {
                 "px-3 py-1.5 rounded-full text-xs font-body font-light transition-colors",
                 filter === f.value
                   ? "bg-graphite text-surface"
-                  : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong"
+                  : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong",
               )}
             >
               {f.label}
@@ -81,20 +92,31 @@ export default function PortfolioPage() {
 
         {isError && (
           <div className="bg-red-bg border border-red/20 rounded-xl p-4 text-sm text-red mb-6">
-            Could not load properties. Make sure the backend is running on port 8000.
+            Could not load properties. Make sure the backend is running on port
+            8000.
           </div>
         )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16">
             <EmptyState
               icon={Building2}
-              title={filter === "all" ? "No properties yet" : `No ${filter.replace("_", " ")} properties`}
-              description={filter === "all" ? "Add your first property to start monitoring it." : "Try changing the filter."}
+              title={
+                filter === "all"
+                  ? "No properties yet"
+                  : `No ${filter.replace("_", " ")} properties`
+              }
+              description={
+                filter === "all"
+                  ? "Add your first property to start monitoring it."
+                  : "Try changing the filter."
+              }
             />
           </div>
         ) : view === "grid" ? (
@@ -118,22 +140,38 @@ export default function PortfolioPage() {
                   transition={{ delay: i * 0.03 }}
                   className="flex items-center gap-4 bg-surface border border-border rounded-xl px-5 py-4 hover:border-border-strong transition-colors group"
                 >
-                  <span className={cn(
-                    "w-2.5 h-2.5 rounded-full flex-shrink-0",
-                    property.status === "critical" ? "bg-red" :
-                    property.status === "needs_attention" ? "bg-amber" : "bg-green"
-                  )} />
+                  <span
+                    className={cn(
+                      "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                      property.status === "critical"
+                        ? "bg-red"
+                        : property.status === "needs_attention"
+                          ? "bg-amber"
+                          : "bg-green",
+                    )}
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className="font-display italic text-sm text-text group-hover:text-graphite transition-colors">{property.name}</p>
-                    <p className="font-mono text-xs text-text-3 truncate mt-0.5">{property.address}</p>
+                    <p className="font-display italic text-sm text-text group-hover:text-graphite transition-colors">
+                      {property.name}
+                    </p>
+                    <p className="font-mono text-xs text-text-3 truncate mt-0.5">
+                      {property.address}
+                    </p>
                   </div>
                   <div className="flex items-center gap-4 flex-shrink-0">
-                    <span className="font-mono text-xs text-text-3 hidden sm:block">{property.device_count} devices</span>
+                    <span className="font-mono text-xs text-text-3 hidden sm:block">
+                      {property.device_count} devices
+                    </span>
                     {property.alert_count > 0 && (
-                      <span className="font-mono text-xs text-red">{property.alert_count} alert{property.alert_count !== 1 ? "s" : ""}</span>
+                      <span className="font-mono text-xs text-red">
+                        {property.alert_count} alert
+                        {property.alert_count !== 1 ? "s" : ""}
+                      </span>
                     )}
                     {property.is_demo && (
-                      <span className="font-mono text-[10px] bg-surface-2 border border-border text-text-3 px-1.5 py-0.5 rounded-full">Demo</span>
+                      <span className="font-mono text-[10px] bg-surface-2 border border-border text-text-3 px-1.5 py-0.5 rounded-full">
+                        Demo
+                      </span>
                     )}
                   </div>
                 </motion.a>

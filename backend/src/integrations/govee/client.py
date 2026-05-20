@@ -11,6 +11,7 @@ lags behind BLE state. This is a Govee platform limitation — no workaround.
 
 Poll interval for Phase 1: 30 seconds (enforced by device_service.py).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -42,7 +43,7 @@ class GoveeAdapter(BaseVendorAdapter):
     async def list_devices(self) -> list[AlphaconDevice]:
         """GET /devices — returns all devices registered to the account."""
         data = await self._request("GET", "/devices")
-        raw_devices: list[dict] = data.get("data", {}).get("devices", [])
+        raw_devices: list[dict[str, Any]] = data.get("data", {}).get("devices", [])
         return [normalise_device(d) for d in raw_devices]
 
     async def get_device_state(self, device_id: str) -> AlphaconDevice:
@@ -55,16 +56,12 @@ class GoveeAdapter(BaseVendorAdapter):
         # We need both device MAC and model — stored together as "mac::model"
         parts = device_id.split("::", 1)
         if len(parts) != 2:
-            raise ValueError(
-                f"Govee device_id must be 'mac::model', got: {device_id!r}"
-            )
+            raise ValueError(f"Govee device_id must be 'mac::model', got: {device_id!r}")
         mac, model = parts
-        data = await self._request(
-            "GET", "/devices/state", params={"device": mac, "model": model}
-        )
+        data = await self._request("GET", "/devices/state", params={"device": mac, "model": model})
         return normalise_state(data.get("data", {}))
 
-    async def send_command(self, device_id: str, command: dict) -> bool:
+    async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
         """
         PUT /devices/control — sends a command to a single device.
 
@@ -76,9 +73,7 @@ class GoveeAdapter(BaseVendorAdapter):
         """
         parts = device_id.split("::", 1)
         if len(parts) != 2:
-            raise ValueError(
-                f"Govee device_id must be 'mac::model', got: {device_id!r}"
-            )
+            raise ValueError(f"Govee device_id must be 'mac::model', got: {device_id!r}")
         mac, model = parts
         govee_cmd = _translate_command(command)
         payload = {"device": mac, "model": model, "cmd": govee_cmd}
@@ -98,9 +93,7 @@ class GoveeAdapter(BaseVendorAdapter):
         for attempt in range(_MAX_RETRIES):
             try:
                 async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-                    r = await client.request(
-                        method, url, headers=self._headers, **kwargs
-                    )
+                    r = await client.request(method, url, headers=self._headers, **kwargs)
                     r.raise_for_status()
                     return r.json()  # type: ignore[no-any-return]
             except httpx.HTTPStatusError as exc:
@@ -122,12 +115,10 @@ class GoveeAdapter(BaseVendorAdapter):
                 await asyncio.sleep(wait)
                 last_exc = exc
 
-        raise RuntimeError(
-            f"Govee API unreachable after {_MAX_RETRIES} attempts"
-        ) from last_exc
+        raise RuntimeError(f"Govee API unreachable after {_MAX_RETRIES} attempts") from last_exc
 
 
-def _translate_command(command: dict) -> dict:
+def _translate_command(command: dict[str, Any]) -> dict[str, Any]:
     """Translate an Alphacon command dict into a Govee cmd object."""
     action = command.get("action", "")
     if action == "turn_on":

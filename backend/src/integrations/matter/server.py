@@ -1,4 +1,5 @@
 """Reusable WebSocket client for python-matter-server."""
+
 from __future__ import annotations
 
 import asyncio
@@ -31,20 +32,28 @@ class MatterServerClient:
 
     async def commission_with_code(self, setup_code: str) -> dict[str, Any]:
         msg_id = f"commission-{uuid.uuid4().hex[:8]}"
-        await self._ws.send(json.dumps({
-            "message_id": msg_id,
-            "command": "commission_with_code",
-            "args": {"code": setup_code, "network_only": True},
-        }))
+        await self._ws.send(
+            json.dumps(
+                {
+                    "message_id": msg_id,
+                    "command": "commission_with_code",
+                    "args": {"code": setup_code, "network_only": True},
+                }
+            )
+        )
         return await self._wait(msg_id)
 
     async def get_nodes(self) -> list[dict[str, Any]]:
         msg_id = f"get-nodes-{uuid.uuid4().hex[:8]}"
-        await self._ws.send(json.dumps({
-            "message_id": msg_id,
-            "command": "get_nodes",
-            "args": {},
-        }))
+        await self._ws.send(
+            json.dumps(
+                {
+                    "message_id": msg_id,
+                    "command": "get_nodes",
+                    "args": {},
+                }
+            )
+        )
         result = await self._wait(msg_id)
         return result.get("result") or []
 
@@ -64,17 +73,21 @@ class MatterServerClient:
         payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         msg_id = f"cmd-{uuid.uuid4().hex[:8]}"
-        await self._ws.send(json.dumps({
-            "message_id": msg_id,
-            "command": "device_command",
-            "args": {
-                "node_id": int(node_id),
-                "endpoint_id": endpoint_id,
-                "cluster_id": cluster_id,
-                "command_name": command,
-                "payload": payload or {},
-            },
-        }))
+        await self._ws.send(
+            json.dumps(
+                {
+                    "message_id": msg_id,
+                    "command": "device_command",
+                    "args": {
+                        "node_id": int(node_id),
+                        "endpoint_id": endpoint_id,
+                        "cluster_id": cluster_id,
+                        "command_name": command,
+                        "payload": payload or {},
+                    },
+                }
+            )
+        )
         return await self._wait(msg_id)
 
     async def close(self) -> None:
@@ -91,11 +104,11 @@ class MatterServerClient:
             if remaining <= 0:
                 raise TimeoutError(f"Timed out waiting for Matter server response to {message_id}")
             raw = await asyncio.wait_for(self._ws.recv(), timeout=remaining)
-            msg = json.loads(raw)
+            msg: dict[str, Any] = json.loads(raw)
             if msg.get("message_id") == message_id:
                 return msg
 
-    async def __aenter__(self) -> "MatterServerClient":
+    async def __aenter__(self) -> MatterServerClient:
         await self.connect()
         return self
 

@@ -18,15 +18,37 @@ import {
   Sun,
   Cpu,
 } from "lucide-react";
-import { provisioningApi, roomsApi, streamProvision, streamCommissionMatter, integrationsApi, propertiesApi } from "@/lib/api";
-import type { Property, Room, ScannedDevice, CommissionedDeviceInfo, VendorIntegration } from "@/lib/types";
+import {
+  provisioningApi,
+  roomsApi,
+  streamProvision,
+  streamCommissionMatter,
+  integrationsApi,
+  propertiesApi,
+} from "@/lib/api";
+import type {
+  Property,
+  Room,
+  ScannedDevice,
+  CommissionedDeviceInfo,
+  VendorIntegration,
+} from "@/lib/types";
 
-type View = "main" | "hotspot-list" | "provision-config" | "provision-progress" | "scan-network" | "matter";
-type MatterSubView = "choose" | "commission" | "commissioning" | "commission-success" | "scan";
+type View =
+  | "main"
+  | "hotspot-list"
+  | "provision-config"
+  | "provision-progress"
+  | "scan-network"
+  | "matter";
+type MatterSubView =
+  | "choose"
+  | "commission"
+  | "commissioning"
+  | "commission-success"
+  | "scan";
 
 // ── Vendor badge colours ───────────────────────────────────────────────────────
-
-
 
 // ── Room selector with inline "Add new room" ──────────────────────────────────
 
@@ -73,7 +95,8 @@ function RoomSelector({
             placeholder="Room name"
             className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
             onKeyDown={(e) => {
-              if (e.key === "Enter" && newName.trim()) createMut.mutate(newName.trim());
+              if (e.key === "Enter" && newName.trim())
+                createMut.mutate(newName.trim());
               if (e.key === "Escape") setAdding(false);
             }}
           />
@@ -82,7 +105,11 @@ function RoomSelector({
             disabled={createMut.isPending}
             className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-text disabled:opacity-50"
           >
-            {createMut.isPending ? <Loader2 size={14} className="animate-spin" /> : "Add"}
+            {createMut.isPending ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              "Add"
+            )}
           </button>
           <button
             onClick={() => setAdding(false)}
@@ -140,7 +167,9 @@ function SaveDeviceModal({
         <h3 className="text-base font-semibold text-text">Add Device</h3>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-text-2 mb-1">Device Name</label>
+            <label className="block text-xs text-text-2 mb-1">
+              Device Name
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -152,22 +181,33 @@ function SaveDeviceModal({
             <label className="block text-xs text-text-2 mb-1">Property</label>
             <select
               value={propertyId}
-              onChange={(e) => { setPropertyId(e.target.value); setRoomId(""); }}
+              onChange={(e) => {
+                setPropertyId(e.target.value);
+                setRoomId("");
+              }}
               className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:border-blue-500"
             >
               <option value="">No property</option>
               {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </select>
           </div>
           {propertyId && (
-            <RoomSelector propertyId={propertyId} value={roomId} onChange={setRoomId} />
+            <RoomSelector
+              propertyId={propertyId}
+              value={roomId}
+              onChange={setRoomId}
+            />
           )}
         </div>
         <div className="flex gap-2 pt-2">
           <button
-            onClick={() => onSave(propertyId, roomId, name.trim() || device.name)}
+            onClick={() =>
+              onSave(propertyId, roomId, name.trim() || device.name)
+            }
             disabled={!name.trim()}
             className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-lg text-sm text-text font-medium"
           >
@@ -201,7 +241,8 @@ export default function IntegrationsPage() {
   const [provisionLog, setProvisionLog] = useState<string[]>([]);
   const [provisionDone, setProvisionDone] = useState(false);
   const [provisionError, setProvisionError] = useState("");
-  const [provisionedDevice, setProvisionedDevice] = useState<ScannedDevice | null>(null);
+  const [provisionedDevice, setProvisionedDevice] =
+    useState<ScannedDevice | null>(null);
 
   // Scan flow state
   const [saveTarget, setSaveTarget] = useState<ScannedDevice | null>(null);
@@ -210,7 +251,8 @@ export default function IntegrationsPage() {
   const [matterSetupCode, setMatterSetupCode] = useState("");
   const [matterPropertyId, setMatterPropertyId] = useState("");
   const [matterRoomId, setMatterRoomId] = useState("");
-  const [commissionedDevice, setCommissionedDevice] = useState<CommissionedDeviceInfo | null>(null);
+  const [commissionedDevice, setCommissionedDevice] =
+    useState<CommissionedDeviceInfo | null>(null);
   const [commissionError, setCommissionError] = useState("");
   const [commissionLog, setCommissionLog] = useState<string[]>([]);
 
@@ -240,7 +282,11 @@ export default function IntegrationsPage() {
     enabled: view === "hotspot-list",
   });
 
-  const { data: networkScan = [], isLoading: scanLoading, refetch: refetchScan } = useQuery({
+  const {
+    data: networkScan = [],
+    isLoading: scanLoading,
+    refetch: refetchScan,
+  } = useQuery({
     queryKey: ["network-scan"],
     queryFn: provisioningApi.scan,
     enabled: view === "scan-network",
@@ -264,7 +310,11 @@ export default function IntegrationsPage() {
     setMatterSubView("commissioning");
     try {
       await streamCommissionMatter(
-        { setup_code: matterSetupCode, property_id: matterPropertyId, room_id: matterRoomId },
+        {
+          setup_code: matterSetupCode,
+          property_id: matterPropertyId,
+          room_id: matterRoomId,
+        },
         (event) => {
           if (event.type === "status" && event.message) {
             setCommissionLog((l) => [...l, event.message!]);
@@ -360,7 +410,7 @@ export default function IntegrationsPage() {
     setMatterDevices([]);
     try {
       const devices = await provisioningApi.scanMatter();
-        setMatterDevices(devices);
+      setMatterDevices(devices);
     } finally {
       setMatterScanning(false);
     }
@@ -368,7 +418,13 @@ export default function IntegrationsPage() {
 
   // ── Shared back button ───────────────────────────────────────────────────────
 
-  function BackButton({ label = "Back", onClick }: { label?: string; onClick: () => void }) {
+  function BackButton({
+    label = "Back",
+    onClick,
+  }: {
+    label?: string;
+    onClick: () => void;
+  }) {
     return (
       <button
         onClick={onClick}
@@ -386,22 +442,30 @@ export default function IntegrationsPage() {
       <div className="p-6 max-w-2xl mx-auto">
         <BackButton onClick={() => setView("main")} />
         <h2 className="text-lg font-bold text-text mb-1">Set Up New Device</h2>
-        <p className="text-sm text-text-2 mb-5">Select your Shelly device from the list below.</p>
+        <p className="text-sm text-text-2 mb-5">
+          Select your Shelly device from the list below.
+        </p>
         {hotspotLoading ? (
           <div className="flex items-center gap-2 text-text-2 text-sm">
-            <Loader2 size={16} className="animate-spin" /> Scanning for device hotspots...
+            <Loader2 size={16} className="animate-spin" /> Scanning for device
+            hotspots...
           </div>
         ) : hotspots.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-6 text-center">
             <p className="text-text-2 text-sm">No device hotspots found.</p>
-            <p className="text-text-3 text-xs mt-1">Make sure your Shelly device is in setup mode (LED flashing).</p>
+            <p className="text-text-3 text-xs mt-1">
+              Make sure your Shelly device is in setup mode (LED flashing).
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
             {hotspots.map((h) => (
               <button
                 key={h}
-                onClick={() => { setSelectedHotspot(h); setView("provision-config"); }}
+                onClick={() => {
+                  setSelectedHotspot(h);
+                  setView("provision-config");
+                }}
                 className="w-full flex items-center justify-between bg-surface border border-border hover:border-border-strong rounded-xl p-4 text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -423,11 +487,14 @@ export default function IntegrationsPage() {
         <BackButton onClick={() => setView("hotspot-list")} />
         <h2 className="text-lg font-bold text-text mb-1">Configure Device</h2>
         <p className="text-sm text-text-2 mb-5">
-          Setting up: <span className="text-text font-medium">{selectedHotspot}</span>
+          Setting up:{" "}
+          <span className="text-text font-medium">{selectedHotspot}</span>
         </p>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs text-text-2 mb-1">Your WiFi Network Name</label>
+            <label className="block text-xs text-text-2 mb-1">
+              Your WiFi Network Name
+            </label>
             <input
               value={wifiSsid}
               onChange={(e) => setWifiSsid(e.target.value)}
@@ -436,7 +503,9 @@ export default function IntegrationsPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-text-2 mb-1">WiFi Password</label>
+            <label className="block text-xs text-text-2 mb-1">
+              WiFi Password
+            </label>
             <input
               type="password"
               value={wifiPassword}
@@ -444,18 +513,27 @@ export default function IntegrationsPage() {
               placeholder="Your WiFi password"
               className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
-            <p className="text-xs text-text-3 mt-1">Used once to set up the device, never stored.</p>
+            <p className="text-xs text-text-3 mt-1">
+              Used once to set up the device, never stored.
+            </p>
           </div>
           <div>
-            <label className="block text-xs text-text-2 mb-1">Property (optional)</label>
+            <label className="block text-xs text-text-2 mb-1">
+              Property (optional)
+            </label>
             <select
               value={provisionPropertyId}
-              onChange={(e) => { setProvisionPropertyId(e.target.value); setProvisionRoomId(""); }}
+              onChange={(e) => {
+                setProvisionPropertyId(e.target.value);
+                setProvisionRoomId("");
+              }}
               className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-blue-500"
             >
               <option value="">No property</option>
               {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </select>
           </div>
@@ -484,7 +562,10 @@ export default function IntegrationsPage() {
         <h2 className="text-lg font-bold text-text mb-5">Setting Up Device</h2>
         <div className="bg-surface border border-border rounded-xl p-4 space-y-2 mb-4 min-h-[120px]">
           {provisionLog.map((msg, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-text-2">
+            <div
+              key={i}
+              className="flex items-center gap-2 text-sm text-text-2"
+            >
               <CheckCircle size={13} className="text-green shrink-0" />
               {msg}
             </div>
@@ -508,7 +589,9 @@ export default function IntegrationsPage() {
 
         {provisionDone && provisionedDevice && !provisionError && (
           <div className="bg-green-900/20 border border-green-700/30 rounded-xl p-4 mb-4">
-            <p className="text-sm text-green font-medium mb-1">{provisionedDevice.name}</p>
+            <p className="text-sm text-green font-medium mb-1">
+              {provisionedDevice.name}
+            </p>
             <p className="text-xs text-text-2">{provisionedDevice.model}</p>
           </div>
         )}
@@ -537,18 +620,25 @@ export default function IntegrationsPage() {
   }
 
   if (view === "scan-network") {
-    const grouped = networkScan.reduce<Record<string, ScannedDevice[]>>((acc, d) => {
-      (acc[d.vendor] ??= []).push(d);
-      return acc;
-    }, {});
+    const grouped = networkScan.reduce<Record<string, ScannedDevice[]>>(
+      (acc, d) => {
+        (acc[d.vendor] ??= []).push(d);
+        return acc;
+      },
+      {},
+    );
 
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <BackButton onClick={() => setView("main")} />
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-bold text-text">Find Devices on Network</h2>
-            <p className="text-sm text-text-2">Devices already connected to your WiFi</p>
+            <h2 className="text-lg font-bold text-text">
+              Find Devices on Network
+            </h2>
+            <p className="text-sm text-text-2">
+              Devices already connected to your WiFi
+            </p>
           </div>
           <button
             onClick={() => refetchScan()}
@@ -575,14 +665,18 @@ export default function IntegrationsPage() {
                 </h3>
                 <div className="space-y-2">
                   {devices.map((d, i) => {
-                    const alreadySaved = savedDevices.some((s) => s.mac === d.mac && d.mac);
+                    const alreadySaved = savedDevices.some(
+                      (s) => s.mac === d.mac && d.mac,
+                    );
                     return (
                       <div
                         key={i}
                         className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3"
                       >
                         <div>
-                          <p className="text-sm text-text font-medium">{d.name}</p>
+                          <p className="text-sm text-text font-medium">
+                            {d.name}
+                          </p>
                           <p className="text-xs text-text-3">{d.model}</p>
                         </div>
                         {alreadySaved ? (
@@ -633,11 +727,17 @@ export default function IntegrationsPage() {
       return (
         <div className="p-6 max-w-md mx-auto">
           <BackButton onClick={() => setMatterSubView("choose")} />
-          <h2 className="text-lg font-bold text-text mb-1">Commission Matter Device</h2>
-          <p className="text-sm text-text-2 mb-5">Enter the setup code from your device packaging.</p>
+          <h2 className="text-lg font-bold text-text mb-1">
+            Commission Matter Device
+          </h2>
+          <p className="text-sm text-text-2 mb-5">
+            Enter the setup code from your device packaging.
+          </p>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-text-2 mb-1">Setup Code</label>
+              <label className="block text-xs text-text-2 mb-1">
+                Setup Code
+              </label>
               <input
                 value={matterSetupCode}
                 onChange={(e) => setMatterSetupCode(e.target.value)}
@@ -646,15 +746,22 @@ export default function IntegrationsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs text-text-2 mb-1">Property (optional)</label>
+              <label className="block text-xs text-text-2 mb-1">
+                Property (optional)
+              </label>
               <select
                 value={matterPropertyId}
-                onChange={(e) => { setMatterPropertyId(e.target.value); setMatterRoomId(""); }}
+                onChange={(e) => {
+                  setMatterPropertyId(e.target.value);
+                  setMatterRoomId("");
+                }}
                 className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-green-500"
               >
                 <option value="">No property</option>
                 {properties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -680,10 +787,15 @@ export default function IntegrationsPage() {
     if (matterSubView === "commissioning") {
       return (
         <div className="p-6 max-w-md mx-auto">
-          <h2 className="text-lg font-bold text-text mb-5">Commissioning Device</h2>
+          <h2 className="text-lg font-bold text-text mb-5">
+            Commissioning Device
+          </h2>
           <div className="bg-surface border border-border rounded-xl p-4 space-y-2 mb-3 min-h-[120px]">
             {commissionLog.map((msg, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-text-2">
+              <div
+                key={i}
+                className="flex items-center gap-2 text-sm text-text-2"
+              >
                 <CheckCircle size={13} className="text-green shrink-0" />
                 {msg}
               </div>
@@ -760,22 +872,32 @@ export default function IntegrationsPage() {
           <BackButton onClick={() => setMatterSubView("choose")} />
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-bold text-text">Matter Devices on Network</h2>
-              <p className="text-sm text-text-2">Devices already commissioned via mobile app</p>
+              <h2 className="text-lg font-bold text-text">
+                Matter Devices on Network
+              </h2>
+              <p className="text-sm text-text-2">
+                Devices already commissioned via mobile app
+              </p>
             </div>
             <button
               onClick={runMatterScan}
               disabled={matterScanning}
               className="flex items-center gap-1.5 text-sm text-green hover:text-green disabled:opacity-50"
             >
-              {matterScanning ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+              {matterScanning ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Search size={14} />
+              )}
               {matterScanning ? "Scanning..." : "Scan Network"}
             </button>
           </div>
 
           {matterDevices.length === 0 && !matterScanning && (
             <div className="bg-surface border border-border rounded-xl p-6 text-center">
-              <p className="text-text-2 text-sm mb-2">No Matter devices found yet.</p>
+              <p className="text-text-2 text-sm mb-2">
+                No Matter devices found yet.
+              </p>
               <button
                 onClick={runMatterScan}
                 className="text-sm text-green hover:text-green"
@@ -788,7 +910,10 @@ export default function IntegrationsPage() {
           {matterDevices.length > 0 && (
             <div className="space-y-2">
               {matterDevices.map((d, i) => (
-                <div key={i} className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3">
+                <div
+                  key={i}
+                  className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3"
+                >
                   <div>
                     <p className="text-sm text-text font-medium">{d.name}</p>
                     <p className="text-xs text-text-3">{d.model}</p>
@@ -831,7 +956,9 @@ export default function IntegrationsPage() {
       <div className="p-6 max-w-md mx-auto">
         <BackButton onClick={() => setView("main")} />
         <h2 className="text-lg font-bold text-text mb-1">Matter Device</h2>
-        <p className="text-sm text-text-2 mb-5">Choose how to add your Matter device.</p>
+        <p className="text-sm text-text-2 mb-5">
+          Choose how to add your Matter device.
+        </p>
         <div className="space-y-3">
           <button
             onClick={() => setMatterSubView("commission")}
@@ -841,22 +968,33 @@ export default function IntegrationsPage() {
               <Smartphone size={18} className="text-green" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-text">Set up a new device</p>
-              <p className="text-xs text-text-3">Enter setup code from device packaging</p>
+              <p className="text-sm font-medium text-text">
+                Set up a new device
+              </p>
+              <p className="text-xs text-text-3">
+                Enter setup code from device packaging
+              </p>
             </div>
             <ChevronRight size={14} className="text-text-3" />
           </button>
 
           <button
-            onClick={() => { setMatterSubView("scan"); runMatterScan(); }}
+            onClick={() => {
+              setMatterSubView("scan");
+              runMatterScan();
+            }}
             className="w-full flex items-center gap-4 bg-surface border border-border hover:border-border-strong rounded-xl p-4 text-left transition-colors"
           >
             <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
               <Search size={18} className="text-text-2" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-text">Already set up your device?</p>
-              <p className="text-xs text-text-3">Find it on your local network</p>
+              <p className="text-sm font-medium text-text">
+                Already set up your device?
+              </p>
+              <p className="text-xs text-text-3">
+                Find it on your local network
+              </p>
             </div>
             <ChevronRight size={14} className="text-text-3" />
           </button>
@@ -871,8 +1009,10 @@ export default function IntegrationsPage() {
 
   const shellyConnected = realDevices.some((d) => d.vendor === "shelly");
   const matterConnected = realDevices.some((d) => d.vendor === "matter");
-  const goveeConnected = integrations.find((i) => i.vendor === "govee")?.connected ?? false;
-  const lifxConnected = integrations.find((i) => i.vendor === "lifx")?.connected ?? false;
+  const goveeConnected =
+    integrations.find((i) => i.vendor === "govee")?.connected ?? false;
+  const lifxConnected =
+    integrations.find((i) => i.vendor === "lifx")?.connected ?? false;
 
   const vendorCards = [
     {
@@ -917,7 +1057,10 @@ export default function IntegrationsPage() {
       connectionType: "Matter protocol",
       connected: matterConnected,
       deviceCount: realDevices.filter((d) => d.vendor === "matter").length,
-      onAction: () => { setView("matter"); setMatterSubView("choose"); },
+      onAction: () => {
+        setView("matter");
+        setMatterSubView("choose");
+      },
     },
   ];
 
@@ -925,7 +1068,9 @@ export default function IntegrationsPage() {
     <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-10">
       <div>
         <h1 className="font-display italic text-2xl text-text">Integrations</h1>
-        <p className="font-body font-light text-sm text-text-3 mt-1">Manage vendor connections and add devices</p>
+        <p className="font-body font-light text-sm text-text-3 mt-1">
+          Manage vendor connections and add devices
+        </p>
       </div>
 
       {/* Section 1: Connected hardware summary */}
@@ -938,14 +1083,21 @@ export default function IntegrationsPage() {
         ) : (
           <div className="bg-surface border border-border rounded-xl p-5 flex items-start justify-between gap-4">
             <div>
-              <p className="font-display italic text-3xl text-text leading-none">{realDevices.length}</p>
+              <p className="font-display italic text-3xl text-text leading-none">
+                {realDevices.length}
+              </p>
               <p className="font-body font-light text-sm text-text-3 mt-1">
                 physical device{realDevices.length !== 1 ? "s" : ""} connected
               </p>
               {realDevices.length > 0 && (
                 <p className="font-mono text-xs text-text-3 mt-2.5">
-                  {realDevices.slice(0, 3).map((d) => d.name).join(" · ")}
-                  {realDevices.length > 3 ? ` · +${realDevices.length - 3} more` : ""}
+                  {realDevices
+                    .slice(0, 3)
+                    .map((d) => d.name)
+                    .join(" · ")}
+                  {realDevices.length > 3
+                    ? ` · +${realDevices.length - 3} more`
+                    : ""}
                 </p>
               )}
             </div>
@@ -965,35 +1117,56 @@ export default function IntegrationsPage() {
           Vendor Connections
         </p>
         <div className="space-y-3">
-          {vendorCards.map(({ key, icon: Icon, iconBg, iconColor, name, connectionType, connected, deviceCount, onAction }) => (
-            <div
-              key={key}
-              className="bg-surface border border-border rounded-xl px-5 py-4 flex items-center gap-4"
-            >
-              <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>
-                <Icon size={17} className={iconColor} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-body font-normal text-sm text-text">{name}</p>
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${connected ? "bg-green" : "bg-border"}`} />
-                  <span className={`font-mono text-xs ${connected ? "text-green" : "text-text-3"}`}>
-                    {connected ? "Connected" : "Not connected"}
-                  </span>
-                </div>
-                <p className="font-mono text-xs text-text-3 mt-0.5">
-                  {connectionType} · {deviceCount} device{deviceCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <button
-                onClick={onAction}
-                disabled={!onAction}
-                className="font-body font-light text-xs px-3 py-1.5 rounded-lg border border-border text-text-3 hover:border-border-strong hover:text-text-2 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          {vendorCards.map(
+            ({
+              key,
+              icon: Icon,
+              iconBg,
+              iconColor,
+              name,
+              connectionType,
+              connected,
+              deviceCount,
+              onAction,
+            }) => (
+              <div
+                key={key}
+                className="bg-surface border border-border rounded-xl px-5 py-4 flex items-center gap-4"
               >
-                {connected ? "Manage" : "Connect"}
-              </button>
-            </div>
-          ))}
+                <div
+                  className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}
+                >
+                  <Icon size={17} className={iconColor} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-body font-normal text-sm text-text">
+                      {name}
+                    </p>
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${connected ? "bg-green" : "bg-border"}`}
+                    />
+                    <span
+                      className={`font-mono text-xs ${connected ? "text-green" : "text-text-3"}`}
+                    >
+                      {connected ? "Connected" : "Not connected"}
+                    </span>
+                  </div>
+                  <p className="font-mono text-xs text-text-3 mt-0.5">
+                    {connectionType} · {deviceCount} device
+                    {deviceCount !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <button
+                  onClick={onAction}
+                  disabled={!onAction}
+                  className="font-body font-light text-xs px-3 py-1.5 rounded-lg border border-border text-text-3 hover:border-border-strong hover:text-text-2 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {connected ? "Manage" : "Connect"}
+                </button>
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -1026,7 +1199,10 @@ export default function IntegrationsPage() {
               desc: "Commission a Matter-compatible smart device",
               iconBg: "bg-green-bg",
               iconColor: "text-green",
-              onClick: () => { setView("matter"); setMatterSubView("choose"); },
+              onClick: () => {
+                setView("matter");
+                setMatterSubView("choose");
+              },
             },
           ].map(({ icon: Icon, title, desc, iconBg, iconColor, onClick }) => (
             <motion.button
@@ -1035,12 +1211,20 @@ export default function IntegrationsPage() {
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="bg-surface border border-border rounded-xl p-5 text-left hover:border-border-strong transition-colors"
             >
-              <div className={`w-12 h-12 rounded-full ${iconBg} flex items-center justify-center mb-4`}>
+              <div
+                className={`w-12 h-12 rounded-full ${iconBg} flex items-center justify-center mb-4`}
+              >
                 <Icon size={20} className={iconColor} />
               </div>
-              <p className="font-body font-normal text-sm text-text mb-1">{title}</p>
-              <p className="font-body font-light text-xs text-text-3 leading-relaxed">{desc}</p>
-              <p className="font-body font-light text-xs text-text-2 mt-3">Start →</p>
+              <p className="font-body font-normal text-sm text-text mb-1">
+                {title}
+              </p>
+              <p className="font-body font-light text-xs text-text-3 leading-relaxed">
+                {desc}
+              </p>
+              <p className="font-body font-light text-xs text-text-2 mt-3">
+                Start →
+              </p>
             </motion.button>
           ))}
         </div>

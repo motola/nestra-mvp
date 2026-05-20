@@ -1,4 +1,5 @@
 """Insight model — AI-generated plain English analysis of a device's behaviour."""
+
 from __future__ import annotations
 
 from datetime import datetime

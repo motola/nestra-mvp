@@ -4,11 +4,12 @@ in the platform. Every vendor normaliser must produce this model as output.
 Nothing in services/, api/, or frontend should ever reference a vendor-specific
 field name. This is the single most important architectural rule in the codebase.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +27,7 @@ class AlphaconDevice(BaseModel):
     type: str
     online: bool
     controllable: bool
-    state: dict = Field(default_factory=dict)
+    state: dict[str, Any] = Field(default_factory=dict)
 
     # Plug-specific
     power_draw: float | None = None

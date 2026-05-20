@@ -1,15 +1,17 @@
 """Integration endpoints — vendor status, device provisioning, network scanning."""
+
 from __future__ import annotations
 
 import json
 import logging
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from api.dependencies import SettingsDep
+from api.dependencies import SessionDep, SettingsDep
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,7 @@ _VENDORS = ("govee", "shelly", "lifx", "matter")
 
 
 # ── Pydantic request models ───────────────────────────────────────────────────
+
 
 class ProvisionPayload(BaseModel):
     hotspot_name: str
@@ -41,8 +44,9 @@ class SaveDevicePayload(BaseModel):
 
 # ── Vendor status ─────────────────────────────────────────────────────────────
 
+
 @router.get("/")
-async def list_integrations(settings: SettingsDep) -> list[dict]:
+async def list_integrations(settings: SettingsDep) -> list[dict[str, Any]]:
     """Return cloud API connection status for all supported vendors."""
     return [
         {
@@ -73,7 +77,9 @@ async def list_integrations(settings: SettingsDep) -> list[dict]:
 
 
 @router.post("/{vendor}/connect")
-async def connect_vendor(vendor: str, payload: dict, settings: SettingsDep) -> dict:
+async def connect_vendor(
+    vendor: str, payload: dict[str, Any], settings: SettingsDep
+) -> dict[str, Any]:
     if vendor not in _VENDORS:
         raise HTTPException(status_code=400, detail=f"Unknown vendor: {vendor}")
     return {"vendor": vendor, "status": "connect_not_yet_implemented"}
@@ -81,17 +87,20 @@ async def connect_vendor(vendor: str, payload: dict, settings: SettingsDep) -> d
 
 # ── Discovery: Shelly hotspot scan ────────────────────────────────────────────
 
+
 @router.get("/hotspots")
 async def list_hotspots() -> list[str]:
     """Scan for nearby Shelly device access points using netsh (Windows)."""
     from integrations.provisioning import scan_shelly_hotspots
+
     return await scan_shelly_hotspots()
 
 
 # ── Discovery: Shelly provisioning (SSE stream) ───────────────────────────────
 
+
 @router.post("/provision")
-async def provision_device(payload: ProvisionPayload, settings: SettingsDep):
+async def provision_device(payload: ProvisionPayload, settings: SettingsDep) -> StreamingResponse:
     """
     Run the full Shelly provisioning flow and stream live progress via SSE.
 
@@ -135,7 +144,9 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep):
             else:
                 yield sse(
                     "error",
-                    message="Device not found on network. Try 'Find on Network' to locate it manually.",
+                    message=(
+                        "Device not found on network. Try 'Find on Network' to locate it manually."
+                    ),
                 )
         except Exception as exc:
             logger.exception("Provisioning failed: %s", exc)
@@ -152,25 +163,33 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep):
 
 # ── Discovery: Universal network scan ────────────────────────────────────────
 
+
 @router.get("/scan")
-async def scan_network() -> list[dict]:
+async def scan_network() -> list[dict[str, Any]]:
     """Scan the local network for all supported smart device vendors."""
-    from integrations.scanner import scan_shelly
     from integrations.provisioning import get_local_subnet
+    from integrations.scanner import scan_shelly
+
     subnet = get_local_subnet()
     print(f"DEBUG: scanning {subnet}", flush=True)
     results = await scan_shelly(subnet)
     print(f"DEBUG: found {len(results)}", flush=True)
     return results
 
-# ── Discovery:Matter scan ────────────────────────────────────────
+
+# ── Discovery: Matter scan ────────────────────────────────────────────────────
+
+
 @router.get("/scan/matter")
-async def scan_matter_devices():
+async def scan_matter_devices() -> dict[str, Any]:
     from integrations.scanner import scan_matter
+
     devices = await scan_matter()
     return {"devices": devices}
 
+
 # ── Matter: commission ────────────────────────────────────────────────────────
+
 
 class MatterCommissionPayload(BaseModel):
     setup_code: str
@@ -180,15 +199,15 @@ class MatterCommissionPayload(BaseModel):
 
 @router.post("/matter/commission")
 async def commission_matter_device(
-    payload: MatterCommissionPayload, settings: SettingsDep
-):
+    payload: MatterCommissionPayload, session: SessionDep
+) -> StreamingResponse:
     """
     Commission a Matter device via python-matter-server, streaming SSE progress events.
 
     SSE event format: data: {"type": "status"|"device"|"error"|"done", ...}
     """
-    from integrations.matter.server import MatterServerClient
     from integrations.matter.client import normalise_node
+    from integrations.matter.server import MatterServerClient
     from services.device_registry import save_device as _save_device
 
     def sse(type_: str, **kwargs: object) -> str:
@@ -225,11 +244,11 @@ async def commission_matter_device(
                         "property_id": payload.property_id,
                         "room_id": payload.room_id,
                     },
-                    settings,
+                    session,
                 )
                 device_id = saved.get("id", device.vendor_id)
             except Exception as exc:
-                logger.warning("Could not save Matter device to Supabase: %s", exc)
+                logger.warning("Could not save Matter device: %s", exc)
                 device_id = device.vendor_id
 
             yield sse("status", message="Done!")
@@ -259,18 +278,22 @@ async def commission_matter_device(
     )
 
 
-# ── Device registry (Supabase) ────────────────────────────────────────────────
+# ── Device registry ───────────────────────────────────────────────────────────
+
 
 @router.get("/devices")
 async def list_saved_devices(
     settings: SettingsDep,
+    session: SessionDep,
     property_id: str | None = Query(default=None),
-) -> list[dict]:
-    """List all provisioned devices stored in Supabase, optionally filtered by property."""
+) -> list[dict[str, Any]]:
+    """List all provisioned devices stored in the registry, optionally filtered by property."""
     from services.device_registry import list_devices
-    rows = await list_devices(settings, property_id=property_id)
+
+    rows = await list_devices(session, property_id=property_id)
     if settings.demo_mode:
         from demo.data import DEMO_DEVICES, demo_device_as_saved
+
         demo_rows = [
             demo_device_as_saved(d)
             for d in DEMO_DEVICES
@@ -281,33 +304,38 @@ async def list_saved_devices(
 
 
 @router.post("/devices")
-async def save_device(payload: SaveDevicePayload, settings: SettingsDep) -> dict:
-    """Save a discovered device to Supabase."""
+async def save_device(payload: SaveDevicePayload, session: SessionDep) -> dict[str, Any]:
+    """Save a discovered device to the registry."""
     from services.device_registry import save_device as _save
+
     try:
-        return await _save(payload.model_dump(), settings)
+        return await _save(payload.model_dump(), session)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.patch("/devices/{device_id}")
-async def rename_device(device_id: str, payload: dict, settings: SettingsDep) -> dict:
-    """Update device fields (e.g. name) in Supabase."""
+async def rename_device(
+    device_id: str, payload: dict[str, Any], session: SessionDep
+) -> dict[str, Any]:
+    """Update device fields (e.g. name) in the registry."""
     from services.device_registry import update_device
+
     if not payload.get("name"):
         raise HTTPException(status_code=400, detail="name is required")
     try:
-        return await update_device(device_id, {"name": payload["name"]}, settings)
+        return await update_device(device_id, {"name": payload["name"]}, session)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.delete("/devices/{device_id}")
-async def remove_device(device_id: str, settings: SettingsDep) -> dict:
-    """Remove a device from Supabase by its ID."""
+async def remove_device(device_id: str, session: SessionDep) -> dict[str, Any]:
+    """Remove a device from the registry by its ID."""
     from services.device_registry import delete_device
+
     try:
-        await delete_device(device_id, settings)
+        await delete_device(device_id, session)
         return {"deleted": device_id}
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

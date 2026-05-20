@@ -21,7 +21,12 @@ export function relativeTime(isoString: string): string {
 /** Absolute timestamp formatted in the user's local timezone. */
 export function localDateTime(
   isoString: string,
-  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" },
+  options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  },
 ): string {
   return new Date(isoString).toLocaleString(undefined, {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

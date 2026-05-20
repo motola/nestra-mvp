@@ -1,7 +1,9 @@
 """Demo portfolio intelligence items."""
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from typing import Any
 
 _PROP_VID_MAP = {
     "demo-prop-001": "Maple Court",
@@ -17,7 +19,7 @@ def _ts(hours_ago: float = 0) -> str:
     return (datetime.utcnow() - timedelta(hours=hours_ago)).isoformat() + "Z"
 
 
-DEMO_INTELLIGENCE: list[dict] = [
+DEMO_INTELLIGENCE: list[dict[str, Any]] = [
     {
         "id": "intel-001",
         "property_id": "demo-prop-003",
@@ -26,7 +28,8 @@ DEMO_INTELLIGENCE: list[dict] = [
         "severity": "critical",
         "title": "Boiler Room energy spike detected",
         "detail": (
-            "The energy meter in the Boiler Room has been recording 2.4 kW continuously for 18+ hours — "
+            "The energy meter in the Boiler Room has been recording 2.4 kW "
+            "continuously for 18+ hours — "
             "well above the 0.8 kW baseline. This is consistent with a heating system fault or a "
             "malfunctioning appliance left running. Recommend immediate inspection."
         ),
@@ -139,7 +142,8 @@ DEMO_INTELLIGENCE: list[dict] = [
         "title": "Oak House energy within normal range",
         "detail": (
             "Total energy draw for Oak House is 1.19 kW — consistent with a 2-bedroom property "
-            "in active use. No anomalies detected. The main draw is the kitchen energy meter at 890 W, "
+            "in active use. No anomalies detected. The main draw is the kitchen "
+            "energy meter at 890 W, "
             "consistent with a cooker or washing machine cycle."
         ),
         "generated_at": _ts(48),
@@ -149,12 +153,17 @@ DEMO_INTELLIGENCE: list[dict] = [
 ]
 
 
-def get_demo_intelligence() -> list[dict]:
+def get_demo_intelligence() -> list[dict[str, Any]]:
     """Return DEMO_INTELLIGENCE with property_id resolved to real UUIDs."""
     from demo.data import _demo_id_map
+
     result = []
     for item in DEMO_INTELLIGENCE:
         prop_name = _PROP_VID_MAP.get(item["property_id"])
-        prop_id = _demo_id_map.get(f"prop:{prop_name}", item["property_id"]) if prop_name else item["property_id"]
+        prop_id = (
+            _demo_id_map.get(f"prop:{prop_name}", item["property_id"])
+            if prop_name
+            else item["property_id"]
+        )
         result.append({**item, "property_id": prop_id})
     return result

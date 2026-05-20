@@ -12,10 +12,10 @@ Usage in main.py lifespan:
             "Starting with incomplete database — some features may not work"
         )
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import httpx
 
@@ -73,7 +73,7 @@ async def verify_schema(settings: Settings) -> bool:
     return all_good
 
 
-async def seed_organisation(settings: Settings) -> Optional[str]:
+async def seed_organisation(settings: Settings) -> str | None:
     """
     Ensure a default organisation exists.
     Returns the org UUID, or None on failure.
@@ -87,7 +87,7 @@ async def seed_organisation(settings: Settings) -> Optional[str]:
             )
 
             if r.status_code == 200 and r.json():
-                org_id = r.json()[0]["id"]
+                org_id = str(r.json()[0]["id"])
                 logger.info("✓ Organisation: %s", org_id)
                 return org_id
 
@@ -99,7 +99,7 @@ async def seed_organisation(settings: Settings) -> Optional[str]:
             )
             r.raise_for_status()
             rows = r.json()
-            org_id = (rows[0] if isinstance(rows, list) else rows)["id"]
+            org_id = str((rows[0] if isinstance(rows, list) else rows)["id"])
             logger.info("✓ Created default organisation: %s", org_id)
             return org_id
 

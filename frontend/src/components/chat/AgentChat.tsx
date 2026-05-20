@@ -82,8 +82,12 @@ export function AgentChat() {
           {/* Header */}
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <div>
-              <p className="font-body font-normal text-sm text-text">Nestra AI</p>
-              <p className="font-body font-light text-xs text-text-3">Portfolio assistant</p>
+              <p className="font-body font-normal text-sm text-text">
+                Nestra AI
+              </p>
+              <p className="font-body font-light text-xs text-text-3">
+                Portfolio assistant
+              </p>
             </div>
             <button
               onClick={() => setOpen(false)}
@@ -145,9 +149,18 @@ export function AgentChat() {
             {streaming && !streamingText && (
               <div className="flex justify-start">
                 <div className="px-3 py-3 rounded-xl rounded-bl-sm bg-surface-2 border border-border flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-text-3 animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
               </div>
             )}

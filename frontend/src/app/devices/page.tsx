@@ -25,10 +25,20 @@ const VENDOR_FILTERS: { label: string; value: VendorName | "all" }[] = [
   { label: "Demo", value: "demo" },
 ];
 
-function StatPill({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatPill({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+}) {
   return (
     <div className="bg-surface border border-border rounded-xl p-4">
-      <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">{label}</p>
+      <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">
+        {label}
+      </p>
       <p className="font-mono text-2xl text-text">{value}</p>
       {sub && <p className="font-mono text-xs text-text-3 mt-0.5">{sub}</p>}
     </div>
@@ -53,7 +63,11 @@ export default function DevicesPage() {
       if (onlineOnly && !d.online) return false;
       if (search) {
         const q = search.toLowerCase();
-        return d.name.toLowerCase().includes(q) || d.type.includes(q) || d.vendor.includes(q);
+        return (
+          d.name.toLowerCase().includes(q) ||
+          d.type.includes(q) ||
+          d.vendor.includes(q)
+        );
       }
       return true;
     });
@@ -62,9 +76,10 @@ export default function DevicesPage() {
   const onlineCount = devices.filter((d) => d.online).length;
   const offlineCount = devices.length - onlineCount;
   const totalPowerW = devices.reduce((s, d) => s + (d.power_draw ?? 0), 0);
-  const powerLabel = totalPowerW >= 1000
-    ? `${(totalPowerW / 1000).toFixed(1)} kW`
-    : `${Math.round(totalPowerW)} W`;
+  const powerLabel =
+    totalPowerW >= 1000
+      ? `${(totalPowerW / 1000).toFixed(1)} kW`
+      : `${Math.round(totalPowerW)} W`;
 
   return (
     <PageWrapper>
@@ -78,7 +93,9 @@ export default function DevicesPage() {
         <div className="mb-6">
           <h1 className="font-display italic text-2xl text-text">Devices</h1>
           <p className="font-body font-light text-sm text-text-3 mt-1">
-            {isLoading ? "Loading…" : `${onlineCount} of ${devices.length} online`}
+            {isLoading
+              ? "Loading…"
+              : `${onlineCount} of ${devices.length} online`}
           </p>
         </div>
 
@@ -113,7 +130,7 @@ export default function DevicesPage() {
                   "px-3 py-1 rounded-full text-xs font-body font-light transition-colors",
                   typeFilter === f.value
                     ? "bg-graphite text-surface"
-                    : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong"
+                    : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong",
                 )}
               >
                 {f.label}
@@ -128,7 +145,7 @@ export default function DevicesPage() {
                   "px-3 py-1 rounded-full text-xs font-body font-light transition-colors",
                   vendorFilter === f.value
                     ? "bg-graphite text-surface"
-                    : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong"
+                    : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong",
                 )}
               >
                 {f.label}
@@ -141,7 +158,7 @@ export default function DevicesPage() {
                 "px-3 py-1 rounded-full text-xs font-body font-light transition-colors",
                 onlineOnly
                   ? "bg-green text-surface"
-                  : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong"
+                  : "bg-surface border border-border text-text-3 hover:text-text hover:border-border-strong",
               )}
             >
               Online only
@@ -151,19 +168,27 @@ export default function DevicesPage() {
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16">
             <EmptyState
               variant="no_devices"
               title="No devices found"
-              description={search ? `No devices match "${search}"` : "Try adjusting your filters."}
+              description={
+                search
+                  ? `No devices match "${search}"`
+                  : "Try adjusting your filters."
+              }
             />
           </div>
         ) : (
           <>
-            <p className="font-mono text-xs text-text-3 mb-4">{filtered.length} device{filtered.length !== 1 ? "s" : ""}</p>
+            <p className="font-mono text-xs text-text-3 mb-4">
+              {filtered.length} device{filtered.length !== 1 ? "s" : ""}
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filtered.map((device, i) => (
                 <motion.div

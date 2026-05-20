@@ -18,7 +18,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <SidebarContext.Provider
-      value={{ isOpen, toggle: () => setIsOpen((v) => !v), close: () => setIsOpen(false) }}
+      value={{
+        isOpen,
+        toggle: () => setIsOpen((v) => !v),
+        close: () => setIsOpen(false),
+      }}
     >
       {children}
     </SidebarContext.Provider>

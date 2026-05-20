@@ -4,10 +4,12 @@ Govee → AlphaconDevice normaliser.
 After this module, no Govee field names (powerState, colorTem, supportCmds, etc.)
 should appear anywhere else in the codebase. This is the translation boundary.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from models.device import AlphaconDevice
 
@@ -43,19 +45,19 @@ def _infer_type(model: str) -> str:
     return _MODEL_TYPE_MAP.get(prefix, "light")
 
 
-def _flatten_properties(props: list[dict]) -> dict:
+def _flatten_properties(props: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Govee state returns properties as a list of single-key dicts.
     Flatten them into one dict for easy access.
     Example: [{"online": true}, {"powerState": "on"}] → {"online": true, "powerState": "on"}
     """
-    result: dict = {}
+    result: dict[str, Any] = {}
     for item in props:
         result.update(item)
     return result
 
 
-def normalise_device(raw: dict) -> AlphaconDevice:
+def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
     """
     Convert a raw Govee device object (from GET /devices) into AlphaconDevice.
     The device list response does not include live state — only metadata.
@@ -78,7 +80,7 @@ def normalise_device(raw: dict) -> AlphaconDevice:
     )
 
 
-def normalise_state(raw: dict) -> AlphaconDevice:
+def normalise_state(raw: dict[str, Any]) -> AlphaconDevice:
     """
     Convert a raw Govee state object (from GET /devices/state) into AlphaconDevice.
     The state response includes live values for online, power, brightness, colour.
@@ -90,7 +92,7 @@ def normalise_state(raw: dict) -> AlphaconDevice:
     online: bool = bool(props.get("online", False))
     power_on: bool = props.get("powerState", "off") == "on"
 
-    state: dict = {"on": power_on}
+    state: dict[str, Any] = {"on": power_on}
 
     brightness = props.get("brightness")
     if brightness is not None:

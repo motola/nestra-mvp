@@ -20,33 +20,43 @@ const REPORT_TYPES: ReportType[] = [
     id: "energy",
     icon: Zap,
     title: "Energy Report",
-    description: "Monthly energy consumption breakdown by property, device type, and time of day. Includes cost estimates and CO₂ savings.",
+    description:
+      "Monthly energy consumption breakdown by property, device type, and time of day. Includes cost estimates and CO₂ savings.",
     formats: ["PDF", "CSV", "XLSX"],
   },
   {
     id: "alerts",
     icon: Bell,
     title: "Alert Summary",
-    description: "Summary of all alerts over the selected period — critical incidents, response times, and recurring issues by device.",
+    description:
+      "Summary of all alerts over the selected period — critical incidents, response times, and recurring issues by device.",
     formats: ["PDF", "CSV"],
   },
   {
     id: "portfolio",
     icon: Building2,
     title: "Portfolio Overview",
-    description: "High-level overview of all properties: occupancy, device health, energy consumption, and outstanding maintenance items.",
+    description:
+      "High-level overview of all properties: occupancy, device health, energy consumption, and outstanding maintenance items.",
     formats: ["PDF"],
   },
   {
     id: "analytics",
     icon: BarChart2,
     title: "Analytics Export",
-    description: "Raw sensor data export for all devices across the selected date range. Suitable for import into BI tools.",
+    description:
+      "Raw sensor data export for all devices across the selected date range. Suitable for import into BI tools.",
     formats: ["CSV", "XLSX", "JSON"],
   },
 ];
 
-function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () => void }) {
+function GenerateDialog({
+  report,
+  onClose,
+}: {
+  report: ReportType;
+  onClose: () => void;
+}) {
   const [period, setPeriod] = useState("last_30");
   const [format, setFormat] = useState(report.formats[0]);
   const [generating, setGenerating] = useState(false);
@@ -78,8 +88,13 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <p className="font-body font-normal text-sm text-text">Generate {report.title}</p>
-          <button onClick={onClose} className="text-text-3 hover:text-text-2 transition-colors">
+          <p className="font-body font-normal text-sm text-text">
+            Generate {report.title}
+          </p>
+          <button
+            onClick={onClose}
+            className="text-text-3 hover:text-text-2 transition-colors"
+          >
             <X size={14} />
           </button>
         </div>
@@ -87,7 +102,9 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
         <div className="px-5 py-5 space-y-5">
           {/* Period */}
           <div>
-            <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-2">Period</p>
+            <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-2">
+              Period
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: "last_7", label: "Last 7 days" },
@@ -102,7 +119,7 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
                     "px-3 py-2 rounded-lg text-xs font-body font-light border transition-colors text-left",
                     period === p.value
                       ? "bg-graphite text-surface border-graphite"
-                      : "bg-surface-2 border-border text-text-2 hover:border-border-strong"
+                      : "bg-surface-2 border-border text-text-2 hover:border-border-strong",
                   )}
                 >
                   {p.label}
@@ -113,7 +130,9 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
 
           {/* Format */}
           <div>
-            <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-2">Format</p>
+            <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-2">
+              Format
+            </p>
             <div className="flex items-center gap-2">
               {report.formats.map((f) => (
                 <button
@@ -123,7 +142,7 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
                     "px-3 py-1.5 rounded-lg text-xs font-mono border transition-colors",
                     format === f
                       ? "bg-graphite text-surface border-graphite"
-                      : "bg-surface-2 border-border text-text-2 hover:border-border-strong"
+                      : "bg-surface-2 border-border text-text-2 hover:border-border-strong",
                   )}
                 >
                   {f}
@@ -140,10 +159,7 @@ function GenerateDialog({ report, onClose }: { report: ReportType; onClose: () =
           >
             Cancel
           </button>
-          <Button
-            onClick={generate}
-            disabled={generating}
-          >
+          <Button onClick={generate} disabled={generating}>
             {generating ? (
               <span className="flex items-center gap-2">
                 <span className="w-3 h-3 border border-surface/40 border-t-surface rounded-full animate-spin" />
@@ -175,7 +191,9 @@ export default function ReportsPage() {
       >
         <div className="mb-8">
           <h1 className="font-display italic text-2xl text-text">Reports</h1>
-          <p className="font-body font-light text-sm text-text-3 mt-1">Generate and download reports for your portfolio</p>
+          <p className="font-body font-light text-sm text-text-3 mt-1">
+            Generate and download reports for your portfolio
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -191,17 +209,24 @@ export default function ReportsPage() {
                     <Icon size={14} className="text-text-2" />
                   </div>
                   <div>
-                    <p className="font-body font-normal text-sm text-text">{report.title}</p>
+                    <p className="font-body font-normal text-sm text-text">
+                      {report.title}
+                    </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       {report.formats.map((f) => (
-                        <span key={f} className="font-mono text-[10px] text-text-3 bg-surface-2 border border-border px-1.5 py-0.5 rounded-full">
+                        <span
+                          key={f}
+                          className="font-mono text-[10px] text-text-3 bg-surface-2 border border-border px-1.5 py-0.5 rounded-full"
+                        >
                           {f}
                         </span>
                       ))}
                     </div>
                   </div>
                 </div>
-                <p className="font-body font-light text-sm text-text-3 leading-relaxed mb-4">{report.description}</p>
+                <p className="font-body font-light text-sm text-text-3 leading-relaxed mb-4">
+                  {report.description}
+                </p>
                 <button
                   onClick={() => setActiveReport(report)}
                   className="flex items-center gap-1.5 font-body font-light text-xs text-text-2 hover:text-text transition-colors"
@@ -217,7 +242,10 @@ export default function ReportsPage() {
 
       <AnimatePresence>
         {activeReport && (
-          <GenerateDialog report={activeReport} onClose={() => setActiveReport(null)} />
+          <GenerateDialog
+            report={activeReport}
+            onClose={() => setActiveReport(null)}
+          />
         )}
       </AnimatePresence>
     </PageWrapper>

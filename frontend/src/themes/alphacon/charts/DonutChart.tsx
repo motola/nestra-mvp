@@ -2,11 +2,20 @@
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
-function CustomTooltip({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[] }) {
+function CustomTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { name: string; value: number }[];
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-surface border border-border rounded-lg px-3 py-2 text-xs">
-      <p className="font-mono text-text">{payload[0].name}: <span className="font-medium">{payload[0].value}</span></p>
+      <p className="font-mono text-text">
+        {payload[0].name}:{" "}
+        <span className="font-medium">{payload[0].value}</span>
+      </p>
     </div>
   );
 }
@@ -48,14 +57,23 @@ export function DonutChart({
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="font-mono text-2xl text-text">{displayTotal}</span>
-          {label && <span className="font-body font-light text-xs text-text-3">{label}</span>}
+          {label && (
+            <span className="font-body font-light text-xs text-text-3">
+              {label}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-            <span className="font-body font-light text-xs text-text-2">{d.name}</span>
+            <span
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: d.color }}
+            />
+            <span className="font-body font-light text-xs text-text-2">
+              {d.name}
+            </span>
             <span className="font-mono text-xs text-text-3">({d.value})</span>
           </div>
         ))}

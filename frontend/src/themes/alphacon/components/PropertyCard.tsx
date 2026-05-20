@@ -9,9 +9,12 @@ import { seededSparklineValues } from "./Sparkline";
 import { PropertyIllustration } from "../ui/PropertyIllustration";
 
 const STATUS_GRADIENT: Record<PropertyStatus, string> = {
-  all_clear: "linear-gradient(to bottom, rgba(45,107,45,0.03) 0%, transparent 60%)",
-  needs_attention: "linear-gradient(to bottom, rgba(154,94,21,0.04) 0%, transparent 60%)",
-  critical: "linear-gradient(to bottom, rgba(139,32,32,0.05) 0%, transparent 60%)",
+  all_clear:
+    "linear-gradient(to bottom, rgba(45,107,45,0.03) 0%, transparent 60%)",
+  needs_attention:
+    "linear-gradient(to bottom, rgba(154,94,21,0.04) 0%, transparent 60%)",
+  critical:
+    "linear-gradient(to bottom, rgba(139,32,32,0.05) 0%, transparent 60%)",
 };
 
 const STATUS_LINE: Record<PropertyStatus, string> = {
@@ -32,7 +35,13 @@ const STATUS_LABEL: Record<PropertyStatus, string> = {
   critical: "Critical",
 };
 
-function BottomSparkline({ seed, status }: { seed: string; status: PropertyStatus }) {
+function BottomSparkline({
+  seed,
+  status,
+}: {
+  seed: string;
+  status: PropertyStatus;
+}) {
   const vals = seededSparklineValues(seed);
   const min = Math.min(...vals);
   const max = Math.max(...vals);
@@ -48,10 +57,19 @@ function BottomSparkline({ seed, status }: { seed: string; status: PropertyStatu
     .join(" ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full" style={{ height: h }}>
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      className="w-full"
+      style={{ height: h }}
+    >
       <defs>
         <linearGradient id={`spk-${seed}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={STATUS_LINE[status]} stopOpacity="0.15" />
+          <stop
+            offset="0%"
+            stopColor={STATUS_LINE[status]}
+            stopOpacity="0.15"
+          />
           <stop offset="100%" stopColor={STATUS_LINE[status]} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -89,7 +107,10 @@ export function PropertyCard({
       <Link href={`/properties/${property.id}`}>
         <div
           className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-border-strong transition-colors relative"
-          style={{ background: STATUS_GRADIENT[property.status] + ", var(--color-surface)" }}
+          style={{
+            background:
+              STATUS_GRADIENT[property.status] + ", var(--color-surface)",
+          }}
         >
           {/* Card body */}
           <div className="px-5 pt-5 pb-4 relative">
@@ -101,7 +122,9 @@ export function PropertyCard({
             {/* Status row */}
             <div className="flex items-center gap-2 mb-3">
               <span className={cn("w-2 h-2 rounded-full flex-shrink-0", dot)} />
-              <span className="font-body font-light text-xs text-text-3">{label}</span>
+              <span className="font-body font-light text-xs text-text-3">
+                {label}
+              </span>
             </div>
 
             {/* Property name */}
@@ -121,13 +144,17 @@ export function PropertyCard({
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 font-mono text-xs text-text-2">
                 <Zap size={10} className="text-text-3" />
-                {property.device_count} device{property.device_count !== 1 ? "s" : ""}
+                {property.device_count} device
+                {property.device_count !== 1 ? "s" : ""}
               </span>
-              <span className="font-mono text-xs text-text-3">~{avgPower} W avg</span>
+              <span className="font-mono text-xs text-text-3">
+                ~{avgPower} W avg
+              </span>
               {property.alert_count > 0 && (
                 <span className="flex items-center gap-1 font-mono text-xs text-amber ml-auto">
                   <AlertTriangle size={10} />
-                  {property.alert_count} alert{property.alert_count !== 1 ? "s" : ""}
+                  {property.alert_count} alert
+                  {property.alert_count !== 1 ? "s" : ""}
                 </span>
               )}
             </div>

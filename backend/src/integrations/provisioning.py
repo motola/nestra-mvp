@@ -10,12 +10,12 @@ Steps:
 
 All netsh commands run via asyncio.to_thread (non-blocking subprocess).
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import re
-import socket
 import subprocess
 from typing import Any
 
@@ -24,8 +24,8 @@ import httpx
 logger = logging.getLogger(__name__)
 
 _SHELLY_AP_IP = "192.168.33.1"
-_HOTSPOT_WAIT = 5    # seconds after connecting to Shelly AP before HTTP is ready
-_REBOOT_WAIT = 12    # seconds for device to reboot and join home network
+_HOTSPOT_WAIT = 5  # seconds after connecting to Shelly AP before HTTP is ready
+_REBOOT_WAIT = 12  # seconds for device to reboot and join home network
 
 
 async def scan_shelly_hotspots() -> list[str]:
@@ -93,26 +93,24 @@ def get_local_subnet() -> str:
     that has a Default Gateway — that's always the internet-
     connected network, not VMware or virtual adapters.
     """
-    import subprocess
     import re
-    
-    result = subprocess.run(
-        ['ipconfig'], capture_output=True, text=True
-    )
-    
+    import subprocess
+
+    result = subprocess.run(["ipconfig"], capture_output=True, text=True)
+
     current_ip = None
-    for line in result.stdout.split('\n'):
+    for line in result.stdout.split("\n"):
         # Store the IP when we see it
-        ip_match = re.search(r'IPv4 Address.*?:\s*([\d.]+)', line)
+        ip_match = re.search(r"IPv4 Address.*?:\s*([\d.]+)", line)
         if ip_match:
             current_ip = ip_match.group(1)
-        
+
         # When we see a real gateway, the current_ip is our answer
-        gateway_match = re.search(r'Default Gateway.*?:\s*([\d.]+)', line)
+        gateway_match = re.search(r"Default Gateway.*?:\s*([\d.]+)", line)
         if gateway_match and current_ip:
-            prefix, _ = current_ip.rsplit('.', 1)
+            prefix, _ = current_ip.rsplit(".", 1)
             return f"{prefix}.0"
-    
+
     return "192.168.1.0"
 
 
@@ -126,7 +124,7 @@ async def scan_for_device(subnet: str) -> dict[str, Any] | None:
     hosts = list(ipaddress.IPv4Network(f"{subnet}/24", strict=False).hosts())
     sem = asyncio.Semaphore(40)
 
-    async def check(ip: str) -> dict | None:
+    async def check(ip: str) -> dict[str, Any] | None:
         async with sem:
             try:
                 async with httpx.AsyncClient(timeout=1.5) as client:

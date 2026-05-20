@@ -24,7 +24,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full border",
         VARIANTS[variant],
-        className
+        className,
       )}
     >
       {children}
