@@ -265,7 +265,7 @@ def _scan_matter_sync() -> list[dict[str, Any]]:
 
     zc = Zeroconf()
     try:
-        ServiceBrowser(zc, _MATTER_SERVICE, _Handler())  # type: ignore[arg-type]
+        ServiceBrowser(zc, _MATTER_SERVICE, _Handler()) 
         import time
 
         time.sleep(_MATTER_BROWSE_TIMEOUT)
