@@ -1,12 +1,14 @@
 """Room endpoints — rename and delete individual rooms."""
+
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from api.dependencies import SettingsDep
+from api.dependencies import SessionDep
 from models.room import Room
 from services import room_service
 
@@ -20,9 +22,9 @@ class RenamePayload(BaseModel):
 
 
 @router.patch("/{room_id}", response_model=Room)
-async def rename_room(room_id: str, payload: RenamePayload, settings: SettingsDep) -> Room:
+async def rename_room(room_id: str, payload: RenamePayload, session: SessionDep) -> Room:
     """Rename a room. Returns 409 if the name already exists in the same property."""
-    existing = await room_service.get_room_by_id(room_id, settings)
+    existing = await room_service.get_room_by_id(room_id, session)
     if not existing:
         raise HTTPException(status_code=404, detail="Room not found")
 
@@ -32,14 +34,14 @@ async def rename_room(room_id: str, payload: RenamePayload, settings: SettingsDe
 
     property_id = existing.get("property_id", "")
     if property_id:
-        siblings = await room_service.list_rooms(property_id, settings)
+        siblings = await room_service.list_rooms(property_id, session)
         if any(r.name.lower() == name.lower() and r.id != room_id for r in siblings):
             raise HTTPException(
                 status_code=409,
                 detail=f"A room named '{name}' already exists in this property",
             )
 
-    row = await room_service.rename_room(room_id, name, settings)
+    row = await room_service.rename_room(room_id, name, session)
     return Room(
         id=existing["id"],
         property_id=existing.get("property_id", ""),
@@ -49,10 +51,10 @@ async def rename_room(room_id: str, payload: RenamePayload, settings: SettingsDe
 
 
 @router.delete("/{room_id}")
-async def delete_room(room_id: str, settings: SettingsDep) -> dict:
+async def delete_room(room_id: str, session: SessionDep) -> dict[str, Any]:
     """Move all devices in the room to Unassigned, then permanently delete the room."""
-    existing = await room_service.get_room_by_id(room_id, settings)
+    existing = await room_service.get_room_by_id(room_id, session)
     if not existing:
         raise HTTPException(status_code=404, detail="Room not found")
-    await room_service.delete_room(room_id, settings)
+    await room_service.delete_room(room_id, session)
     return {"deleted": room_id}

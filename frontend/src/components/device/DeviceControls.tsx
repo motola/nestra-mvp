@@ -21,13 +21,15 @@ export function DeviceControls({ device }: { device: AlphaconDevice }) {
             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-body opacity-50 cursor-not-allowed",
             isOn
               ? "bg-green text-surface"
-              : "bg-surface-2 border border-border text-text-2"
+              : "bg-surface-2 border border-border text-text-2",
           )}
         >
           <Power size={14} />
           {isOn ? "Turn Off" : "Turn On"}
         </button>
-        <span className="font-body font-light text-xs text-text-3">Controls active in next release</span>
+        <span className="font-body font-light text-xs text-text-3">
+          Controls active in next release
+        </span>
       </div>
     </div>
   );

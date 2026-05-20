@@ -37,7 +37,9 @@ export function DeviceStateHistory({ deviceId }: { deviceId: string }) {
 
   return (
     <div className="bg-surface border border-border rounded-xl p-5">
-      <p className="font-body font-normal text-sm text-text mb-4">State History</p>
+      <p className="font-body font-normal text-sm text-text mb-4">
+        State History
+      </p>
 
       {isLoading ? (
         <div className="space-y-3">
@@ -65,7 +67,9 @@ export function DeviceStateHistory({ deviceId }: { deviceId: string }) {
               <span className="font-body font-light text-sm text-text-2 flex-1">
                 {EVENT_LABELS[event.event_type] ?? event.event_type}
                 {event.value && (
-                  <span className="font-mono text-text-3 ml-1 text-xs">({event.value})</span>
+                  <span className="font-mono text-text-3 ml-1 text-xs">
+                    ({event.value})
+                  </span>
                 )}
               </span>
               <span className="font-mono text-xs text-text-3 shrink-0">

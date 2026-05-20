@@ -1,4 +1,5 @@
 """Matter integration — commissioning via python-matter-server WebSocket."""
+
 from __future__ import annotations
 
 import json
@@ -6,7 +7,6 @@ import logging
 import uuid
 from typing import Any
 
-import websockets
 from websockets.asyncio.client import connect
 
 from integrations import BaseVendorAdapter
@@ -27,7 +27,7 @@ class MatterAdapter(BaseVendorAdapter):
     async def get_device_state(self, device_id: str) -> AlphaconDevice:
         raise NotImplementedError
 
-    async def send_command(self, device_id: str, command: dict) -> bool:
+    async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
         raise NotImplementedError
 
 
@@ -45,14 +45,18 @@ async def commission_device(setup_code: str) -> dict[str, Any]:
         logger.debug("Matter server hello: %s", sdk_version_msg)
 
         # Send commission_with_code
-        await ws.send(json.dumps({
-            "message_id": commission_id,
-            "command": "commission_with_code",
-            "args": {
-                "code": setup_code,
-                "network_only": False,
-            },
-        }))
+        await ws.send(
+            json.dumps(
+                {
+                    "message_id": commission_id,
+                    "command": "commission_with_code",
+                    "args": {
+                        "code": setup_code,
+                        "network_only": False,
+                    },
+                }
+            )
+        )
 
         # Wait for the commission response
         commission_result = await _wait_for_response(ws, commission_id)
@@ -60,41 +64,50 @@ async def commission_device(setup_code: str) -> dict[str, Any]:
 
         if commission_result.get("error_code"):
             raise RuntimeError(
-                f"Matter commissioning failed: {commission_result.get('details', commission_result)}"
+                f"Matter commissioning failed: "
+                f"{commission_result.get('details', commission_result)}"
             )
 
         # Retrieve commissioned node details
-        await ws.send(json.dumps({
-            "message_id": get_nodes_id,
-            "command": "get_nodes",
-            "args": {},
-        }))
+        await ws.send(
+            json.dumps(
+                {
+                    "message_id": get_nodes_id,
+                    "command": "get_nodes",
+                    "args": {},
+                }
+            )
+        )
 
         nodes_result = await _wait_for_response(ws, get_nodes_id)
-        nodes: list[dict] = nodes_result.get("result", [])
+        nodes: list[dict[str, Any]] = nodes_result.get("result", [])
 
         # Return the most recently commissioned node (last in list)
         if nodes:
             return nodes[-1]
 
-        return commission_result.get("result", {})
+        out: dict[str, Any] = commission_result.get("result", {})
+        return out
 
 
 async def _wait_for_response(ws: Any, message_id: str, timeout: float = _TIMEOUT) -> dict[str, Any]:
     """Read messages until we find the one matching message_id."""
     import asyncio
+
     deadline = asyncio.get_event_loop().time() + timeout
     while True:
         remaining = deadline - asyncio.get_event_loop().time()
         if remaining <= 0:
             raise TimeoutError(f"Timed out waiting for Matter server response to {message_id}")
         raw = await asyncio.wait_for(ws.recv(), timeout=remaining)
-        msg = json.loads(raw)
+        msg: dict[str, Any] = json.loads(raw)
         if msg.get("message_id") == message_id:
             return msg
 
 
-def normalise_node(node: dict[str, Any], property_id: str = "", room_id: str = "") -> AlphaconDevice:
+def normalise_node(
+    node: dict[str, Any], property_id: str = "", room_id: str = ""
+) -> AlphaconDevice:
     """Convert a python-matter-server node dict into an AlphaconDevice."""
     node_id = str(node.get("node_id", uuid.uuid4()))
     name = _extract_name(node) or f"Matter Device {node_id}"

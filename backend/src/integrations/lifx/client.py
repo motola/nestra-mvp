@@ -7,6 +7,7 @@ Docs     : https://api.lifx.com/
 
 Phase 1 — implemented for cloud polling. No local LAN protocol.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -46,7 +47,7 @@ class LIFXAdapter(BaseVendorAdapter):
             return normalise_device(data[0])
         raise ValueError(f"LIFX device not found: {device_id}")
 
-    async def send_command(self, device_id: str, command: dict) -> bool:
+    async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
         """PUT /lights/id:{device_id}/state — set power, brightness, colour."""
         payload = _translate_command(command)
         await self._request("PUT", f"/lights/id:{device_id}/state", json=payload)
@@ -64,9 +65,7 @@ class LIFXAdapter(BaseVendorAdapter):
         for attempt in range(_MAX_RETRIES):
             try:
                 async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-                    r = await client.request(
-                        method, url, headers=self._headers, **kwargs
-                    )
+                    r = await client.request(method, url, headers=self._headers, **kwargs)
                     r.raise_for_status()
                     return r.json()
             except httpx.HTTPStatusError as exc:
@@ -85,7 +84,7 @@ class LIFXAdapter(BaseVendorAdapter):
         raise RuntimeError(f"LIFX API unreachable after {_MAX_RETRIES} attempts") from last_exc
 
 
-def _translate_command(command: dict) -> dict:
+def _translate_command(command: dict[str, Any]) -> dict[str, Any]:
     """Translate Alphacon command into LIFX state payload."""
     action = command.get("action", "")
     if action == "turn_on":

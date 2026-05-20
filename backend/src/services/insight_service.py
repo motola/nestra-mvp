@@ -10,11 +10,13 @@ Insights are cached in Upstash Redis with a 15-minute TTL using the REST API
 (no Redis socket required). If Upstash is not configured, caching is skipped
 and Claude is called on every request.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 from datetime import datetime
+from typing import Any
 
 import anthropic
 import httpx
@@ -32,7 +34,7 @@ _SONNET = "claude-sonnet-4-6"
 
 async def get_insight(
     device: AlphaconDevice,
-    history: list[dict],
+    history: list[dict[str, Any]],
     settings: Settings,
 ) -> Insight:
     """
@@ -74,7 +76,7 @@ async def get_insight(
     return insight
 
 
-def _choose_model(device: AlphaconDevice, history: list[dict]) -> str:
+def _choose_model(device: AlphaconDevice, history: list[dict[str, Any]]) -> str:
     """
     Route to Sonnet for complex cases; Haiku for routine summaries.
 
@@ -92,9 +94,14 @@ def _choose_model(device: AlphaconDevice, history: list[dict]) -> str:
     return _HAIKU
 
 
-def _build_prompt(device: AlphaconDevice, history: list[dict]) -> str:
+def _build_prompt(device: AlphaconDevice, history: list[dict[str, Any]]) -> str:
     recent = history[:10] if history else []
     on_state = device.state.get("on") if device.state else None
+    last_seen = (
+        device.last_seen.isoformat()
+        if isinstance(device.last_seen, datetime)
+        else str(device.last_seen)
+    )
     return f"""You are analysing smart device data for a UK property manager.
 
 Device    : {device.name}
@@ -106,7 +113,7 @@ Power draw: {f"{device.power_draw:.1f}W" if device.power_draw is not None else "
 Temp      : {f"{device.temperature}°C" if device.temperature is not None else "N/A"}
 Humidity  : {f"{device.humidity}%" if device.humidity is not None else "N/A"}
 Leak      : {device.leak_detected}
-Last seen : {device.last_seen.isoformat() if isinstance(device.last_seen, datetime) else device.last_seen}
+Last seen : {last_seen}
 History   : {json.dumps(recent)}
 
 Write a brief, plain English insight for the property manager. Focus only on
@@ -145,6 +152,7 @@ def _parse_response(device_id: str, text: str, model: str) -> Insight:
 
 # ── Upstash Redis REST helpers ────────────────────────────────────────────────
 
+
 async def _cache_get(key: str, settings: Settings) -> str | None:
     if not settings.upstash_redis_rest_url or not settings.upstash_redis_rest_token:
         return None
@@ -155,15 +163,14 @@ async def _cache_get(key: str, settings: Settings) -> str | None:
                 headers={"Authorization": f"Bearer {settings.upstash_redis_rest_token}"},
             )
             if r.status_code == 200:
-                return r.json().get("result")
+                result: str | None = r.json().get("result")
+                return result
     except Exception as exc:
         logger.debug("Cache get failed: %s", exc)
     return None
 
 
-async def _cache_set(
-    key: str, value: str, ttl: int, settings: Settings
-) -> None:
+async def _cache_set(key: str, value: str, ttl: int, settings: Settings) -> None:
     if not settings.upstash_redis_rest_url or not settings.upstash_redis_rest_token:
         return
     try:

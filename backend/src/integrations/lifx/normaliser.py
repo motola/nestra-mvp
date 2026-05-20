@@ -4,21 +4,23 @@ LIFX Cloud → AlphaconDevice normaliser.
 After this module, no LIFX field names (connected, color, kelvin, etc.)
 should appear anywhere else in the codebase.
 """
+
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from models.device import AlphaconDevice
 
 
-def normalise_device(raw: dict) -> AlphaconDevice:
+def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
     """Convert a raw LIFX light object into AlphaconDevice."""
-    product: dict = raw.get("product", {})
-    color: dict = raw.get("color", {})
+    product: dict[str, Any] = raw.get("product", {})
+    color: dict[str, Any] = raw.get("color", {})
     power: str = raw.get("power", "off")
 
-    state: dict = {
+    state: dict[str, Any] = {
         "on": power == "on",
         "brightness": round(float(raw.get("brightness", 1.0)) * 100),
     }

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import logging
 import logging.config
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from api.v1.router import router as v1_router
 from config import get_settings
@@ -39,46 +42,49 @@ logging.config.dictConfig(
 
 logger = logging.getLogger(__name__)
 
+_BACKEND_ROOT = Path(__file__).parent.parent
+
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
 
-    # Log startup mode
     mode = "DEMO" if settings.demo_mode else "LIVE"
     logger.info("Alphacon API starting — mode=%s", mode)
 
-    if settings.demo_mode:
-        from demo.data import ensure_demo_seeded
-        await ensure_demo_seeded(settings)
+    # Run DB migrations
+    try:
+        from alembic.config import Config
 
-    # Verify Supabase connectivity
-    if settings.supabase_url and settings.supabase_service_role_key:
-        try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                r = await client.get(
-                    f"{settings.supabase_url}/rest/v1/",
-                    headers={
-                        "apikey": settings.supabase_service_role_key,
-                        "Authorization": f"Bearer {settings.supabase_service_role_key}",
-                    },
-                )
-            if r.status_code < 500:
-                logger.info("Supabase connected — %s", settings.supabase_url)
-            else:
-                logger.warning(
-                    "Supabase returned %s on startup ping — check credentials",
-                    r.status_code,
-                )
-        except Exception as exc:
-            logger.warning("Supabase unreachable on startup: %s", exc)
-    else:
-        logger.warning(
-            "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — "
-            "registry and alert features will be disabled"
-        )
+        from alembic import command
+
+        alembic_cfg = Config(str(_BACKEND_ROOT / "alembic.ini"))
+        logger.info("Running Alembic migrations...")
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Migrations complete.")
+    except Exception as exc:
+        logger.warning("Alembic migration failed: %s", exc, exc_info=True)
+
+    # Verify DB connectivity
+    try:
+        from db import engine
+
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        logger.info("Database connected")
+    except Exception as exc:
+        logger.warning("Database unreachable on startup: %s", exc)
+
+    # Seed demo data
+    if settings.demo_mode:
+        from db import AsyncSessionLocal
+        from demo.data import ensure_demo_seeded
+
+        async with AsyncSessionLocal() as session:
+            await ensure_demo_seeded(session)
 
     # Verify Upstash Redis connectivity
     if settings.upstash_redis_rest_url and settings.upstash_redis_rest_token:
@@ -90,7 +96,7 @@ async def lifespan(_app: FastAPI):
                 r = await client.get(f"{base}/get/startup_test", headers=headers)
                 val = r.json().get("result") if r.status_code == 200 else None
             if val == "ok":
-                logger.info("✓ Redis connected — Upstash")
+                logger.info("Redis connected — Upstash")
             else:
                 logger.warning("Redis ping returned unexpected value: %r", val)
         except Exception as exc:

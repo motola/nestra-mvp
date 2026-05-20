@@ -76,17 +76,22 @@ function NavItem({
   badge?: number;
 }) {
   const pathname = usePathname();
-  const active = pathname === href || (href !== "/portfolio" && pathname.startsWith(href + "/"));
+  const active =
+    pathname === href ||
+    (href !== "/portfolio" && pathname.startsWith(href + "/"));
 
   return (
-    <motion.div whileHover={{ x: active ? 0 : 2 }} transition={{ duration: 0.12 }}>
+    <motion.div
+      whileHover={{ x: active ? 0 : 2 }}
+      transition={{ duration: 0.12 }}
+    >
       <Link
         href={href}
         className={cn(
           "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors relative",
           active
             ? "border-l-2 border-l-graphite text-text font-normal bg-surface-2 rounded-l-none -ml-3 pl-[14px]"
-            : "text-text-2 font-light hover:text-text hover:bg-surface-2"
+            : "text-text-2 font-light hover:text-text hover:bg-surface-2",
         )}
       >
         <Icon size={14} />
@@ -106,18 +111,23 @@ function SidebarContent() {
   const activeAlerts = alerts.filter((a) => !a.dismissed).length;
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundImage: DOT_PATTERN }}>
+    <div
+      className="flex flex-col h-full"
+      style={{ backgroundImage: DOT_PATTERN }}
+    >
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border">
         <div className="flex items-center gap-3">
           {/* N monogram */}
-          <div
-            className="w-7 h-7 rounded-lg bg-graphite flex items-center justify-center flex-shrink-0"
-          >
-            <span className="font-display italic text-surface text-sm leading-none">N</span>
+          <div className="w-7 h-7 rounded-lg bg-graphite flex items-center justify-center flex-shrink-0">
+            <span className="font-display italic text-surface text-sm leading-none">
+              N
+            </span>
           </div>
           <div>
-            <p className="font-display italic text-base text-text leading-tight tracking-tight">Nestra</p>
+            <p className="font-display italic text-base text-text leading-tight tracking-tight">
+              Nestra
+            </p>
             <p className="font-body font-light text-[9px] text-text-3 uppercase tracking-widest leading-tight">
               Property Intelligence
             </p>
@@ -152,7 +162,9 @@ function SidebarContent() {
             A
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-body font-normal text-xs text-text truncate">Alphacon Demo</p>
+            <p className="font-body font-normal text-xs text-text truncate">
+              Alphacon Demo
+            </p>
             <span className="font-mono text-[10px] text-text-3">Free plan</span>
           </div>
         </div>

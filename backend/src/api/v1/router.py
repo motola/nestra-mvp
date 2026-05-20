@@ -1,4 +1,5 @@
 """Registers all v1 route modules onto a single APIRouter."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter

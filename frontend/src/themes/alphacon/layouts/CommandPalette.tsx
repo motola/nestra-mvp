@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
-import { Bell, Brain, Building2, Cable, LayoutGrid, Search, Settings, Zap } from "lucide-react";
+import {
+  Bell,
+  Brain,
+  Building2,
+  Cable,
+  LayoutGrid,
+  Search,
+  Settings,
+  Zap,
+} from "lucide-react";
 import { useProperties } from "@/hooks/useProperty";
 import { useAlerts } from "@/hooks/useAlerts";
 import { cn } from "@/lib/utils";
@@ -94,12 +103,14 @@ export function CommandPalette() {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer",
                       "font-body text-sm text-text-2 hover:text-text hover:bg-surface-2",
-                      "data-[selected=true]:bg-surface-2 data-[selected=true]:text-text"
+                      "data-[selected=true]:bg-surface-2 data-[selected=true]:text-text",
                     )}
                   >
                     <Building2 size={14} className="text-text-3" />
                     {p.name}
-                    <span className="ml-auto font-mono text-xs text-text-3">{p.address.split(",")[1]?.trim()}</span>
+                    <span className="ml-auto font-mono text-xs text-text-3">
+                      {p.address.split(",")[1]?.trim()}
+                    </span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -117,15 +128,21 @@ export function CommandPalette() {
                   <Command.Item
                     key={a.id}
                     value={`alert-${a.message}`}
-                    onSelect={() => navigate(`/properties/${a.property_id}/devices/${a.device_id}`)}
+                    onSelect={() =>
+                      navigate(
+                        `/properties/${a.property_id}/devices/${a.device_id}`,
+                      )
+                    }
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer",
                       "font-body text-sm text-text-2 hover:text-text hover:bg-surface-2",
-                      "data-[selected=true]:bg-surface-2"
+                      "data-[selected=true]:bg-surface-2",
                     )}
                   >
                     <Bell size={14} className="text-amber" />
-                    <span className="truncate">{a.device_name} — {a.message}</span>
+                    <span className="truncate">
+                      {a.device_name} — {a.message}
+                    </span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -146,7 +163,7 @@ export function CommandPalette() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer",
                     "font-body text-sm text-text-2 hover:text-text hover:bg-surface-2",
-                    "data-[selected=true]:bg-surface-2 data-[selected=true]:text-text"
+                    "data-[selected=true]:bg-surface-2 data-[selected=true]:text-text",
                   )}
                 >
                   <Icon size={14} className="text-text-3" />

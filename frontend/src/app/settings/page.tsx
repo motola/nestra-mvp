@@ -21,11 +21,17 @@ function AccountTab() {
   return (
     <div className="space-y-6">
       <div className="bg-surface border border-border rounded-xl p-5">
-        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-4">Profile</p>
+        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-4">
+          Profile
+        </p>
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-12 h-12 rounded-full bg-graphite flex items-center justify-center text-surface font-mono">A</div>
+          <div className="w-12 h-12 rounded-full bg-graphite flex items-center justify-center text-surface font-mono">
+            A
+          </div>
           <div>
-            <p className="font-body font-normal text-sm text-text">Alphacon Demo</p>
+            <p className="font-body font-normal text-sm text-text">
+              Alphacon Demo
+            </p>
             <p className="font-mono text-xs text-text-3">demo@alphacon.ai</p>
           </div>
         </div>
@@ -37,7 +43,9 @@ function AccountTab() {
             { label: "Role", value: "Owner" },
           ].map((f) => (
             <div key={f.label}>
-              <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">{f.label}</label>
+              <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">
+                {f.label}
+              </label>
               <input
                 defaultValue={f.value}
                 readOnly
@@ -55,10 +63,14 @@ function AccountTab() {
       </div>
 
       <div className="bg-surface border border-border rounded-xl p-5">
-        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-4">Password</p>
+        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-4">
+          Password
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">Current Password</label>
+            <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">
+              Current Password
+            </label>
             <input
               type="password"
               placeholder="••••••••"
@@ -66,7 +78,9 @@ function AccountTab() {
             />
           </div>
           <div>
-            <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">New Password</label>
+            <label className="font-body font-normal text-xs text-text-3 uppercase tracking-wider block mb-1.5">
+              New Password
+            </label>
             <input
               type="password"
               placeholder="••••••••"
@@ -75,7 +89,9 @@ function AccountTab() {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <Button onClick={() => toast.success("Password updated")}>Update Password</Button>
+          <Button onClick={() => toast.success("Password updated")}>
+            Update Password
+          </Button>
         </div>
       </div>
     </div>
@@ -83,11 +99,31 @@ function AccountTab() {
 }
 
 const NOTIFICATION_PREFS = [
-  { key: "critical_alerts", label: "Critical Alerts", description: "Immediate notification for critical device failures or leaks" },
-  { key: "warning_alerts", label: "Warning Alerts", description: "Notifications for warning-level events" },
-  { key: "weekly_digest", label: "Weekly Digest", description: "Weekly summary of energy usage and property health" },
-  { key: "device_offline", label: "Device Offline", description: "Notify when a device goes offline for more than 30 minutes" },
-  { key: "maintenance_reminders", label: "Maintenance Reminders", description: "Upcoming scheduled maintenance tasks" },
+  {
+    key: "critical_alerts",
+    label: "Critical Alerts",
+    description: "Immediate notification for critical device failures or leaks",
+  },
+  {
+    key: "warning_alerts",
+    label: "Warning Alerts",
+    description: "Notifications for warning-level events",
+  },
+  {
+    key: "weekly_digest",
+    label: "Weekly Digest",
+    description: "Weekly summary of energy usage and property health",
+  },
+  {
+    key: "device_offline",
+    label: "Device Offline",
+    description: "Notify when a device goes offline for more than 30 minutes",
+  },
+  {
+    key: "maintenance_reminders",
+    label: "Maintenance Reminders",
+    description: "Upcoming scheduled maintenance tasks",
+  },
 ];
 
 function NotificationsTab() {
@@ -112,13 +148,20 @@ function NotificationsTab() {
   return (
     <div className="bg-surface border border-border rounded-xl divide-y divide-border">
       {NOTIFICATION_PREFS.map((pref) => (
-        <div key={pref.key} className="flex items-center justify-between px-5 py-4">
+        <div
+          key={pref.key}
+          className="flex items-center justify-between px-5 py-4"
+        >
           <div>
-            <p className="font-body font-normal text-sm text-text">{pref.label}</p>
-            <p className="font-body font-light text-xs text-text-3 mt-0.5">{pref.description}</p>
+            <p className="font-body font-normal text-sm text-text">
+              {pref.label}
+            </p>
+            <p className="font-body font-light text-xs text-text-3 mt-0.5">
+              {pref.description}
+            </p>
           </div>
           <Switch
-            checked={prefs[pref.key] ?? (pref.key === "critical_alerts")}
+            checked={prefs[pref.key] ?? pref.key === "critical_alerts"}
             onCheckedChange={() => toggle(pref.key)}
           />
         </div>
@@ -135,22 +178,34 @@ function IntegrationsTab() {
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-surface border border-border rounded-xl h-16 animate-pulse" />
+            <div
+              key={i}
+              className="bg-surface border border-border rounded-xl h-16 animate-pulse"
+            />
           ))}
         </div>
       ) : (
         integrations.map((integration) => (
-          <div key={integration.vendor} className="bg-surface border border-border rounded-xl flex items-center justify-between px-5 py-4">
+          <div
+            key={integration.vendor}
+            className="bg-surface border border-border rounded-xl flex items-center justify-between px-5 py-4"
+          >
             <div>
-              <p className="font-body font-normal text-sm text-text">{integration.display_name}</p>
-              <p className="font-body font-light text-xs text-text-3 mt-0.5">{integration.description}</p>
+              <p className="font-body font-normal text-sm text-text">
+                {integration.display_name}
+              </p>
+              <p className="font-body font-light text-xs text-text-3 mt-0.5">
+                {integration.description}
+              </p>
             </div>
-            <span className={cn(
-              "font-mono text-xs px-2.5 py-1 rounded-full border",
-              integration.connected
-                ? "text-green bg-green-bg border-green/20"
-                : "text-text-3 bg-surface-2 border-border"
-            )}>
+            <span
+              className={cn(
+                "font-mono text-xs px-2.5 py-1 rounded-full border",
+                integration.connected
+                  ? "text-green bg-green-bg border-green/20"
+                  : "text-text-3 bg-surface-2 border-border",
+              )}
+            >
               {integration.connected ? "Connected" : "Not connected"}
             </span>
           </div>
@@ -158,7 +213,10 @@ function IntegrationsTab() {
       )}
       <p className="font-body font-light text-xs text-text-3 text-center pt-2">
         Manage API keys and connection settings via the{" "}
-        <a href="/integrations" className="underline hover:text-text-2">Integrations</a> page.
+        <a href="/integrations" className="underline hover:text-text-2">
+          Integrations
+        </a>{" "}
+        page.
       </p>
     </div>
   );
@@ -169,15 +227,25 @@ function BillingTab() {
     <div className="space-y-4">
       <div className="bg-surface border border-border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3">Current Plan</p>
-          <span className="font-mono text-xs bg-surface-2 border border-border text-text-3 px-2 py-0.5 rounded-full">Free</span>
+          <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
+            Current Plan
+          </p>
+          <span className="font-mono text-xs bg-surface-2 border border-border text-text-3 px-2 py-0.5 rounded-full">
+            Free
+          </span>
         </div>
         <p className="font-display italic text-2xl text-text mb-1">Free</p>
-        <p className="font-body font-light text-sm text-text-3 mb-5">Up to 3 properties, 20 devices, basic analytics</p>
-        <Button onClick={() => toast.success("Upgrade flow coming soon!")}>Upgrade to Pro</Button>
+        <p className="font-body font-light text-sm text-text-3 mb-5">
+          Up to 3 properties, 20 devices, basic analytics
+        </p>
+        <Button onClick={() => toast.success("Upgrade flow coming soon!")}>
+          Upgrade to Pro
+        </Button>
       </div>
       <div className="bg-surface border border-border rounded-xl p-5">
-        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-3">Pro Plan Features</p>
+        <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-3">
+          Pro Plan Features
+        </p>
         <ul className="space-y-2">
           {[
             "Unlimited properties and devices",
@@ -187,7 +255,10 @@ function BillingTab() {
             "Custom report templates",
             "API access",
           ].map((f) => (
-            <li key={f} className="flex items-center gap-2.5 font-body font-light text-sm text-text-2">
+            <li
+              key={f}
+              className="flex items-center gap-2.5 font-body font-light text-sm text-text-2"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-graphite flex-shrink-0" />
               {f}
             </li>
@@ -210,7 +281,9 @@ function TeamTab() {
               {member.name[0]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-body font-normal text-sm text-text">{member.name}</p>
+              <p className="font-body font-normal text-sm text-text">
+                {member.name}
+              </p>
               <p className="font-mono text-xs text-text-3">{member.email}</p>
             </div>
             <span className="font-mono text-xs bg-surface-2 border border-border text-text-3 px-2 py-0.5 rounded-full">
@@ -219,7 +292,10 @@ function TeamTab() {
           </div>
         ))}
       </div>
-      <Button variant="secondary" onClick={() => toast.success("Team invite coming in Pro plan!")}>
+      <Button
+        variant="secondary"
+        onClick={() => toast.success("Team invite coming in Pro plan!")}
+      >
         Invite team member
       </Button>
     </div>
@@ -239,7 +315,9 @@ export default function SettingsPage() {
       >
         <div className="mb-6">
           <h1 className="font-display italic text-2xl text-text">Settings</h1>
-          <p className="font-body font-light text-sm text-text-3 mt-1">Manage your account and preferences</p>
+          <p className="font-body font-light text-sm text-text-3 mt-1">
+            Manage your account and preferences
+          </p>
         </div>
 
         <RadixTabs.Root value={tab} onValueChange={setTab}>
@@ -252,7 +330,7 @@ export default function SettingsPage() {
                   "flex items-center gap-1.5 px-3 py-2.5 text-xs font-body font-light whitespace-nowrap border-b-2 transition-colors -mb-px",
                   tab === value
                     ? "border-graphite text-text"
-                    : "border-transparent text-text-3 hover:text-text-2"
+                    : "border-transparent text-text-3 hover:text-text-2",
                 )}
               >
                 <Icon size={12} />
@@ -261,11 +339,21 @@ export default function SettingsPage() {
             ))}
           </RadixTabs.List>
 
-          <RadixTabs.Content value="account"><AccountTab /></RadixTabs.Content>
-          <RadixTabs.Content value="notifications"><NotificationsTab /></RadixTabs.Content>
-          <RadixTabs.Content value="integrations"><IntegrationsTab /></RadixTabs.Content>
-          <RadixTabs.Content value="billing"><BillingTab /></RadixTabs.Content>
-          <RadixTabs.Content value="team"><TeamTab /></RadixTabs.Content>
+          <RadixTabs.Content value="account">
+            <AccountTab />
+          </RadixTabs.Content>
+          <RadixTabs.Content value="notifications">
+            <NotificationsTab />
+          </RadixTabs.Content>
+          <RadixTabs.Content value="integrations">
+            <IntegrationsTab />
+          </RadixTabs.Content>
+          <RadixTabs.Content value="billing">
+            <BillingTab />
+          </RadixTabs.Content>
+          <RadixTabs.Content value="team">
+            <TeamTab />
+          </RadixTabs.Content>
         </RadixTabs.Root>
       </motion.div>
     </PageWrapper>

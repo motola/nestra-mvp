@@ -1,5 +1,8 @@
 """Pre-defined demo alerts."""
+
 from __future__ import annotations
+
+from typing import Any
 
 # Legacy vendor IDs used as keys in _demo_id_map
 _PROP_VID_MAP = {
@@ -11,7 +14,7 @@ _PROP_VID_MAP = {
     "demo-prop-006": "Riverside Flat",
 }
 
-DEMO_ALERTS: list[dict] = [
+DEMO_ALERTS: list[dict[str, Any]] = [
     {
         "id": "demo-alert-001",
         "device_id": "demo-dev-bh-003",
@@ -87,13 +90,18 @@ DEMO_ALERTS: list[dict] = [
 ]
 
 
-def get_demo_alerts() -> list[dict]:
+def get_demo_alerts() -> list[dict[str, Any]]:
     """Return DEMO_ALERTS with property_id and device_id resolved to real UUIDs."""
     from demo.data import _demo_id_map
+
     result = []
     for a in DEMO_ALERTS:
         prop_name = _PROP_VID_MAP.get(a["property_id"])
-        prop_id = _demo_id_map.get(f"prop:{prop_name}", a["property_id"]) if prop_name else a["property_id"]
+        prop_id = (
+            _demo_id_map.get(f"prop:{prop_name}", a["property_id"])
+            if prop_name
+            else a["property_id"]
+        )
         dev_id = _demo_id_map.get(f"dev:{a['device_id']}", a["device_id"])
         result.append({**a, "property_id": prop_id, "device_id": dev_id})
     return result

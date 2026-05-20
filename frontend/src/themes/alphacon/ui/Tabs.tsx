@@ -22,7 +22,7 @@ export function Tabs({
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-body transition-colors",
               "text-text-2 hover:text-text",
-              "data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:border data-[state=active]:border-border"
+              "data-[state=active]:bg-surface data-[state=active]:text-text data-[state=active]:border data-[state=active]:border-border",
             )}
           >
             {tab.label}

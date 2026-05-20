@@ -17,7 +17,10 @@ const FILTER_TABS: { key: Filter; label: string }[] = [
   { key: "info", label: "Info" },
 ];
 
-const SEVERITY_HEADER: Record<AlertSeverity, { label: string; icon: typeof CheckCircle; color: string }> = {
+const SEVERITY_HEADER: Record<
+  AlertSeverity,
+  { label: string; icon: typeof CheckCircle; color: string }
+> = {
   critical: { label: "Critical", icon: XCircle, color: "text-red" },
   warning: { label: "Warning", icon: AlertTriangle, color: "text-amber" },
   info: { label: "Info", icon: CheckCircle, color: "text-green" },
@@ -34,7 +37,9 @@ function StatPill({
 }) {
   return (
     <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-1">
-      <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3">{label}</p>
+      <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
+        {label}
+      </p>
       <p className={cn("font-mono text-2xl", color ?? "text-text")}>{value}</p>
     </div>
   );
@@ -46,7 +51,8 @@ export default function AlertsPage() {
   const [filter, setFilter] = useState<Filter>("all");
 
   const active = alerts.filter((a) => !a.dismissed);
-  const filtered = filter === "all" ? active : active.filter((a) => a.severity === filter);
+  const filtered =
+    filter === "all" ? active : active.filter((a) => a.severity === filter);
 
   const counts: Record<Filter, number> = {
     all: active.length,
@@ -67,7 +73,9 @@ export default function AlertsPage() {
           <div>
             <h1 className="font-display italic text-2xl text-text">Alerts</h1>
             <p className="font-body font-light text-sm text-text-3 mt-1">
-              {isLoading ? "Loading…" : `${active.length} active alert${active.length !== 1 ? "s" : ""}`}
+              {isLoading
+                ? "Loading…"
+                : `${active.length} active alert${active.length !== 1 ? "s" : ""}`}
             </p>
           </div>
           {active.length > 0 && (
@@ -84,9 +92,21 @@ export default function AlertsPage() {
         {!isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatPill label="Total" value={counts.all} />
-            <StatPill label="Critical" value={counts.critical} color={counts.critical > 0 ? "text-red" : undefined} />
-            <StatPill label="Warning" value={counts.warning} color={counts.warning > 0 ? "text-amber" : undefined} />
-            <StatPill label="Info" value={counts.info} color={counts.info > 0 ? "text-green" : undefined} />
+            <StatPill
+              label="Critical"
+              value={counts.critical}
+              color={counts.critical > 0 ? "text-red" : undefined}
+            />
+            <StatPill
+              label="Warning"
+              value={counts.warning}
+              color={counts.warning > 0 ? "text-amber" : undefined}
+            />
+            <StatPill
+              label="Info"
+              value={counts.info}
+              color={counts.info > 0 ? "text-green" : undefined}
+            />
           </div>
         )}
 
@@ -100,15 +120,19 @@ export default function AlertsPage() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-body transition-colors",
                 filter === key
                   ? "bg-surface border border-border text-text"
-                  : "text-text-2 hover:text-text"
+                  : "text-text-2 hover:text-text",
               )}
             >
               {label}
               {counts[key] > 0 && (
-                <span className={cn(
-                  "font-mono text-xs px-1.5 py-0.5 rounded-full",
-                  filter === key ? "bg-surface-2 text-text-3" : "bg-surface border border-border text-text-3"
-                )}>
+                <span
+                  className={cn(
+                    "font-mono text-xs px-1.5 py-0.5 rounded-full",
+                    filter === key
+                      ? "bg-surface-2 text-text-3"
+                      : "bg-surface border border-border text-text-3",
+                  )}
+                >
                   {counts[key]}
                 </span>
               )}
@@ -118,14 +142,22 @@ export default function AlertsPage() {
 
         {isLoading ? (
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} className="h-20" />)}
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} className="h-20" />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16">
             <EmptyState
               variant="no_alerts"
-              title={filter === "all" ? "No active alerts" : `No ${filter} alerts`}
-              description={filter === "all" ? "All properties are running normally." : "Try a different filter."}
+              title={
+                filter === "all" ? "No active alerts" : `No ${filter} alerts`
+              }
+              description={
+                filter === "all"
+                  ? "All properties are running normally."
+                  : "Try a different filter."
+              }
             />
           </div>
         ) : (
@@ -139,8 +171,12 @@ export default function AlertsPage() {
                   {filter === "all" && (
                     <div className={cn("flex items-center gap-2 mb-3", color)}>
                       <Icon size={13} />
-                      <span className="font-body font-normal text-xs uppercase tracking-widest">{label}</span>
-                      <span className="font-mono text-xs ml-1 text-text-3">{items.length}</span>
+                      <span className="font-body font-normal text-xs uppercase tracking-widest">
+                        {label}
+                      </span>
+                      <span className="font-mono text-xs ml-1 text-text-3">
+                        {items.length}
+                      </span>
                     </div>
                   )}
                   <div className="space-y-2">

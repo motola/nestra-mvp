@@ -4,11 +4,14 @@ Device service — polls all configured vendor adapters and aggregates results.
 This is the single entry point for device data across the platform.
 It knows about vendor adapters; the API layer does not.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime
 from typing import Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
 from integrations.govee.client import GoveeAdapter
@@ -18,15 +21,16 @@ from models.device import AlphaconDevice
 logger = logging.getLogger(__name__)
 
 
-async def list_all_devices(settings: Settings) -> list[AlphaconDevice]:
+async def list_all_devices(settings: Settings, session: AsyncSession) -> list[AlphaconDevice]:
     """
     Return all devices: demo data (if demo mode), cloud vendor APIs,
-    and saved registry devices (Shelly, Matter from Supabase).
+    and saved registry devices (Shelly, Matter from the database).
     """
     devices: list[AlphaconDevice] = []
 
     if settings.demo_mode:
         from demo.data import DEMO_DEVICES, demo_device_as_alphacon
+
         devices.extend([AlphaconDevice(**demo_device_as_alphacon(d)) for d in DEMO_DEVICES])
 
     if settings.govee_api_key:
@@ -42,8 +46,8 @@ async def list_all_devices(settings: Settings) -> list[AlphaconDevice]:
 
     if settings.lifx_api_token:
         try:
-            adapter = LIFXAdapter(settings.lifx_api_token)
-            lifx_devices = await adapter.list_devices()
+            lifx_adapter = LIFXAdapter(settings.lifx_api_token)
+            lifx_devices = await lifx_adapter.list_devices()
             devices.extend(lifx_devices)
             logger.info("LIFX: fetched %d devices", len(lifx_devices))
         except Exception as exc:
@@ -53,7 +57,8 @@ async def list_all_devices(settings: Settings) -> list[AlphaconDevice]:
 
     try:
         from services.device_registry import list_devices as _list_registry
-        rows = await _list_registry(settings)
+
+        rows = await _list_registry(session)
         devices.extend([_row_to_alphacon(row) for row in rows])
         logger.info("Registry: fetched %d saved devices", len(rows))
     except Exception as exc:
@@ -62,27 +67,32 @@ async def list_all_devices(settings: Settings) -> list[AlphaconDevice]:
     return devices
 
 
-async def get_device(device_id: str, settings: Settings) -> AlphaconDevice | None:
-    """Return current state for a single device. Checks vendor APIs first, falls back to Supabase."""
+async def get_device(
+    device_id: str, settings: Settings, session: AsyncSession
+) -> AlphaconDevice | None:
+    """Return current state for a single device. Checks vendor APIs first, falls back to DB."""
     if settings.demo_mode:
-        from demo.data import is_demo_device, get_demo_device, demo_device_as_alphacon
+        from demo.data import demo_device_as_alphacon, get_demo_device, is_demo_device
+
         if is_demo_device(device_id):
             d = get_demo_device(device_id)
             return AlphaconDevice(**demo_device_as_alphacon(d)) if d else None
 
-    all_devices = await list_all_devices(settings)
+    all_devices = await list_all_devices(settings, session)
     for device in all_devices:
         if device.id == device_id:
             return device
-    # Not found in live vendor APIs — check Supabase registry
+    # Not found in live vendor APIs — check registry
     from services.device_registry import get_device_by_id
-    row = await get_device_by_id(device_id, settings)
+
+    row = await get_device_by_id(device_id, session)
     if not row:
         return None
     device = _row_to_alphacon(row)
     # For Shelly devices with a stored IP, fetch live state so online/power fields are accurate
     if row.get("vendor") == "shelly" and row.get("ip_address"):
         from integrations.shelly_local.controller import ShellyLocalController
+
         try:
             live = await ShellyLocalController(row["ip_address"]).get_state()
             device.online = True
@@ -95,21 +105,33 @@ async def get_device(device_id: str, settings: Settings) -> AlphaconDevice | Non
     return device
 
 
-async def get_saved_devices(property_id: str, settings: Settings) -> list[AlphaconDevice]:
-    """Return devices from the Supabase registry for a specific property."""
+async def get_saved_devices(
+    property_id: str, settings: Settings, session: AsyncSession
+) -> list[AlphaconDevice]:
+    """Return devices from the registry for a specific property."""
     if settings.demo_mode:
-        from demo.data import is_demo_property, get_demo_devices_for_property, demo_device_as_alphacon
+        from demo.data import (
+            demo_device_as_alphacon,
+            get_demo_devices_for_property,
+            is_demo_property,
+        )
+
         if is_demo_property(property_id):
-            return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in get_demo_devices_for_property(property_id)]
+            demo_devs = get_demo_devices_for_property(property_id)
+            if demo_devs:
+                return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in demo_devs]
+            # Property has real Supabase devices — fall through to DB query
     from services.device_registry import list_devices
-    rows = await list_devices(settings, property_id=property_id)
+
+    rows = await list_devices(session, property_id=property_id)
     return [_row_to_alphacon(row) for row in rows]
 
 
-async def get_all_saved_devices(settings: Settings) -> list[AlphaconDevice]:
-    """Return all devices from the Supabase registry across all properties."""
+async def get_all_saved_devices(settings: Settings, session: AsyncSession) -> list[AlphaconDevice]:
+    """Return all devices from the registry across all properties."""
     from services.device_registry import list_devices
-    rows = await list_devices(settings)
+
+    rows = await list_devices(session)
     return [_row_to_alphacon(row) for row in rows]
 
 
@@ -124,7 +146,6 @@ def _infer_device_type(vendor: str, model: str) -> str:
         return "sensor"
     if any(x in m for x in ["lock"]):
         return "lock"
-    # vendor-level fallback
     if vendor in ("shelly", "shelly_local"):
         return "plug"
     if vendor in ("govee", "lifx"):
@@ -133,7 +154,7 @@ def _infer_device_type(vendor: str, model: str) -> str:
 
 
 def _row_to_alphacon(row: dict[str, Any]) -> AlphaconDevice:
-    """Convert a Supabase devices row to AlphaconDevice."""
+    """Convert a devices registry row to AlphaconDevice."""
     vendor = row.get("vendor", "unknown")
     model = row.get("model") or ""
     created = row.get("created_at")

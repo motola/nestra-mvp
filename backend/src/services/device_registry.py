@@ -1,174 +1,103 @@
-"""
-Device registry — CRUD on the Supabase devices table via PostgREST.
+"""Device registry — CRUD on the devices table via SQLModel."""
 
-Uses SUPABASE_URL/rest/v1/devices with the service role key.
-No asyncpg required — plain HTTPS via httpx.
-"""
 from __future__ import annotations
 
 import logging
 import uuid
 from typing import Any
 
-import httpx
+from sqlalchemy import delete as sql_delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
-from config import Settings
+from models.database import Device as DBDevice
 
 logger = logging.getLogger(__name__)
 
 
-def _base_url(settings: Settings) -> str:
-    return f"{settings.supabase_url}/rest/v1/devices"
-
-
-def _headers(settings: Settings) -> dict[str, str]:
+def _to_dict(d: DBDevice) -> dict[str, Any]:
     return {
-        "apikey": settings.supabase_service_role_key,
-        "Authorization": f"Bearer {settings.supabase_service_role_key}",
-        "Content-Type": "application/json",
+        "id": str(d.id),
+        "property_id": str(d.property_id) if d.property_id else None,
+        "room_id": str(d.room_id) if d.room_id else None,
+        "vendor": d.vendor,
+        "vendor_id": d.vendor_id,
+        "name": d.name,
+        "model": d.model,
+        "ip_address": d.ip_address,
+        "mac": d.mac,
+        "created_at": d.created_at.isoformat() if d.created_at else None,
     }
-
-
-def _configured(settings: Settings) -> bool:
-    return bool(settings.supabase_url and settings.supabase_service_role_key)
 
 
 async def list_devices(
-    settings: Settings,
+    session: AsyncSession,
     property_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Return devices from Supabase, newest first. Optionally filter by property_id."""
-    if not _configured(settings):
-        return []
-    try:
-        params: dict[str, str] = {"order": "created_at.desc"}
-        if property_id:
-            params["property_id"] = f"eq.{property_id}"
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(
-                _base_url(settings),
-                headers=_headers(settings),
-                params=params,
-            )
-            if r.status_code == 200:
-                return r.json()
-            logger.warning("Supabase list_devices %s: %s", r.status_code, r.text[:200])
-    except Exception as exc:
-        logger.error("Supabase list_devices failed: %s", exc)
-    return []
+    stmt = select(DBDevice).order_by(DBDevice.created_at.desc())  # type: ignore[union-attr]
+    if property_id:
+        stmt = stmt.where(DBDevice.property_id == uuid.UUID(property_id))  # type: ignore[arg-type]
+    result = await session.execute(stmt)
+    return [_to_dict(row) for row in result.scalars().all()]
 
 
-async def save_device(data: dict[str, Any], settings: Settings) -> dict[str, Any]:
-    """Insert a device row and return the created record."""
-    if not _configured(settings):
-        raise RuntimeError("Supabase not configured — add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env")
-
-    row = {
-        "id": str(uuid.uuid4()),
-        "property_id": data.get("property_id") or None,
-        "room_id": data.get("room_id") or None,
-        "vendor": data["vendor"],
-        "vendor_id": data.get("vendor_id") or data.get("mac") or "",
-        "name": data["name"],
-        "model": data.get("model") or "",
-        "ip_address": data.get("ip") or "",
-        "mac": data.get("mac") or "",
-    }
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.post(
-            _base_url(settings),
-            headers={**_headers(settings), "Prefer": "return=representation"},
-            json=row,
-        )
-        r.raise_for_status()
-        created = r.json()
-        return created[0] if isinstance(created, list) else created
+async def save_device(data: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    device = DBDevice(
+        property_id=uuid.UUID(data["property_id"]) if data.get("property_id") else None,
+        room_id=uuid.UUID(data["room_id"]) if data.get("room_id") else None,
+        vendor=data["vendor"],
+        vendor_id=data.get("vendor_id") or data.get("mac") or "",
+        name=data["name"],
+        model=data.get("model") or "",
+        ip_address=data.get("ip") or "",
+        mac=data.get("mac") or "",
+    )
+    session.add(device)
+    await session.flush()
+    await session.refresh(device)
+    await session.commit()
+    return _to_dict(device)
 
 
-async def get_device_by_id(device_id: str, settings: Settings) -> dict[str, Any] | None:
-    """Return a single device row by its UUID, or None if not found."""
-    if not _configured(settings):
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.get(
-                _base_url(settings),
-                headers=_headers(settings),
-                params={"id": f"eq.{device_id}", "limit": "1"},
-            )
-            if r.status_code == 200:
-                rows = r.json()
-                return rows[0] if rows else None
-            logger.warning("Supabase get_device_by_id %s: %s", r.status_code, r.text[:200])
-    except Exception as exc:
-        logger.error("Supabase get_device_by_id failed: %s", exc)
-    return None
+async def get_device_by_id(device_id: str, session: AsyncSession) -> dict[str, Any] | None:
+    device = await session.get(DBDevice, uuid.UUID(device_id))
+    return _to_dict(device) if device else None
 
 
-async def update_device(device_id: str, data: dict[str, Any], settings: Settings) -> dict[str, Any]:
-    """Partially update a device row and return the updated record."""
-    if not _configured(settings):
-        raise RuntimeError("Supabase not configured")
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.patch(
-            _base_url(settings),
-            headers={**_headers(settings), "Prefer": "return=representation"},
-            params={"id": f"eq.{device_id}"},
-            json=data,
-        )
-        r.raise_for_status()
-        rows = r.json()
-        return rows[0] if isinstance(rows, list) and rows else data
+async def update_device(
+    device_id: str, data: dict[str, Any], session: AsyncSession
+) -> dict[str, Any]:
+    device = await session.get(DBDevice, uuid.UUID(device_id))
+    if not device:
+        raise RuntimeError(f"Device {device_id} not found")
+    for key, value in data.items():
+        if hasattr(device, key):
+            setattr(device, key, value)
+    await session.commit()
+    await session.refresh(device)
+    return _to_dict(device)
 
 
-async def delete_device(device_id: str, settings: Settings) -> None:
-    """Delete a device row by its UUID."""
-    if not _configured(settings):
-        raise RuntimeError("Supabase not configured")
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.delete(
-            _base_url(settings),
-            headers=_headers(settings),
-            params={"id": f"eq.{device_id}"},
-        )
-        r.raise_for_status()
+async def delete_device(device_id: str, session: AsyncSession) -> None:
+    await session.execute(sql_delete(DBDevice).where(DBDevice.id == uuid.UUID(device_id)))  # type: ignore[arg-type]
+    await session.commit()
 
 
-async def move_devices_to_null_room(room_id: str, settings: Settings) -> None:
-    """Bulk-set room_id = null for all devices currently in a room."""
-    if not _configured(settings):
-        return
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            r = await client.patch(
-                _base_url(settings),
-                headers=_headers(settings),
-                params={"room_id": f"eq.{room_id}"},
-                json={"room_id": None},
-            )
-            if r.status_code not in (200, 204):
-                logger.warning("move_devices_to_null_room %s: %s", r.status_code, r.text[:200])
-    except Exception as exc:
-        logger.error("move_devices_to_null_room failed: %s", exc)
+async def move_devices_to_null_room(room_id: str, session: AsyncSession) -> None:
+    stmt = select(DBDevice).where(DBDevice.room_id == uuid.UUID(room_id))  # type: ignore[arg-type]
+    result = await session.execute(stmt)
+    for device in result.scalars().all():
+        device.room_id = None
+    await session.commit()
 
 
 async def assign_device_room(
-    device_id: str, room_id: str | None, settings: Settings
+    device_id: str, room_id: str | None, session: AsyncSession
 ) -> dict[str, Any]:
-    """Update a device's room_id. Returns the updated device row."""
-    if not _configured(settings):
-        raise RuntimeError("Supabase not configured")
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        r = await client.patch(
-            _base_url(settings),
-            headers={**_headers(settings), "Prefer": "return=representation"},
-            params={"id": f"eq.{device_id}"},
-            json={"room_id": room_id},
-        )
-        r.raise_for_status()
-        rows = r.json()
-        return rows[0] if isinstance(rows, list) and rows else {"id": device_id}
+    device = await session.get(DBDevice, uuid.UUID(device_id))
+    if not device:
+        raise RuntimeError(f"Device {device_id} not found")
+    device.room_id = uuid.UUID(room_id) if room_id else None
+    await session.commit()
+    await session.refresh(device)
+    return _to_dict(device)

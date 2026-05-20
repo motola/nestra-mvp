@@ -22,12 +22,17 @@ export function Switch({
       {(label || description) && (
         <div className="flex-1 mr-4">
           {label && (
-            <label htmlFor={switchId} className="font-body font-normal text-sm text-text cursor-pointer">
+            <label
+              htmlFor={switchId}
+              className="font-body font-normal text-sm text-text cursor-pointer"
+            >
               {label}
             </label>
           )}
           {description && (
-            <p className="font-body font-light text-xs text-text-3 mt-0.5">{description}</p>
+            <p className="font-body font-light text-xs text-text-3 mt-0.5">
+              {description}
+            </p>
           )}
         </div>
       )}
@@ -37,13 +42,13 @@ export function Switch({
         onCheckedChange={onCheckedChange}
         className={cn(
           "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none flex-shrink-0",
-          checked ? "bg-graphite" : "bg-border"
+          checked ? "bg-graphite" : "bg-border",
         )}
       >
         <RadixSwitch.Thumb
           className={cn(
             "block h-4 w-4 rounded-full bg-surface transition-transform",
-            checked ? "translate-x-[18px]" : "translate-x-0.5"
+            checked ? "translate-x-[18px]" : "translate-x-0.5",
           )}
         />
       </RadixSwitch.Root>

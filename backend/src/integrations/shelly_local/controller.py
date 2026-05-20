@@ -1,4 +1,5 @@
 """Direct local-network controller for Shelly devices."""
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,7 @@ class ShellyLocalController:
 
     async def get_power(self) -> float:
         state = await self.get_state()
-        return state["power"]
+        return float(state["power"])
 
     async def _relay_set(self, on: bool) -> bool:
         try:

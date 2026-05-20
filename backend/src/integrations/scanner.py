@@ -11,6 +11,7 @@ Concurrently discovers smart devices from all supported vendors:
 Auto-detects local subnet. Hard timeout: 10 seconds total.
 UDP scans run via asyncio.to_thread to avoid blocking the event loop.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -35,13 +36,15 @@ _UDP_TIMEOUT = 3.0
 
 # ── Shelly HTTP scan ──────────────────────────────────────────────────────────
 
+
 async def scan_shelly(subnet: str) -> list[dict[str, Any]]:
     """GET /shelly on every host in the /24 subnet using one shared client."""
     hosts = list(ipaddress.IPv4Network(f"{subnet}/24", strict=False).hosts())
     sem = asyncio.Semaphore(200)
 
     async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT) as client:
-        async def check(ip: str) -> dict | None:
+
+        async def check(ip: str) -> dict[str, Any] | None:
             async with sem:
                 try:
                     r = await client.get(f"http://{ip}/shelly")
@@ -68,16 +71,14 @@ async def scan_shelly(subnet: str) -> list[dict[str, Any]]:
 # ── Govee UDP scan ────────────────────────────────────────────────────────────
 
 _GOVEE_PORT = 4001
-_GOVEE_PACKET = json.dumps(
-    {"msg": {"cmd": "scan", "data": {"account_topic": "reserve"}}}
-).encode()
+_GOVEE_PACKET = json.dumps({"msg": {"cmd": "scan", "data": {"account_topic": "reserve"}}}).encode()
 
 
 def _scan_govee_sync() -> list[dict[str, Any]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.settimeout(_UDP_TIMEOUT)
-    devices: list[dict] = []
+    devices: list[dict[str, Any]] = []
     try:
         sock.sendto(_GOVEE_PACKET, ("255.255.255.255", _GOVEE_PORT))
         deadline = time.monotonic() + _UDP_TIMEOUT
@@ -86,15 +87,17 @@ def _scan_govee_sync() -> list[dict[str, Any]]:
                 data, addr = sock.recvfrom(4096)
                 payload = json.loads(data.decode())
                 device_data = payload.get("msg", {}).get("data", {})
-                devices.append({
-                    "vendor": "govee",
-                    "name": device_data.get("sku", f"Govee@{addr[0]}"),
-                    "model": device_data.get("sku", "Unknown"),
-                    "ip": addr[0],
-                    "mac": device_data.get("device", ""),
-                    "raw": payload,
-                })
-            except (socket.timeout, json.JSONDecodeError, UnicodeDecodeError):
+                devices.append(
+                    {
+                        "vendor": "govee",
+                        "name": device_data.get("sku", f"Govee@{addr[0]}"),
+                        "model": device_data.get("sku", "Unknown"),
+                        "ip": addr[0],
+                        "mac": device_data.get("device", ""),
+                        "raw": payload,
+                    }
+                )
+            except (TimeoutError, json.JSONDecodeError, UnicodeDecodeError):
                 break
     except Exception as exc:
         logger.debug("Govee UDP scan error: %s", exc)
@@ -129,22 +132,24 @@ def _scan_lifx_sync() -> list[dict[str, Any]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.settimeout(_UDP_TIMEOUT)
-    devices: list[dict] = []
+    devices: list[dict[str, Any]] = []
     try:
         sock.sendto(packet, ("255.255.255.255", _LIFX_PORT))
         deadline = time.monotonic() + _UDP_TIMEOUT
         while time.monotonic() < deadline:
             try:
                 data, addr = sock.recvfrom(128)
-                devices.append({
-                    "vendor": "lifx",
-                    "name": f"LIFX@{addr[0]}",
-                    "model": "LIFX Light",
-                    "ip": addr[0],
-                    "mac": "",
-                    "raw": {"bytes": data.hex()},
-                })
-            except socket.timeout:
+                devices.append(
+                    {
+                        "vendor": "lifx",
+                        "name": f"LIFX@{addr[0]}",
+                        "model": "LIFX Light",
+                        "ip": addr[0],
+                        "mac": "",
+                        "raw": {"bytes": data.hex()},
+                    }
+                )
+            except TimeoutError:
                 break
     except Exception as exc:
         logger.debug("LIFX UDP scan error: %s", exc)
@@ -187,7 +192,7 @@ def _scan_kasa_sync() -> list[dict[str, Any]]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.settimeout(_UDP_TIMEOUT)
-    devices: list[dict] = []
+    devices: list[dict[str, Any]] = []
     try:
         sock.sendto(_KASA_PACKET, ("255.255.255.255", _KASA_PORT))
         deadline = time.monotonic() + _UDP_TIMEOUT
@@ -196,15 +201,17 @@ def _scan_kasa_sync() -> list[dict[str, Any]]:
                 data, addr = sock.recvfrom(4096)
                 payload = json.loads(_kasa_decrypt(data))
                 info = payload.get("system", {}).get("get_sysinfo", {})
-                devices.append({
-                    "vendor": "kasa",
-                    "name": info.get("alias", f"Kasa@{addr[0]}"),
-                    "model": info.get("model", "Unknown"),
-                    "ip": addr[0],
-                    "mac": info.get("mac", ""),
-                    "raw": info,
-                })
-            except (socket.timeout, json.JSONDecodeError, UnicodeDecodeError):
+                devices.append(
+                    {
+                        "vendor": "kasa",
+                        "name": info.get("alias", f"Kasa@{addr[0]}"),
+                        "model": info.get("model", "Unknown"),
+                        "ip": addr[0],
+                        "mac": info.get("mac", ""),
+                        "raw": info,
+                    }
+                )
+            except (TimeoutError, json.JSONDecodeError, UnicodeDecodeError):
                 break
     except Exception as exc:
         logger.debug("Kasa UDP scan error: %s", exc)
@@ -231,35 +238,36 @@ def _scan_matter_sync() -> list[dict[str, Any]]:
         logger.debug("zeroconf not available — skipping Matter mDNS scan")
         return []
 
-    devices: list[dict] = []
+    devices: list[dict[str, Any]] = []
 
     class _Handler:
-        def add_service(self, zc: "Zeroconf", type_: str, name: str) -> None:
+        def add_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             info = zc.get_service_info(type_, name)
             if info:
-                addresses = [
-                    socket.inet_ntoa(a) for a in info.addresses if len(a) == 4
-                ]
+                addresses = [socket.inet_ntoa(a) for a in info.addresses if len(a) == 4]
                 ip = addresses[0] if addresses else ""
-                devices.append({
-                    "vendor": "matter",
-                    "name": name.replace(f".{type_}", "").replace("._matter._tcp.local.", ""),
-                    "model": "Matter Device",
-                    "ip": ip,
-                    "mac": "",
-                    "raw": {"service": name, "port": info.port},
-                })
+                devices.append(
+                    {
+                        "vendor": "matter",
+                        "name": name.replace(f".{type_}", "").replace("._matter._tcp.local.", ""),
+                        "model": "Matter Device",
+                        "ip": ip,
+                        "mac": "",
+                        "raw": {"service": name, "port": info.port},
+                    }
+                )
 
-        def remove_service(self, zc: "Zeroconf", type_: str, name: str) -> None:
+        def remove_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             pass
 
-        def update_service(self, zc: "Zeroconf", type_: str, name: str) -> None:
+        def update_service(self, zc: Zeroconf, type_: str, name: str) -> None:
             pass
 
     zc = Zeroconf()
     try:
-        ServiceBrowser(zc, _MATTER_SERVICE, _Handler())
+        ServiceBrowser(zc, _MATTER_SERVICE, _Handler())  # type: ignore[arg-type]
         import time
+
         time.sleep(_MATTER_BROWSE_TIMEOUT)
     finally:
         zc.close()
@@ -273,13 +281,14 @@ async def scan_matter() -> list[dict[str, Any]]:
 
 # ── Combined scan ─────────────────────────────────────────────────────────────
 
+
 async def scan_all() -> list[dict[str, Any]]:
     """Scan the local /24 subnet for Shelly devices."""
     subnet = get_local_subnet()
     logger.info("Scanning subnet %s/24", subnet)
     try:
         devices = await asyncio.wait_for(scan_shelly(subnet), timeout=_SCAN_TIMEOUT)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning("Network scan timed out after %ss", _SCAN_TIMEOUT)
         return []
     devices.sort(key=lambda d: d.get("name", ""))

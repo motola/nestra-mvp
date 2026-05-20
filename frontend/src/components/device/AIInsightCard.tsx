@@ -8,7 +8,12 @@ import { cn, localDateTime } from "@/lib/utils";
 
 const SEVERITY_CONFIG: Record<
   InsightSeverity,
-  { borderColor: string; bgColor: string; textColor: string; icon: typeof CheckCircle }
+  {
+    borderColor: string;
+    bgColor: string;
+    textColor: string;
+    icon: typeof CheckCircle;
+  }
 > = {
   info: {
     borderColor: "border-l-green",
@@ -31,7 +36,11 @@ const SEVERITY_CONFIG: Record<
 };
 
 export function AIInsightCard({ deviceId }: { deviceId: string }) {
-  const { data: insight, isLoading, isError } = useQuery<Insight>({
+  const {
+    data: insight,
+    isLoading,
+    isError,
+  } = useQuery<Insight>({
     queryKey: ["insight", deviceId],
     queryFn: () => insightsApi.get(deviceId),
     staleTime: 15 * 60 * 1000,
@@ -62,20 +71,37 @@ export function AIInsightCard({ deviceId }: { deviceId: string }) {
         </p>
       )}
 
-      {insight && (() => {
-        const { borderColor, bgColor, textColor, icon: Icon } = SEVERITY_CONFIG[insight.severity];
-        return (
-          <div className={cn("border-l-4 rounded-r-lg p-3 flex gap-2.5", borderColor, bgColor)}>
-            <Icon size={15} className={cn("flex-shrink-0 mt-0.5", textColor)} />
-            <div>
-              <p className="font-body font-light text-sm text-text leading-relaxed">{insight.message}</p>
-              <p className="font-mono text-xs text-text-3 mt-1.5">
-                {localDateTime(insight.generated_at)}
-              </p>
+      {insight &&
+        (() => {
+          const {
+            borderColor,
+            bgColor,
+            textColor,
+            icon: Icon,
+          } = SEVERITY_CONFIG[insight.severity];
+          return (
+            <div
+              className={cn(
+                "border-l-4 rounded-r-lg p-3 flex gap-2.5",
+                borderColor,
+                bgColor,
+              )}
+            >
+              <Icon
+                size={15}
+                className={cn("flex-shrink-0 mt-0.5", textColor)}
+              />
+              <div>
+                <p className="font-body font-light text-sm text-text leading-relaxed">
+                  {insight.message}
+                </p>
+                <p className="font-mono text-xs text-text-3 mt-1.5">
+                  {localDateTime(insight.generated_at)}
+                </p>
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
     </div>
   );
 }

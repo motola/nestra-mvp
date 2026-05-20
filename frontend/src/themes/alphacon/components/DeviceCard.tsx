@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Droplets, Lock, LockOpen, Shield, Thermometer, Wifi, WifiOff, Zap } from "lucide-react";
+import {
+  Droplets,
+  Lock,
+  LockOpen,
+  Shield,
+  Thermometer,
+  Wifi,
+  WifiOff,
+  Zap,
+} from "lucide-react";
 import type { AlphaconDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { kelvinToRgb, BrightnessBar } from "./ColourPreview";
@@ -37,7 +46,12 @@ function powerColor(w: number): string {
   return "text-red";
 }
 
-function getLightGradient(r: number, g: number, b: number, on: boolean): string {
+function getLightGradient(
+  r: number,
+  g: number,
+  b: number,
+  on: boolean,
+): string {
   if (!on) return "";
   return `radial-gradient(ellipse at 50% 0%, rgba(${r},${g},${b},0.1) 0%, transparent 70%)`;
 }
@@ -49,7 +63,9 @@ export function DeviceCard({
   device: AlphaconDevice;
   propertyId?: string;
 }) {
-  const href = propertyId ? `/properties/${propertyId}/devices/${device.id}` : "#";
+  const href = propertyId
+    ? `/properties/${propertyId}/devices/${device.id}`
+    : "#";
   const state = device.state as Record<string, unknown>;
   const isOn = Boolean(state.on);
   const isLocked = Boolean(state.locked);
@@ -57,20 +73,41 @@ export function DeviceCard({
   const motionActive = Boolean(state.motion);
 
   // Light colour state
-  const colorState = state.color as { r: number; g: number; b: number } | undefined;
-  const colorTem = (state.colorTem ?? state.color_temp_kelvin) as number | undefined;
-  let lightR = 255, lightG = 210, lightB = 140;
-  if (colorState) { lightR = colorState.r; lightG = colorState.g; lightB = colorState.b; }
-  else if (colorTem) { [lightR, lightG, lightB] = kelvinToRgb(colorTem); }
+  const colorState = state.color as
+    | { r: number; g: number; b: number }
+    | undefined;
+  const colorTem = (state.colorTem ?? state.color_temp_kelvin) as
+    | number
+    | undefined;
+  let lightR = 255,
+    lightG = 210,
+    lightB = 140;
+  if (colorState) {
+    lightR = colorState.r;
+    lightG = colorState.g;
+    lightB = colorState.b;
+  } else if (colorTem) {
+    [lightR, lightG, lightB] = kelvinToRgb(colorTem);
+  }
 
-  const brightness = typeof state.brightness === "number" ? state.brightness as number : 100;
+  const brightness =
+    typeof state.brightness === "number" ? (state.brightness as number) : 100;
   const isLight = device.type === "light";
-  const gradientStyle = isLight ? { background: getLightGradient(lightR, lightG, lightB, isOn) } : {};
-  const borderStyle = isLight && isOn ? { borderColor: `rgba(${lightR},${lightG},${lightB},0.3)` } : {};
+  const gradientStyle = isLight
+    ? { background: getLightGradient(lightR, lightG, lightB, isOn) }
+    : {};
+  const borderStyle =
+    isLight && isOn
+      ? { borderColor: `rgba(${lightR},${lightG},${lightB},0.3)` }
+      : {};
 
   // Sensor tints
-  const tempTint = device.temperature != null ? getTempTint(device.temperature) : "";
-  const humidTint = device.humidity != null && !tempTint ? getHumidityTint(device.humidity) : "";
+  const tempTint =
+    device.temperature != null ? getTempTint(device.temperature) : "";
+  const humidTint =
+    device.humidity != null && !tempTint
+      ? getHumidityTint(device.humidity)
+      : "";
   const sensorTint = tempTint || humidTint;
 
   return (
@@ -79,23 +116,32 @@ export function DeviceCard({
         className={cn(
           "bg-surface border border-border rounded-xl p-4 cursor-pointer",
           "hover:border-border-strong hover:bg-surface-2 hover:-translate-y-0.5 transition-all duration-150",
-          sensorTint && `border-l-4 ${sensorTint}`
+          sensorTint && `border-l-4 ${sensorTint}`,
         )}
-        style={{ ...gradientStyle, ...borderStyle, transition: "background 0.3s ease, border-color 0.3s ease" }}
+        style={{
+          ...gradientStyle,
+          ...borderStyle,
+          transition: "background 0.3s ease, border-color 0.3s ease",
+        }}
       >
         <div className="flex items-start justify-between mb-3">
           <div className="min-w-0">
-            <p className="font-body text-sm text-text truncate">{device.name}</p>
+            <p className="font-body text-sm text-text truncate">
+              {device.name}
+            </p>
             <p className="font-mono text-xs text-text-3 mt-0.5 capitalize">
-              {device.vendor !== "demo" ? `${device.vendor} · ` : ""}{device.type}
+              {device.vendor !== "demo" ? `${device.vendor} · ` : ""}
+              {device.type}
             </p>
           </div>
-          <span className={cn(
-            "flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full",
-            device.online
-              ? "bg-green-bg text-green border border-green/20"
-              : "bg-surface-2 text-text-3 border border-border"
-          )}>
+          <span
+            className={cn(
+              "flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full",
+              device.online
+                ? "bg-green-bg text-green border border-green/20"
+                : "bg-surface-2 text-text-3 border border-border",
+            )}
+          >
             {device.online ? <Wifi size={10} /> : <WifiOff size={10} />}
             {device.online ? "Online" : "Offline"}
           </span>
@@ -105,8 +151,12 @@ export function DeviceCard({
           {device.type === "plug" && device.power_draw != null && (
             <div className="flex items-center gap-1.5">
               <Zap size={11} />
-              <span className={powerColor(device.power_draw)}>{device.power_draw} W</span>
-              <span className={cn("ml-auto", isOn ? "text-amber" : "text-text-3")}>
+              <span className={powerColor(device.power_draw)}>
+                {device.power_draw} W
+              </span>
+              <span
+                className={cn("ml-auto", isOn ? "text-amber" : "text-text-3")}
+              >
                 {isOn ? "On" : "Off"}
               </span>
             </div>
@@ -115,26 +165,54 @@ export function DeviceCard({
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <span
-                  className={cn("w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0")}
-                  style={isOn ? { backgroundColor: `rgb(${lightR},${lightG},${lightB})` } : { backgroundColor: "#e0dbcf" }}
+                  className={cn(
+                    "w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0",
+                  )}
+                  style={
+                    isOn
+                      ? {
+                          backgroundColor: `rgb(${lightR},${lightG},${lightB})`,
+                        }
+                      : { backgroundColor: "#e0dbcf" }
+                  }
                 />
-                <span className={isOn ? "text-text-2" : "text-text-3"}>{isOn ? "On" : "Off"}</span>
+                <span className={isOn ? "text-text-2" : "text-text-3"}>
+                  {isOn ? "On" : "Off"}
+                </span>
                 {isOn && (
-                  <span className="text-text-3 ml-auto">{Math.round((brightness / 254) * 100)}%</span>
+                  <span className="text-text-3 ml-auto">
+                    {Math.round((brightness / 254) * 100)}%
+                  </span>
                 )}
               </div>
-              {isOn && <BrightnessBar brightness={Math.round((brightness / 254) * 100)} r={lightR} g={lightG} b={lightB} />}
+              {isOn && (
+                <BrightnessBar
+                  brightness={Math.round((brightness / 254) * 100)}
+                  r={lightR}
+                  g={lightG}
+                  b={lightB}
+                />
+              )}
             </div>
           )}
           {device.type === "lock" && (
             <div className="flex items-center gap-1.5">
-              {isLocked ? <Lock size={11} className="text-green" /> : <LockOpen size={11} className="text-amber" />}
-              <span className={isLocked ? "text-green" : "text-amber"}>{isLocked ? "Locked" : "Unlocked"}</span>
+              {isLocked ? (
+                <Lock size={11} className="text-green" />
+              ) : (
+                <LockOpen size={11} className="text-amber" />
+              )}
+              <span className={isLocked ? "text-green" : "text-amber"}>
+                {isLocked ? "Locked" : "Unlocked"}
+              </span>
             </div>
           )}
           {hasMotion && (
             <div className="flex items-center gap-1.5">
-              <Shield size={11} className={motionActive ? "text-amber" : undefined} />
+              <Shield
+                size={11}
+                className={motionActive ? "text-amber" : undefined}
+              />
               <span className={motionActive ? "text-amber" : undefined}>
                 {motionActive ? "Motion detected" : "No motion"}
               </span>
@@ -142,7 +220,10 @@ export function DeviceCard({
           )}
           {device.leak_detected != null && (
             <div className="flex items-center gap-1.5">
-              <Droplets size={11} className={device.leak_detected ? "text-red" : undefined} />
+              <Droplets
+                size={11}
+                className={device.leak_detected ? "text-red" : undefined}
+              />
               <span className={device.leak_detected ? "text-red" : undefined}>
                 {device.leak_detected ? "Leak detected" : "Dry"}
               </span>
@@ -154,7 +235,12 @@ export function DeviceCard({
                 <Thermometer size={11} />
                 <span>{device.temperature.toFixed(1)} °C</span>
               </div>
-              <span className={cn("text-xs", tempTint ? "text-amber" : "text-text-3")}>
+              <span
+                className={cn(
+                  "text-xs",
+                  tempTint ? "text-amber" : "text-text-3",
+                )}
+              >
                 {getTempLabel(device.temperature)}
               </span>
             </div>
@@ -165,7 +251,12 @@ export function DeviceCard({
                 <Droplets size={11} />
                 <span>{device.humidity.toFixed(0)} %</span>
               </div>
-              <span className={cn("text-xs", humidTint ? "text-amber" : "text-text-3")}>
+              <span
+                className={cn(
+                  "text-xs",
+                  humidTint ? "text-amber" : "text-text-3",
+                )}
+              >
                 {getHumidLabel(device.humidity)}
               </span>
             </div>

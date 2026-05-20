@@ -59,11 +59,16 @@ function CrumbNav({ crumbs }: { crumbs: Crumb[] }) {
         <span key={i} className="flex items-center gap-1.5">
           {i > 0 && <ChevronRight size={13} className="text-text-3" />}
           {crumb.href ? (
-            <a href={crumb.href} className="font-body font-light text-text-3 hover:text-text-2 transition-colors">
+            <a
+              href={crumb.href}
+              className="font-body font-light text-text-3 hover:text-text-2 transition-colors"
+            >
               {crumb.label}
             </a>
           ) : (
-            <span className="font-body font-normal text-text">{crumb.label}</span>
+            <span className="font-body font-normal text-text">
+              {crumb.label}
+            </span>
           )}
         </span>
       ))}
@@ -75,7 +80,9 @@ function Breadcrumb() {
   const pathname = usePathname();
 
   // Match /properties/{id} or /properties/{id}/devices/{deviceId}
-  const propMatch = pathname.match(/^\/properties\/([^/]+)(?:\/devices\/([^/]+))?/);
+  const propMatch = pathname.match(
+    /^\/properties\/([^/]+)(?:\/devices\/([^/]+))?/,
+  );
   const propertyId = propMatch?.[1] ?? null;
   const deviceId = propMatch?.[2] ?? null;
 
@@ -106,17 +113,27 @@ function Breadcrumb() {
   }
 
   const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) return <span className="font-body text-sm text-text-2">Dashboard</span>;
+  if (segments.length === 0)
+    return <span className="font-body text-sm text-text-2">Dashboard</span>;
 
   const crumbs: Crumb[] = segments.map((seg, i) => ({
     label: SEGMENT_LABELS[seg] ?? seg,
-    href: i < segments.length - 1 ? "/" + segments.slice(0, i + 1).join("/") : undefined,
+    href:
+      i < segments.length - 1
+        ? "/" + segments.slice(0, i + 1).join("/")
+        : undefined,
   }));
 
   return <CrumbNav crumbs={crumbs} />;
 }
 
-function NotificationPanel({ alerts, onClose }: { alerts: Alert[]; onClose: () => void }) {
+function NotificationPanel({
+  alerts,
+  onClose,
+}: {
+  alerts: Alert[];
+  onClose: () => void;
+}) {
   const router = useRouter();
   const dismiss = useDismissAlert();
   const ref = useRef<HTMLDivElement>(null);
@@ -154,7 +171,9 @@ function NotificationPanel({ alerts, onClose }: { alerts: Alert[]; onClose: () =
 
       {active.length === 0 ? (
         <div className="px-4 py-8 text-center">
-          <p className="font-body font-light text-sm text-text-3">No active alerts</p>
+          <p className="font-body font-light text-sm text-text-3">
+            No active alerts
+          </p>
         </div>
       ) : (
         <>
@@ -162,13 +181,24 @@ function NotificationPanel({ alerts, onClose }: { alerts: Alert[]; onClose: () =
             {active.map((alert) => {
               const Icon = SEVERITY_ICON[alert.severity];
               return (
-                <li key={alert.id} className="px-4 py-3 hover:bg-surface-2 transition-colors group">
+                <li
+                  key={alert.id}
+                  className="px-4 py-3 hover:bg-surface-2 transition-colors group"
+                >
                   <div className="flex items-start gap-2.5">
-                    <Icon size={14} className={cn("flex-shrink-0 mt-0.5", SEVERITY_COL[alert.severity])} />
+                    <Icon
+                      size={14}
+                      className={cn(
+                        "flex-shrink-0 mt-0.5",
+                        SEVERITY_COL[alert.severity],
+                      )}
+                    />
                     <div className="flex-1 min-w-0">
                       <button
                         onClick={() => {
-                          router.push(`/properties/${alert.property_id}/devices/${alert.device_id}`);
+                          router.push(
+                            `/properties/${alert.property_id}/devices/${alert.device_id}`,
+                          );
                           onClose();
                         }}
                         className="font-body text-xs text-text leading-snug text-left hover:text-text-2 w-full block"
@@ -176,7 +206,9 @@ function NotificationPanel({ alerts, onClose }: { alerts: Alert[]; onClose: () =
                         {alert.message}
                       </button>
                       <div className="flex items-center justify-between mt-1">
-                        <p className="font-mono text-xs text-text-3 truncate">{alert.device_name}</p>
+                        <p className="font-mono text-xs text-text-3 truncate">
+                          {alert.device_name}
+                        </p>
                         <p className="font-mono text-xs text-text-3 ml-2 flex-shrink-0">
                           {format(new Date(alert.created_at), "d MMM, HH:mm")}
                         </p>
@@ -230,7 +262,11 @@ export function Header() {
         {/* Search */}
         <button
           onClick={() => {
-            const e = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+            const e = new KeyboardEvent("keydown", {
+              key: "k",
+              metaKey: true,
+              bubbles: true,
+            });
             document.dispatchEvent(e);
           }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-text-3 hover:text-text-2 hover:border-border-strong transition-colors text-sm font-body font-light"
@@ -255,7 +291,12 @@ export function Header() {
               </span>
             )}
           </button>
-          {notifOpen && <NotificationPanel alerts={alerts} onClose={() => setNotifOpen(false)} />}
+          {notifOpen && (
+            <NotificationPanel
+              alerts={alerts}
+              onClose={() => setNotifOpen(false)}
+            />
+          )}
         </div>
 
         {/* Avatar dropdown */}
@@ -272,9 +313,13 @@ export function Header() {
               className="w-52 bg-surface border border-border rounded-xl z-50 overflow-hidden shadow-sm"
             >
               <div className="px-4 py-3 border-b border-border">
-                <p className="font-body font-normal text-sm text-text">Alphacon Demo</p>
+                <p className="font-body font-normal text-sm text-text">
+                  Alphacon Demo
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-mono text-xs text-text-3">demo@alphacon.ai</span>
+                  <span className="font-mono text-xs text-text-3">
+                    demo@alphacon.ai
+                  </span>
                   <span className="font-mono text-[10px] bg-surface-2 border border-border text-text-3 px-1.5 py-0.5 rounded-full">
                     Free
                   </span>

@@ -5,9 +5,11 @@ Rule: every vendor client must extend BaseVendorAdapter.
 Every method must return AlphaconDevice — never a vendor-specific type.
 Nothing outside this package should ever reference a vendor field name.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from models.device import AlphaconDevice
 
@@ -32,7 +34,7 @@ class BaseVendorAdapter(ABC):
         ...
 
     @abstractmethod
-    async def send_command(self, device_id: str, command: dict) -> bool:
+    async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
         """
         Send a control command to a device.
 

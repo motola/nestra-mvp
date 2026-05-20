@@ -7,10 +7,28 @@ import { format } from "date-fns";
 import type { Alert, AlertSeverity } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const SEVERITY: Record<AlertSeverity, { border: string; bg: string; text: string; icon: typeof CheckCircle }> = {
-  info: { border: "border-l-green", bg: "", text: "text-green", icon: CheckCircle },
-  warning: { border: "border-l-amber", bg: "", text: "text-amber", icon: AlertTriangle },
-  critical: { border: "border-l-red", bg: "bg-red-bg", text: "text-red", icon: XCircle },
+const SEVERITY: Record<
+  AlertSeverity,
+  { border: string; bg: string; text: string; icon: typeof CheckCircle }
+> = {
+  info: {
+    border: "border-l-green",
+    bg: "",
+    text: "text-green",
+    icon: CheckCircle,
+  },
+  warning: {
+    border: "border-l-amber",
+    bg: "",
+    text: "text-amber",
+    icon: AlertTriangle,
+  },
+  critical: {
+    border: "border-l-red",
+    bg: "bg-red-bg",
+    text: "text-red",
+    icon: XCircle,
+  },
 };
 
 export function AlertCard({
@@ -34,7 +52,7 @@ export function AlertCard({
       className={cn(
         "border-l-4 rounded-r-xl p-4 flex items-start gap-3 bg-surface border border-border",
         border,
-        bg
+        bg,
       )}
     >
       <Icon size={15} className={cn("flex-shrink-0 mt-0.5", text)} />
@@ -47,9 +65,13 @@ export function AlertCard({
             {alert.device_name}
           </Link>
           <span className="text-text-3">·</span>
-          <p className="font-body font-light text-xs text-text-3 truncate">{alert.property_name}</p>
+          <p className="font-body font-light text-xs text-text-3 truncate">
+            {alert.property_name}
+          </p>
         </div>
-        <p className="font-body font-light text-sm text-text-2">{alert.message}</p>
+        <p className="font-body font-light text-sm text-text-2">
+          {alert.message}
+        </p>
         <p className="font-mono text-xs text-text-3 mt-1">
           {format(new Date(alert.created_at), "d MMM, HH:mm")}
         </p>

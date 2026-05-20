@@ -9,9 +9,16 @@ export { Switch } from "./alphacon/ui/Switch";
 export { PropertyIllustration } from "./alphacon/ui/PropertyIllustration";
 
 // Components
-export { Sparkline, seededSparklineValues } from "./alphacon/components/Sparkline";
+export {
+  Sparkline,
+  seededSparklineValues,
+} from "./alphacon/components/Sparkline";
 export { StatCard } from "./alphacon/components/StatCard";
-export { ColourPreview, BrightnessBar, kelvinToRgb } from "./alphacon/components/ColourPreview";
+export {
+  ColourPreview,
+  BrightnessBar,
+  kelvinToRgb,
+} from "./alphacon/components/ColourPreview";
 export { PropertyCard } from "./alphacon/components/PropertyCard";
 export { DeviceCard } from "./alphacon/components/DeviceCard";
 export { AlertCard } from "./alphacon/components/AlertCard";

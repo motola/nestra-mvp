@@ -30,13 +30,15 @@ export function Modal({
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-            className
+            className,
           )}
         >
           {(title || description) && (
             <div className="mb-5">
               {title && (
-                <Dialog.Title className="font-display text-xl text-text">{title}</Dialog.Title>
+                <Dialog.Title className="font-display text-xl text-text">
+                  {title}
+                </Dialog.Title>
               )}
               {description && (
                 <Dialog.Description className="font-body font-light text-sm text-text-3 mt-1">
