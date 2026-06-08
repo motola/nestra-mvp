@@ -20,13 +20,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-graphite hover:bg-graphite-2 text-[#fbf9f4] rounded-[9px]",
+  // Espresso accent = primary action
+  primary: "bg-accent hover:bg-accent-2 text-white rounded-[9px]",
   secondary:
     "bg-surface hover:bg-surface-2 text-text border border-border rounded-[9px]",
   ghost: "bg-transparent hover:bg-surface-2 text-text-2 rounded-[9px]",
   destructive:
     "bg-surface hover:bg-red-bg text-red border border-red-bg rounded-[9px]",
-  tagPrim: "bg-graphite hover:bg-graphite-2 text-[#fbf9f4] rounded-tag",
+  // Graphite = system/brand dark chips (not the same family as accent)
+  tagPrim: "bg-graphite hover:bg-graphite-2 text-white rounded-tag",
   tagSec:
     "bg-surface-2 hover:bg-surface text-text-2 border border-border rounded-tag",
 };
