@@ -3,14 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Building,
-  History,
-  Home,
   LayoutGrid,
-  MessageSquare,
   Monitor,
   Plug,
   Settings,
+  Sparkles,
   Users,
   Zap,
   type LucideIcon,
@@ -45,14 +42,16 @@ function SidebarItem({
           : "border-transparent hover:bg-surface-2",
       )}
     >
+      {/* Icon chip — espresso when active, neutral when not */}
       <div
         className={cn(
           "w-6 h-6 rounded-[7px] flex items-center justify-center shrink-0",
-          active ? "bg-graphite text-[#fbf9f4]" : "bg-surface-2 text-text-3",
+          active ? "bg-accent text-white" : "bg-surface-2 text-text-3",
         )}
       >
         <Icon size={13} strokeWidth={1.5} />
       </div>
+
       <span
         className={cn(
           "text-[13px] flex-1",
@@ -61,7 +60,9 @@ function SidebarItem({
       >
         {label}
       </span>
-      {badge && (
+
+      {/* Count badge takes priority over the trailing dot */}
+      {badge ? (
         <span
           className={cn(
             "font-mono text-[9px] uppercase tracking-[0.08em] font-semibold px-[7px] py-[2px] rounded-tag",
@@ -72,7 +73,10 @@ function SidebarItem({
         >
           {badge}
         </span>
-      )}
+      ) : active ? (
+        // 5px accent trailing dot for active items with no badge
+        <span className="w-[5px] h-[5px] rounded-full bg-accent shrink-0" />
+      ) : null}
     </Link>
   );
 }
@@ -87,11 +91,13 @@ export function Sidebar() {
       <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-3 px-2.5 py-2 m-0">
         Workspace
       </p>
+
+      {/* Nav order per spec: Intelligence · Portfolio · Devices · Integrations · Automations */}
       <SidebarItem
-        href="/overview"
-        icon={Home}
-        label="Overview"
-        active={active("/overview")}
+        href="/intelligence"
+        icon={Sparkles}
+        label="Intelligence"
+        active={active("/intelligence")}
       />
       <SidebarItem
         href="/portfolio"
@@ -121,59 +127,8 @@ export function Sidebar() {
         label="Automations"
         active={active("/automations")}
       />
-      <SidebarItem
-        href="/agent"
-        icon={MessageSquare}
-        label="Agent"
-        active={active("/agent")}
-      />
-      <SidebarItem
-        href="/audit"
-        icon={History}
-        label="Audit log"
-        active={active("/audit")}
-      />
 
-      <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-3 px-2.5 pt-4 pb-2 m-0">
-        Properties
-      </p>
-      <SidebarItem
-        href="/properties/maple-court"
-        icon={Building}
-        label="Maple Court"
-        badge="1"
-        badgeVariant="warn"
-        active={active("/properties/maple-court")}
-      />
-      <SidebarItem
-        href="/properties/ash-cottage"
-        icon={Building}
-        label="Ash Cottage"
-        active={active("/properties/ash-cottage")}
-      />
-      <SidebarItem
-        href="/properties/northbrook-mill"
-        icon={Building}
-        label="Northbrook Mill"
-        badge="2"
-        active={active("/properties/northbrook-mill")}
-      />
-      <SidebarItem
-        href="/properties/heron-place"
-        icon={Building}
-        label="Heron Place"
-        active={active("/properties/heron-place")}
-      />
-      <SidebarItem
-        href="/properties/seacombe-wharf"
-        icon={Building}
-        label="Seacombe Wharf"
-        active={active("/properties/seacombe-wharf")}
-      />
-      <div className="px-2.5 py-1.5">
-        <span className="text-[12px] text-text-3">+ 7 more</span>
-      </div>
-
+      {/* Team + Settings pinned to bottom */}
       <div className="mt-auto pt-4 flex flex-col gap-0.5">
         <SidebarItem
           href="/team"
