@@ -678,3 +678,154 @@ export const VENDORS: Vendor[] = [
     popular: false,
   },
 ];
+
+// ─── Team ─────────────────────────────────────────────────────────────────────
+
+export type TeamRole =
+  | "OWNER"
+  | "ORG_ADMIN"
+  | "PORTFOLIO_ADMIN"
+  | "PORTFOLIO_MANAGER"
+  | "PROPERTY_MANAGER"
+  | "CONTRACTOR";
+
+export interface TeamMember {
+  name: string;
+  email: string;
+  role: TeamRole;
+  scope: string;
+  last: string;
+}
+
+export const TEAM: TeamMember[] = [
+  {
+    name: "Marcus Chen",
+    email: "marcus@chen.holdings",
+    role: "OWNER",
+    scope: "Org · Chen Property Holdings",
+    last: "Active now",
+  },
+  {
+    name: "Rina Patel",
+    email: "rina@chen.holdings",
+    role: "ORG_ADMIN",
+    scope: "Org · Chen Property Holdings",
+    last: "2 h ago",
+  },
+  {
+    name: "Theo Adeyemi",
+    email: "theo@chen.holdings",
+    role: "PORTFOLIO_ADMIN",
+    scope: "Northern Portfolio",
+    last: "today 09:14",
+  },
+  {
+    name: "Jules Marais",
+    email: "jules@chen.holdings",
+    role: "PORTFOLIO_MANAGER",
+    scope: "Southern Portfolio",
+    last: "yesterday",
+  },
+  {
+    name: "Olu Adebayo",
+    email: "olu@chen.holdings",
+    role: "PROPERTY_MANAGER",
+    scope: "Maple Court, Heron Place",
+    last: "today 07:30",
+  },
+  {
+    name: "Sam Field",
+    email: "sam@field.contractor",
+    role: "CONTRACTOR",
+    scope: "Maple Court · expires 30 Apr",
+    last: "yesterday",
+  },
+];
+
+// ─── Audit log ────────────────────────────────────────────────────────────────
+
+export type AuditActorKind =
+  | "AGENT"
+  | "AUTOMATION"
+  | "USER"
+  | "SYSTEM"
+  | "VENDOR";
+
+export interface AuditActor {
+  name: string;
+  kind: AuditActorKind;
+}
+
+export interface AuditEntry {
+  time: string;
+  actor: AuditActor;
+  action: string;
+  resource: string;
+  meta: string;
+}
+
+export const AUDIT: AuditEntry[] = [
+  {
+    time: "today 11:24",
+    actor: { name: "Agent", kind: "AGENT" },
+    action: "command.execute",
+    resource: "Device · Living thermostat",
+    meta: "Set 14°C · Maple Court Flat 3B · owner: property",
+  },
+  {
+    time: "today 11:20",
+    actor: { name: "Automation", kind: "AUTOMATION" },
+    action: "automation.run",
+    resource: "Vacant cool-down",
+    meta: "Triggered by stay.completed · 2 actions ok",
+  },
+  {
+    time: "today 08:42",
+    actor: { name: "Agent", kind: "AGENT" },
+    action: "command.execute",
+    resource: "Device · Living thermostat",
+    meta: "Approved by Marcus Chen · Maple Court Flat 3B",
+  },
+  {
+    time: "today 08:14",
+    actor: { name: "Agent", kind: "AGENT" },
+    action: "insight.publish",
+    resource: "Insight · Vacant heating waste",
+    meta: "94% confidence · Maple Court Flat 3B",
+  },
+  {
+    time: "today 07:30",
+    actor: { name: "System", kind: "SYSTEM" },
+    action: "report.generate",
+    resource: "Daily energy summary",
+    meta: "12 properties · 1,247 kWh month-to-date",
+  },
+  {
+    time: "today 06:47",
+    actor: { name: "Vendor", kind: "VENDOR" },
+    action: "webhook.received",
+    resource: "Integration · SmartThings",
+    meta: "Subscription event: hub.offline · Northbrook Mill",
+  },
+  {
+    time: "yesterday 18:02",
+    actor: { name: "Marcus Chen", kind: "USER" },
+    action: "membership.create",
+    resource: "User · Olu Adebayo → Property Manager",
+    meta: "Maple Court, Heron Place",
+  },
+  {
+    time: "yesterday 16:30",
+    actor: { name: "Theo Adeyemi", kind: "USER" },
+    action: "integration.connect",
+    resource: "Integration · Ecobee",
+    meta: "Owner: Southern Portfolio · 7 devices imported",
+  },
+  {
+    time: "yesterday 09:11",
+    actor: { name: "Marcus Chen", kind: "USER" },
+    action: "automation.update",
+    resource: "Frost protection",
+    meta: "Disabled · changed by Marcus Chen",
+  },
+];
