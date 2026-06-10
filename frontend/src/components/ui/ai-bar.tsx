@@ -21,7 +21,7 @@ export function AIBar({
   chips = DEFAULT_CHIPS,
   placeholder = "Ask anything about your portfolio — what's my total energy spend this week?",
   compact = false,
-  href = "/agent",
+  href = "/intelligence",
 }: AIBarProps) {
   const router = useRouter();
 
