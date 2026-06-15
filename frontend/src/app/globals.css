@@ -1,23 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colour */
+  /* Core palette — parchment */
   --color-bg: #f4f1eb;
   --color-surface: #fbf9f4;
   --color-surface-2: #efebe2;
   --color-border: #e0dbcf;
   --color-border-strong: #cdc6b8;
-  --color-text: #1a1814;
+
+  /* Text */
+  --color-text: #1f1c17;
   --color-text-2: #5a564e;
   --color-text-3: #a39d8e;
-  --color-graphite: #28241e;
-  --color-graphite-2: #3a3530;
-  --color-green: #2d6b2d;
-  --color-green-bg: #eef5ee;
-  --color-amber: #9a5e15;
-  --color-amber-bg: #fbf2e3;
-  --color-red: #9a2828;
-  --color-red-bg: #fbeeee;
+
+  /* Accent — espresso brown (design token --blue, value brown) */
+  --color-accent: #7a4f24;
+  --color-accent-2: #5e3c1a;
+  --color-accent-bg: #efe6d8;
+  --color-accent-on-dark: #c9a06a;
+
+  /* Graphite — brand mark / AI avatar / dark chips */
+  --color-graphite: #16191f;
+  --color-graphite-2: #2b2f38;
+
+  /* Status */
+  --color-green: #067647;
+  --color-green-bg: #ecfdf3;
+  --color-amber: #b54708;
+  --color-amber-bg: #fffaeb;
+  --color-red: #b42318;
+  --color-red-bg: #fef3f2;
 
   /* Typography */
   --font-family-sans: var(--font-sans), "DM Sans", system-ui, sans-serif;
@@ -31,15 +43,47 @@
   --radius-card: 13px;
   --radius-panel: 14px;
 
-  /* Shadow */
-  --shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.04);
-  --shadow-md: 0 4px 12px rgba(26, 24, 20, 0.08);
-  --shadow-lg: 0 12px 32px rgba(26, 24, 20, 0.12);
+  /* Shadow — cool-neutral base */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
 }
 
 body {
-  background-color: #f4f1eb;
-  color: #1a1814;
-  font-family: var(--font-sans), "DM Sans", system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Focus ring — 2px espresso + 2px canvas offset */
+:where(button, input, a, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    0 0 0 4px var(--color-bg);
+  border-radius: var(--radius-input);
+}
+
+/* Suppress focus ring on the Intelligence composer input — pill frames it */
+.composer-input:focus-visible {
+  box-shadow: none;
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
 }
