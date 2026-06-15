@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Settings } from "lucide-react";
 import { SectionHead } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
@@ -53,6 +54,7 @@ const QUESTIONS = [
 
 export function QuickQuestions() {
   const [open, setOpen] = useState<string | null>(null);
+  const router = useRouter();
 
   return (
     <section>
@@ -111,7 +113,10 @@ export function QuickQuestions() {
                       {item.tool} · 0 reasoning tokens
                     </span>
                     <button
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push("/intelligence");
+                      }}
                       className="text-[11px] text-graphite font-medium flex items-center gap-1 bg-transparent border-0 cursor-pointer"
                     >
                       Open in agent <ArrowRight size={11} strokeWidth={1.5} />
