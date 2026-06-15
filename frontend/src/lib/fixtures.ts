@@ -430,3 +430,251 @@ export const DEVICES_MAPLE: Device[] = [
     capabilities: ["MOTION", "BATTERY"],
   },
 ];
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+export interface Integration {
+  id: string;
+  vendor: string;
+  ownerType: string;
+  ownerName: string;
+  status: "ACTIVE" | "TOKEN_EXPIRED";
+  devices: number;
+  scopes: string[];
+  lastSync: string;
+  connectedAt: string;
+  needsReauth?: boolean;
+}
+
+export const INTEGRATIONS: Integration[] = [
+  {
+    id: "i1",
+    vendor: "Nest",
+    ownerType: "PROPERTY",
+    ownerName: "Northern Portfolio",
+    status: "ACTIVE",
+    devices: 18,
+    scopes: ["thermostat:read", "thermostat:write"],
+    lastSync: "2 min ago",
+    connectedAt: "12 Jan 2026",
+  },
+  {
+    id: "i2",
+    vendor: "Hue",
+    ownerType: "PROPERTY",
+    ownerName: "Northern Portfolio",
+    status: "ACTIVE",
+    devices: 47,
+    scopes: ["lights:full"],
+    lastSync: "30 sec ago",
+    connectedAt: "12 Jan 2026",
+  },
+  {
+    id: "i3",
+    vendor: "August",
+    ownerType: "PROPERTY",
+    ownerName: "Northern Portfolio",
+    status: "ACTIVE",
+    devices: 9,
+    scopes: ["locks:control"],
+    lastSync: "1 min ago",
+    connectedAt: "18 Jan 2026",
+  },
+  {
+    id: "i4",
+    vendor: "Shelly",
+    ownerType: "PROPERTY",
+    ownerName: "Northern Portfolio",
+    status: "ACTIVE",
+    devices: 32,
+    scopes: ["devices:read", "devices:write"],
+    lastSync: "1 min ago",
+    connectedAt: "20 Jan 2026",
+  },
+  {
+    id: "i5",
+    vendor: "SmartThings",
+    ownerType: "PROPERTY",
+    ownerName: "Northern Portfolio",
+    status: "TOKEN_EXPIRED",
+    devices: 12,
+    scopes: ["sensors:read"],
+    lastSync: "6 h ago",
+    connectedAt: "22 Jan 2026",
+    needsReauth: true,
+  },
+  {
+    id: "i6",
+    vendor: "Ecobee",
+    ownerType: "PROPERTY",
+    ownerName: "Southern Portfolio",
+    status: "ACTIVE",
+    devices: 7,
+    scopes: ["thermostat:read", "thermostat:write"],
+    lastSync: "5 min ago",
+    connectedAt: "01 Feb 2026",
+  },
+];
+
+// ─── Automations ──────────────────────────────────────────────────────────────
+
+export type AutomationSource = "AGENT" | "MANUAL";
+
+export interface Automation {
+  id: string;
+  name: string;
+  owner: string;
+  source: AutomationSource;
+  scope: string;
+  trigger: string;
+  actions: number;
+  lastRun: string;
+  runs: number;
+  enabled: boolean;
+}
+
+export const AUTOMATIONS: Automation[] = [
+  {
+    id: "a1",
+    name: "Pre-arrival warm-up",
+    owner: "PROPERTY",
+    source: "AGENT",
+    scope: "Northern Portfolio",
+    trigger: "2h before check-in",
+    actions: 3,
+    lastRun: "yesterday 14:00",
+    runs: 124,
+    enabled: true,
+  },
+  {
+    id: "a2",
+    name: "Vacant cool-down",
+    owner: "PROPERTY",
+    source: "AGENT",
+    scope: "All portfolios",
+    trigger: "Check-out + 30 min",
+    actions: 2,
+    lastRun: "today 11:20",
+    runs: 87,
+    enabled: true,
+  },
+  {
+    id: "a3",
+    name: "Leak → cut water + ping",
+    owner: "PROPERTY",
+    source: "MANUAL",
+    scope: "All portfolios",
+    trigger: "Leak sensor wet",
+    actions: 3,
+    lastRun: "—",
+    runs: 0,
+    enabled: true,
+  },
+  {
+    id: "a4",
+    name: "Daily energy summary",
+    owner: "PROPERTY",
+    source: "AGENT",
+    scope: "Northern Portfolio",
+    trigger: "Every day 07:30",
+    actions: 1,
+    lastRun: "today 07:30",
+    runs: 91,
+    enabled: true,
+  },
+  {
+    id: "a5",
+    name: "Frost protection",
+    owner: "PROPERTY",
+    source: "MANUAL",
+    scope: "All portfolios",
+    trigger: "Outdoor < 2°C",
+    actions: 2,
+    lastRun: "12 Mar 03:14",
+    runs: 8,
+    enabled: false,
+  },
+];
+
+// ─── Vendors ──────────────────────────────────────────────────────────────────
+
+export interface Vendor {
+  id: string;
+  name: string;
+  cats: string;
+  connected: boolean;
+  popular: boolean;
+}
+
+export const VENDORS: Vendor[] = [
+  {
+    id: "v_nest",
+    name: "Nest",
+    cats: "Thermostats",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_ecobee",
+    name: "Ecobee",
+    cats: "Thermostats",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_hue",
+    name: "Philips Hue",
+    cats: "Lights",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_august",
+    name: "August",
+    cats: "Locks",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_shelly",
+    name: "Shelly",
+    cats: "Plugs · Energy meters",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_smartthings",
+    name: "SmartThings",
+    cats: "Hubs · Sensors · Multi-vendor",
+    connected: true,
+    popular: true,
+  },
+  {
+    id: "v_lifx",
+    name: "LIFX",
+    cats: "Lights",
+    connected: false,
+    popular: false,
+  },
+  {
+    id: "v_yale",
+    name: "Yale",
+    cats: "Locks",
+    connected: false,
+    popular: false,
+  },
+  {
+    id: "v_tado",
+    name: "Tado",
+    cats: "Thermostats",
+    connected: false,
+    popular: false,
+  },
+  {
+    id: "v_aqara",
+    name: "Aqara",
+    cats: "Sensors · Plugs",
+    connected: false,
+    popular: false,
+  },
+];
