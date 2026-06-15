@@ -6,6 +6,7 @@ import { Tabs } from "../src/components/ui/tabs";
 
 const MOCK_PROPERTY = {
   id: "p_test",
+  portfolio: "pf_north",
   name: "Test House",
   address: "london_e1",
   type: "LONG_TERM_RENTAL" as const,
