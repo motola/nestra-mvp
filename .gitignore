@@ -46,3 +46,9 @@ htmlcov/
 
 # Python lock files (not committed — use pyproject.toml only)
 poetry.lock
+
+# Next.js build output
+frontend/.next/
+
+# Misc local artifacts
+devtools.zip
