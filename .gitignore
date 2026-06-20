@@ -15,7 +15,8 @@ CLAUDE.md
 /frontend/SKILL.md
 .claude
 
-# Environment files
+# Environment files]
+.env
 .env.local
 .env.*.local
 **/.env.local
