@@ -10,7 +10,6 @@ CLAUDE.md
 /backend/node_modules
 /backend/dist
 /.env
-/docs
 /backend/SKILL.md
 /frontend/SKILL.md
 .claude
