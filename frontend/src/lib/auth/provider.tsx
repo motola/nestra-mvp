@@ -58,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       return;
     }
-    apiFetch<MeResponse>("/auth/me")
+    // TODO: Once Authorization header middleware is wired, remove ?auth= query param
+    apiFetch<MeResponse>(`/auth/me?auth=${encodeURIComponent(token)}`)
       .then(({ user, organization }) => {
         setUser(user);
         setOrganization(organization);
@@ -69,10 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setSession = useCallback((token: string) => {
     setToken(token);
-    apiFetch<MeResponse>("/auth/me").then(({ user, organization }) => {
-      setUser(user);
-      setOrganization(organization);
-    });
+    apiFetch<MeResponse>(`/auth/me?auth=${encodeURIComponent(token)}`).then(
+      ({ user, organization }) => {
+        setUser(user);
+        setOrganization(organization);
+      },
+    );
   }, []);
 
   const clearSession = useCallback(() => {
