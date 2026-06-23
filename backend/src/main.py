@@ -13,6 +13,7 @@ from sqlalchemy import text
 
 from api.v1.router import router as v1_router
 from config import get_settings
+from identity.api import router as identity_router
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,7 @@ app.add_middleware(
 )
 
 app.include_router(v1_router)
+app.include_router(identity_router)
 
 
 @app.get("/health")

@@ -3,9 +3,8 @@ import { DM_Sans, DM_Mono, Instrument_Serif } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import { Providers } from "./providers";
-import { SidebarProvider } from "@/contexts/SidebarContext";
-import { Sidebar, Header, CommandPalette } from "@/themes";
-import { AgentChat } from "@/components/chat/AgentChat";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AppShell } from "@/components/AppShell";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -46,17 +45,9 @@ export default function RootLayout({
     >
       <body className="bg-bg text-text font-body antialiased h-full">
         <Providers>
-          <SidebarProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-                <Header />
-                <main className="flex-1 overflow-y-auto bg-bg">{children}</main>
-              </div>
-            </div>
-            <AgentChat />
-            <CommandPalette />
-          </SidebarProvider>
+          <AuthProvider>
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
         </Providers>
         <Toaster
           position="bottom-right"
