@@ -4,6 +4,8 @@ CLAUDE.md
 **/__pycache__/
 **/*.pyc
 **/*.pyo
+/docs
+/claude_design
 /prompts
 /frontend/node_modules
 /frontend/dist
