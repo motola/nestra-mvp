@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 import jwt
@@ -23,8 +24,8 @@ router = APIRouter(prefix="/auth", tags=["identity"])
 # ─── Mock data (remove when database is wired) ────────────────────────────────
 
 # In-memory store for demo — replaced with real DB queries later
-_MOCK_USERS: dict[str, dict] = {}
-_MOCK_ORGS: dict[UUID, dict] = {}
+_MOCK_USERS: dict[str, dict[str, Any]] = {}
+_MOCK_ORGS: dict[UUID, dict[str, Any]] = {}
 
 # Test user for immediate login demo
 _TEST_ORG_ID = UUID("12345678-1234-5678-1234-567812345678")
