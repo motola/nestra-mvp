@@ -51,3 +51,4 @@ frontend/.next/
 
 # Misc local artifacts
 devtools.zip
+/claude_design
