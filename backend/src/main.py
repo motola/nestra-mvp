@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
 from demo.routes import router as demo_router
-from identity.api.routes import router as identity_router
 
 _settings = get_settings()
 
@@ -19,7 +18,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,4 +31,3 @@ async def health() -> dict[str, str]:
 
 
 app.include_router(demo_router)
-app.include_router(identity_router)

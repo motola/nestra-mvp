@@ -4,20 +4,18 @@ CLAUDE.md
 **/__pycache__/
 **/*.pyc
 **/*.pyo
-/docs
-/claude_design
 /prompts
 /frontend/node_modules
 /frontend/dist
 /backend/node_modules
 /backend/dist
 /.env
+/docs
 /backend/SKILL.md
 /frontend/SKILL.md
 .claude
 
-# Environment files]
-.env
+# Environment files
 .env.local
 .env.*.local
 **/.env.local
@@ -47,10 +45,3 @@ htmlcov/
 
 # Python lock files (not committed — use pyproject.toml only)
 poetry.lock
-
-# Next.js build output
-frontend/.next/
-
-# Misc local artifacts
-devtools.zip
-/claude_design
