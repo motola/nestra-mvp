@@ -14,7 +14,7 @@ import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { BluetoothPairingModal } from "@/components/integrations/bluetooth-pairing-modal";
-import { useBluetoothDevices } from "@/lib/api/hooks/use-bluetooth";
+import { useBluetoothDevices } from "@/integrations/bluetooth";
 
 // ─── Vendor logo placeholder (graphite chip + initials) ───────────────────────
 
