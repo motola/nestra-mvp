@@ -59,7 +59,7 @@ def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> str:
     return jwt.encode(payload, secret_key, algorithm="HS256")
 
 
-def _decode_token(token: str, secret_key: str) -> dict:
+def _decode_token(token: str, secret_key: str) -> dict[str, Any]:
     """Decode and verify a JWT token."""
     try:
         return jwt.decode(token, secret_key, algorithms=["HS256"])
