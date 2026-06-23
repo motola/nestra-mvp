@@ -7,17 +7,13 @@ import { Card } from "@/components/ui/card";
 import {
   scanBluetoothDevices,
   usePairBluetoothDevice,
-} from "@/lib/api/hooks/use-bluetooth";
+  type ScannedDevice,
+} from "@/integrations/bluetooth";
 
 interface BluetoothPairingModalProps {
   propertyId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
-}
-
-interface ScannedDevice {
-  name: string;
-  mac_address: string;
 }
 
 type ModalState =
