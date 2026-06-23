@@ -1,21 +1,22 @@
-CLAUDE.md
-/prompts
+# Dependencies & build output
 /frontend/node_modules
+frontend/node_modules/
+frontend/.next/
 /frontend/dist
 /backend/node_modules
 /backend/dist
-/.env
-/docs
-/backend/SKILL.md
-/frontend/SKILL.md
-.claude
-# Frontend
-frontend/node_modules/
-frontend/.next/
-frontend/.env.local
-frontend/.env
 
-# Backend
+# Environment files (contain secrets — never commit)
+/.env
+.env
+.env.local
+.env.production
+**/.env
+**/.env.local
+frontend/.env
+frontend/.env.local
+
+# Python
 backend/.venv/
 backend/venv/
 backend/__pycache__/
@@ -23,19 +24,15 @@ backend/**/__pycache__/
 backend/**/*.pyc
 *.pyc
 *.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Environment files
-.env
-.env.local
-.env.production
-**/.env
-**/.env.local
+# Claude Code local settings
+.claude
 
 # OS
 .DS_Store
 *.log
 *.log.*
-
-# Python
-*.egg-info/
-.pytest_cache/

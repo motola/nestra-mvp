@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAlerts, useDismissAlert } from "@/hooks/useAlerts";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { propertiesApi, devicesApi } from "@/lib/api";
 import type { Alert, AlertSeverity } from "@/lib/types";
 
@@ -242,9 +243,17 @@ function NotificationPanel({
 
 export function Header() {
   const { toggle } = useSidebar();
+  const { user, logout } = useAuth();
+  const router = useRouter();
   const { data: alerts = [] } = useAlerts();
   const [notifOpen, setNotifOpen] = useState(false);
   const activeAlerts = alerts.filter((a) => !a.dismissed).length;
+  const initial = user?.full_name?.trim()?.[0]?.toUpperCase() ?? "?";
+
+  function handleSignOut() {
+    logout();
+    router.push("/login");
+  }
 
   return (
     <header className="h-14 flex-shrink-0 bg-surface border-b border-border flex items-center justify-between px-4 md:px-6">
@@ -303,7 +312,7 @@ export function Header() {
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <button className="w-8 h-8 rounded-full bg-graphite flex items-center justify-center text-surface text-xs font-mono hover:bg-graphite-2 transition-colors">
-              A
+              {initial}
             </button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
@@ -314,14 +323,11 @@ export function Header() {
             >
               <div className="px-4 py-3 border-b border-border">
                 <p className="font-body font-normal text-sm text-text">
-                  Alphacon Demo
+                  {user?.organization?.name ?? user?.full_name ?? "Account"}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="font-mono text-xs text-text-3">
-                    demo@alphacon.ai
-                  </span>
-                  <span className="font-mono text-[10px] bg-surface-2 border border-border text-text-3 px-1.5 py-0.5 rounded-full">
-                    Free
+                  <span className="font-mono text-xs text-text-3 truncate">
+                    {user?.email ?? ""}
                   </span>
                 </div>
               </div>
@@ -341,7 +347,10 @@ export function Header() {
                 ))}
               </div>
               <div className="border-t border-border py-1">
-                <DropdownMenu.Item className="flex items-center gap-2.5 px-4 py-2 text-sm font-body text-red hover:bg-red-bg cursor-pointer outline-none">
+                <DropdownMenu.Item
+                  onSelect={handleSignOut}
+                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-body text-red hover:bg-red-bg cursor-pointer outline-none"
+                >
                   <LogOut size={14} />
                   Sign out
                 </DropdownMenu.Item>

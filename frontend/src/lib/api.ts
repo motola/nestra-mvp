@@ -18,12 +18,24 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+export const TOKEN_STORAGE_KEY = "nestra_token";
+
+function authHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeader(),
+      ...init?.headers,
+    },
     ...init,
   });
   if (!res.ok) {
@@ -33,6 +45,39 @@ export async function apiFetch<T>(
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  full_name: string;
+  organization: { id: string; name: string } | null;
+}
+
+export const authApi = {
+  signup: (data: {
+    email: string;
+    password: string;
+    full_name: string;
+    organization_name?: string;
+  }) =>
+    apiFetch<TokenResponse>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  login: (data: { email: string; password: string }) =>
+    apiFetch<TokenResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  me: () => apiFetch<CurrentUser>("/me"),
+};
 
 // ── Properties ────────────────────────────────────────────────────────────────
 
