@@ -1,6 +1,7 @@
-"use client"; // Client: tab switching, filter chips, grid/list toggle
+"use client"; // Client: tab switching, filter chips, grid/list toggle, navigation
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Download, LayoutGrid, ChevronRight, List } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { PORTFOLIOS, PROPERTIES } from "@/lib/fixtures";
@@ -154,7 +155,11 @@ function FilterChips({
 
 // ─── Portfolios tab ───────────────────────────────────────────────────────────
 
-function PortfoliosTab() {
+function PortfoliosTab({
+  onPropertyClick,
+}: {
+  onPropertyClick: (id: string) => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
       {PORTFOLIOS.map((pf) => {
@@ -210,7 +215,11 @@ function PortfoliosTab() {
               }}
             >
               {props.map((p) => (
-                <PropertyCard key={p.id} {...p} />
+                <PropertyCard
+                  key={p.id}
+                  {...p}
+                  onClick={() => onPropertyClick(p.id)}
+                />
               ))}
             </div>
           </section>
@@ -222,7 +231,11 @@ function PortfoliosTab() {
 
 // ─── All properties tab ───────────────────────────────────────────────────────
 
-function AllPropertiesTab() {
+function AllPropertiesTab({
+  onPropertyClick,
+}: {
+  onPropertyClick: (id: string) => void;
+}) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const filtered =
@@ -268,11 +281,19 @@ function AllPropertiesTab() {
           }}
         >
           {filtered.map((p) => (
-            <PropertyCard key={p.id} {...p} />
+            <PropertyCard
+              key={p.id}
+              {...p}
+              onClick={() => onPropertyClick(p.id)}
+            />
           ))}
         </div>
       ) : (
-        <DataTable columns={TABLE_COLUMNS} rows={filtered} />
+        <DataTable
+          columns={TABLE_COLUMNS}
+          rows={filtered}
+          onRowClick={(p) => onPropertyClick(p.id)}
+        />
       )}
     </div>
   );
@@ -282,8 +303,13 @@ function AllPropertiesTab() {
 
 export function PortfolioScreen() {
   const [tab, setTab] = useState("portfolios");
+  const router = useRouter();
   const totalUnits = PROPERTIES.reduce((s, p) => s + p.units, 0);
   const totalDevices = PROPERTIES.reduce((s, p) => s + p.devices, 0);
+
+  function goToProperty(id: string) {
+    router.push(`/properties/${id}`);
+  }
 
   return (
     <>
@@ -315,7 +341,11 @@ export function PortfolioScreen() {
       </div>
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        {tab === "portfolios" ? <PortfoliosTab /> : <AllPropertiesTab />}
+        {tab === "portfolios" ? (
+          <PortfoliosTab onPropertyClick={goToProperty} />
+        ) : (
+          <AllPropertiesTab onPropertyClick={goToProperty} />
+        )}
       </div>
     </>
   );
