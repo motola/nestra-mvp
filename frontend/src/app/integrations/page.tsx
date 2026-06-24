@@ -289,10 +289,12 @@ export default function IntegrationsPage() {
     enabled: view === "hotspot-list",
   });
 
-  const { data: wifiNetworks = [] } = useQuery({
-    queryKey: ["wifi-networks"],
-    queryFn: provisioningApi.wifiNetworks,
-    enabled: view === "provision-config",
+  const { data: shellyNetworks = [], isLoading: shellyScanning } = useQuery({
+    queryKey: ["shelly-scan", selectedHotspot],
+    queryFn: () => provisioningApi.shellyScan(selectedHotspot),
+    enabled: view === "provision-config" && !!selectedHotspot,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 
   const {
@@ -539,19 +541,27 @@ export default function IntegrationsPage() {
                     setWifiSsid(e.target.value);
                   }
                 }}
-                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-border-strong"
+                disabled={shellyScanning}
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-border-strong disabled:opacity-60"
               >
-                <option value="">Select your Wi-Fi network…</option>
-                {wifiNetworks.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
+                <option value="">
+                  {shellyScanning
+                    ? "Scanning networks from the device…"
+                    : "Select your Wi-Fi network…"}
+                </option>
+                {shellyNetworks.map((n) => (
+                  <option key={n.ssid} value={n.ssid}>
+                    {n.ssid}
+                    {n.rssi != null ? ` · ${n.rssi} dBm` : ""}
+                    {n.open ? " · open" : ""}
                   </option>
                 ))}
                 <option value="__manual__">Other (enter manually)…</option>
               </select>
             )}
             <p className="font-body font-light text-xs text-text-3 mt-1">
-              The network the device will join — not the Shelly hotspot.
+              These are the networks the device itself can see (2.4GHz only) —
+              not the Shelly hotspot.
             </p>
           </div>
           <div>
@@ -560,10 +570,11 @@ export default function IntegrationsPage() {
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={wifiPassword}
               onChange={(e) => setWifiPassword(e.target.value)}
-              placeholder="Your WiFi password"
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              placeholder="Your Wi-Fi password"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-text-3 focus:outline-none focus:border-border-strong"
             />
             <p className="text-xs text-text-3 mt-1">
               Used once to set up the device, never stored.

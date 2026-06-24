@@ -126,6 +126,58 @@ async def connect_hotspot(ssid: str) -> None:
     await asyncio.sleep(_HOTSPOT_WAIT)
 
 
+def _current_ssid() -> str | None:
+    """The SSID the laptop is currently on (to restore it after a device scan)."""
+    result = subprocess.run(
+        ["netsh", "wlan", "show", "interfaces"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    for line in result.stdout.splitlines():
+        m = re.match(r"^\s*SSID\s*:\s*(.+)$", line)
+        if m:
+            return m.group(1).strip()
+    return None
+
+
+async def scan_networks_via_shelly(hotspot_ssid: str) -> list[dict[str, Any]]:
+    """Ask the Shelly itself which Wi-Fi networks it can see (RPC WiFi.Scan).
+
+    The device's own radio is what must reach the home network, so its scan is
+    more reliable than the laptop's. Connects to the Shelly AP, scans, then
+    restores the laptop to whatever network it was on.
+    """
+    home = await asyncio.to_thread(_current_ssid)
+    await connect_hotspot(hotspot_ssid)
+    networks: list[dict[str, Any]] = []
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"http://{_SHELLY_AP_IP}/rpc/WiFi.Scan")
+            r.raise_for_status()
+            seen: set[str] = set()
+            for ap in r.json().get("results", []):
+                ssid = ap.get("ssid")
+                if ssid and ssid not in seen:
+                    seen.add(ssid)
+                    networks.append(
+                        {"ssid": ssid, "rssi": ap.get("rssi"), "open": ap.get("auth", 1) == 0}
+                    )
+    except Exception as exc:
+        logger.warning("Shelly WiFi.Scan failed: %s", exc)
+    finally:
+        if home:
+            await asyncio.to_thread(
+                subprocess.run,
+                ["netsh", "wlan", "connect", f"name={home}"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+    networks.sort(key=lambda n: n.get("rssi") or -999, reverse=True)
+    return networks
+
+
 async def send_wifi_credentials(home_ssid: str, home_password: str) -> None:
     """POST home WiFi credentials to Shelly device at 192.168.33.1, then reboot."""
     payload = {
@@ -211,6 +263,13 @@ async def scan_for_device(subnet: str) -> dict[str, Any] | None:
                 pass
             return None
 
-    results = await asyncio.gather(*[check(str(ip)) for ip in hosts])
-    found = [r for r in results if r is not None]
-    return found[0] if found else None
+    # The device can take 15–30s to reboot, join Wi-Fi and get a DHCP lease, so
+    # scan several times rather than giving up after a single pass.
+    for attempt in range(4):
+        results = await asyncio.gather(*[check(str(ip)) for ip in hosts])
+        found = [r for r in results if r is not None]
+        if found:
+            return found[0]
+        if attempt < 3:
+            await asyncio.sleep(8)
+    return None
