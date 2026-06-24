@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Sparkline } from "./Sparkline";
 
 function useCountUp(target: number, duration = 800) {
   const [value, setValue] = useState(0);
@@ -27,6 +28,7 @@ export function StatCard({
   sub,
   icon: Icon,
   animate = false,
+  trend,
   className,
 }: {
   label: string;
@@ -35,6 +37,7 @@ export function StatCard({
   sub?: string;
   icon?: React.ElementType;
   animate?: boolean;
+  trend?: string;
   className?: string;
 }) {
   const numValue = typeof value === "number" ? value : 0;
@@ -61,13 +64,22 @@ export function StatCard({
           {label}
         </p>
       )}
-      <div className="flex items-baseline gap-1.5">
-        <span className="font-mono text-2xl text-text tabular-nums">
-          {display}
-        </span>
-        {unit && <span className="font-mono text-xs text-text-3">{unit}</span>}
+      <div className="flex items-end justify-between gap-2">
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-mono text-2xl text-text tabular-nums">
+            {display}
+          </span>
+          {unit && (
+            <span className="font-mono text-xs text-text-3">{unit}</span>
+          )}
+        </div>
+        {trend && (
+          <span className="text-text-3 mb-0.5">
+            <Sparkline seed={trend} width={58} height={22} />
+          </span>
+        )}
       </div>
-      {sub && <p className="font-mono text-xs text-text-3 mt-0.5">{sub}</p>}
+      {sub && <p className="font-mono text-xs text-text-3 mt-1">{sub}</p>}
     </div>
   );
 }
