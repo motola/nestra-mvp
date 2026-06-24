@@ -283,10 +283,19 @@ export default function IntegrationsPage() {
     queryFn: integrationsApi.list,
   });
 
-  const { data: hotspots = [], isLoading: hotspotLoading } = useQuery({
+  const {
+    data: hotspots = [],
+    isLoading: hotspotLoading,
+    isFetching: hotspotFetching,
+    refetch: refetchHotspots,
+  } = useQuery({
     queryKey: ["hotspots"],
     queryFn: provisioningApi.hotspots,
     enabled: view === "hotspot-list",
+    // netsh caches scan results, so a first pass can come back empty. Keep
+    // re-scanning while this view is open so the device appears on its own.
+    refetchInterval: view === "hotspot-list" ? 4000 : false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: shellyNetworks = [], isLoading: shellyScanning } = useQuery({
@@ -478,10 +487,22 @@ export default function IntegrationsPage() {
           </div>
         ) : hotspots.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-6 text-center">
-            <p className="text-text-2 text-sm">No device hotspots found.</p>
+            <p className="text-text-2 text-sm">No device hotspots found yet.</p>
             <p className="text-text-3 text-xs mt-1">
-              Make sure your Shelly device is in setup mode (LED flashing).
+              Make sure your Shelly is in setup mode (LED flashing) — still
+              scanning…
             </p>
+            <button
+              onClick={() => refetchHotspots()}
+              disabled={hotspotFetching}
+              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-xs text-text-2 transition-colors disabled:opacity-50"
+            >
+              <Loader2
+                size={12}
+                className={hotspotFetching ? "animate-spin" : ""}
+              />
+              Rescan
+            </button>
           </div>
         ) : (
           <div className="space-y-2">
