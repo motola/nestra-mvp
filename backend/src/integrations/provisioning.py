@@ -208,16 +208,28 @@ async def scan_networks_via_shelly(hotspot_ssid: str) -> list[dict[str, Any]]:
     networks: list[dict[str, Any]] = []
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
-            r = await client.get(f"http://{_SHELLY_AP_IP}/rpc/WiFi.Scan")
-            r.raise_for_status()
             seen: set[str] = set()
-            for ap in r.json().get("results", []):
-                ssid = ap.get("ssid")
-                if ssid and ssid not in seen:
-                    seen.add(ssid)
-                    networks.append(
-                        {"ssid": ssid, "rssi": ap.get("rssi"), "open": ap.get("auth", 1) == 0}
-                    )
+            # A single Wi-Fi scan misses networks, so sweep several times and
+            # merge unique SSIDs — that's why the list looked incomplete before.
+            for attempt in range(3):
+                try:
+                    r = await client.get(f"http://{_SHELLY_AP_IP}/rpc/WiFi.Scan")
+                    r.raise_for_status()
+                    for ap in r.json().get("results", []):
+                        ssid = ap.get("ssid")
+                        if ssid and ssid not in seen:
+                            seen.add(ssid)
+                            networks.append(
+                                {
+                                    "ssid": ssid,
+                                    "rssi": ap.get("rssi"),
+                                    "open": ap.get("auth", 1) == 0,
+                                }
+                            )
+                except Exception as exc:
+                    logger.warning("Shelly WiFi.Scan pass %d failed: %s", attempt, exc)
+                if attempt < 2:
+                    await asyncio.sleep(2)
     except Exception as exc:
         logger.warning("Shelly WiFi.Scan failed: %s", exc)
     finally:
