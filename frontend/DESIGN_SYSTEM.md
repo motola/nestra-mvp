@@ -20,28 +20,28 @@ explanations.** Avoid a beige wash everywhere and avoid a button in every card.
 
 ## Colour Tokens
 
-| Token                                      | Hex       | Usage                                       |
-| ------------------------------------------ | --------- | ------------------------------------------- |
-| `--color-bg` / `bg-bg`                     | `#f5f4f2` | Warm light-grey — app canvas                |
-| `--color-surface` / `bg-surface`           | `#ffffff` | White — card and panel background           |
-| `--color-surface-2` / `bg-surface-2`       | `#f1f0ed` | Subtle section background                   |
-| `--color-text` / `text-text`               | `#1a1a17` | Primary text (near-black charcoal)          |
-| `--color-text-2` / `text-text-2`           | `#5b5a55` | Secondary text                              |
-| `--color-text-3` / `text-text-3`           | `#94938d` | Placeholder, labels, muted                  |
-| `--color-graphite` / `bg-graphite`         | `#1f1d1a` | Primary buttons, AI surface                 |
-| `--color-graphite-2` / `bg-graphite-2`     | `#34322e` | Button / graphite hover                     |
-| `--color-border` / `border-border`         | `#e7e6e2` | Default 1px border                          |
-| `--color-border-strong` / `border-border-strong` | `#d6d4cf` | Focused or prominent borders          |
-| `--color-accent` / `text-accent`           | `#9a5e15` | **Bronze brand accent** — selected nav, chart highlights, brand moments only |
-| `--color-accent-2` / `text-accent-2`       | `#b07a2e` | Accent hover / secondary accent             |
-| `--color-green` / `text-green`             | `#2d6b2d` | Success, online, all clear                  |
-| `--color-green-bg` / `bg-green-bg`         | `#ecf4ec` | Green tint                                  |
-| `--color-amber` / `text-amber`             | `#9a5e15` | Warning, needs attention                    |
-| `--color-amber-bg` / `bg-amber-bg`         | `#faf1e1` | Amber tint                                  |
-| `--color-red` / `text-red`                 | `#b3261e` | Critical, offline, error                    |
-| `--color-red-bg` / `bg-red-bg`             | `#fcecea` | Red tint                                    |
-| `--color-info` / `text-info`               | `#44566b` | Informational (blue-grey)                   |
-| `--color-info-bg` / `bg-info-bg`           | `#eef1f4` | Info tint                                   |
+| Token                                            | Hex       | Usage                                                                        |
+| ------------------------------------------------ | --------- | ---------------------------------------------------------------------------- |
+| `--color-bg` / `bg-bg`                           | `#f5f4f2` | Warm light-grey — app canvas                                                 |
+| `--color-surface` / `bg-surface`                 | `#ffffff` | White — card and panel background                                            |
+| `--color-surface-2` / `bg-surface-2`             | `#f1f0ed` | Subtle section background                                                    |
+| `--color-text` / `text-text`                     | `#1a1a17` | Primary text (near-black charcoal)                                           |
+| `--color-text-2` / `text-text-2`                 | `#5b5a55` | Secondary text                                                               |
+| `--color-text-3` / `text-text-3`                 | `#94938d` | Placeholder, labels, muted                                                   |
+| `--color-graphite` / `bg-graphite`               | `#1f1d1a` | Primary buttons, AI surface                                                  |
+| `--color-graphite-2` / `bg-graphite-2`           | `#34322e` | Button / graphite hover                                                      |
+| `--color-border` / `border-border`               | `#e7e6e2` | Default 1px border                                                           |
+| `--color-border-strong` / `border-border-strong` | `#d6d4cf` | Focused or prominent borders                                                 |
+| `--color-accent` / `text-accent`                 | `#9a5e15` | **Bronze brand accent** — selected nav, chart highlights, brand moments only |
+| `--color-accent-2` / `text-accent-2`             | `#b07a2e` | Accent hover / secondary accent                                              |
+| `--color-green` / `text-green`                   | `#2d6b2d` | Success, online, all clear                                                   |
+| `--color-green-bg` / `bg-green-bg`               | `#ecf4ec` | Green tint                                                                   |
+| `--color-amber` / `text-amber`                   | `#9a5e15` | Warning, needs attention                                                     |
+| `--color-amber-bg` / `bg-amber-bg`               | `#faf1e1` | Amber tint                                                                   |
+| `--color-red` / `text-red`                       | `#b3261e` | Critical, offline, error                                                     |
+| `--color-red-bg` / `bg-red-bg`                   | `#fcecea` | Red tint                                                                     |
+| `--color-info` / `text-info`                     | `#44566b` | Informational (blue-grey)                                                    |
+| `--color-info-bg` / `bg-info-bg`                 | `#eef1f4` | Info tint                                                                    |
 
 Status colours and the bronze accent are used **sparingly** — most of the UI is
 charcoal text on white over a warm-grey canvas.
