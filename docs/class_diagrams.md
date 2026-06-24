@@ -75,7 +75,7 @@ flowchart TB
     Org --> Port
     Port --> Prop
     Prop --> Tenant
-    
+
     Prop -. owns .-> Device
     Tenant -. owns .-> Device
     Prop -. owns .-> Integration
@@ -475,7 +475,6 @@ classDiagram
         SENSOR_CONTACT
         SENSOR_MOTION
         SENSOR_LEAK
-        ENERGY_METER
         HUB
     }
 
@@ -493,7 +492,6 @@ classDiagram
         CONTACT
         MOTION
         LEAK
-        ENERGY_USAGE
     }
 
     class CommandStatus {
@@ -1567,7 +1565,7 @@ The third clause is the privacy-aware host visibility: the host can see *that* a
 | Phase 2 | `Camera` device category and video/snapshot capabilities |
 | Phase 2 | `LocalHubAdapter` for direct Zigbee/Z-Wave/Matter |
 | Phase 2 | Long-term `MemoryItem` with hybrid retrieval |
-| Phase 2 | Energy meter analytics, occupancy inference |
+| Phase 2 | Occupancy inference |
 | Phase 2 | Sub-Stays (long-term tenant inviting house-sitter) |
 | Phase 2 | Cross-Organization device portability (Tenant moving between AlphaCon-using companies) |
 | Phase 3 | Proprietary `AlphaConHubDevice` and direct hardware control |

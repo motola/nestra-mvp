@@ -32,7 +32,7 @@ Tracks the foundational MVP and the work to bring the existing build into line w
 - **Agent chat** — `POST /chat/` SSE streaming with portfolio context (single Haiku call; **no tool-use loop / routing / memory / prompt caching yet**).
 - **Insights & intelligence** — Claude insights with Haiku/Sonnet routing + Upstash Redis caching; intelligence items list.
 - **Alerts** — alert model, listing, dismiss.
-- **App pages** — energy, maintenance, reports, tenants, settings (UI shells).
+- **App pages** — maintenance, reports, tenants, settings (UI shells).
 - **Demo mode** — `DEMO_MODE` seeds 6 properties / rooms / devices.
 
 ---

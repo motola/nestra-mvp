@@ -57,7 +57,7 @@ The Claude-powered agent is the differentiating capability. The design treats it
 No gradients (except on AI surfaces, intentionally). No glassmorphism. No animated illustrations. No emojis in production UI. No exclamation marks in copy. We sell to property management companies, not consumers. Every visual flourish has to earn its place.
 
 ### 1.4 Data is the hero
-Property occupancy, device state, energy spend, agent-suggested savings — these are the things customers come to AlphaCon for. Type-set them well, give them breathing room, don't let chrome compete with content. Numbers should be larger than their labels by a clear margin. Status colours should be deeply saturated, not pastel.
+Property occupancy, device state, active alerts, agent-flagged risks — these are the things customers come to AlphaCon for. Type-set them well, give them breathing room, don't let chrome compete with content. Numbers should be larger than their labels by a clear margin. Status colours should be deeply saturated, not pastel.
 
 ### 1.5 Density without cramming
 A property manager looks at 12 properties simultaneously. Tight grids, small body text (13–14px), clear hierarchy. But not airless — generous gutters between cards (16–20px), comfortable line-height (1.5–1.65), proper spacing between sections (20–24px). Information-dense but readable.
@@ -143,7 +143,7 @@ Three faces. Each has a single specific job; don't cross them.
 **`DM Mono`** — metadata and structured data
 - Labels in stat cards (`PROPERTIES`, `OCCUPANCY`)
 - Sidebar section labels (`WORKSPACE`, `PROPERTIES`)
-- Timestamp/category strings on alerts (`ENERGY · MAPLE COURT · TODAY 08:14 · 94% CONFIDENCE`)
+- Timestamp/category strings on alerts (`MAINTENANCE · MAPLE COURT · TODAY 08:14 · 94% CONFIDENCE`)
 - Property addresses in cards (`leeds_ls1`, lowercase intentional)
 - IDs, codes, technical fields, model names (`claude-sonnet-4.6`)
 - Conversation `YOU` / `AI` row labels
@@ -438,7 +438,7 @@ The most distinctive component in AlphaCon. Where the agent surfaces proactive r
         I can turn off and set a pre-arrival schedule automatically.
       </div>
       <div className="text-mono text-text-3 mt-2">
-        ENERGY · MAPLE COURT · TODAY 08:14 · 94% CONFIDENCE
+        MAINTENANCE · MAPLE COURT · TODAY 08:14 · 94% CONFIDENCE
       </div>
     </div>
   </div>
@@ -451,7 +451,7 @@ The most distinctive component in AlphaCon. Where the agent surfaces proactive r
 ```
 
 **Status dot colours:**
-- Amber: warning, optimisation opportunity (energy, vacancy)
+- Amber: warning, attention needed (maintenance, vacancy)
 - Red: critical, security, offline, error
 - Green: positive (rare; usually for "all clear" messages)
 - Graphite: neutral information from the agent
@@ -512,7 +512,7 @@ The most distinctive component in AlphaCon. Where the agent surfaces proactive r
 <div className="flex items-start gap-2.5">
   <span className="font-mono text-mono font-medium text-text-3 w-8 mt-0.5 uppercase">YOU</span>
   <span className="text-body text-text-2 leading-relaxed flex-1">
-    What was my total energy cost last month across all properties?
+    Which properties have open maintenance items right now?
   </span>
 </div>
 ```
@@ -546,10 +546,10 @@ The most distinctive component in AlphaCon. Where the agent surfaces proactive r
   </div>
   <input
     className="flex-1 bg-transparent border-none outline-none text-body-lg text-text-3 italic font-sans"
-    placeholder="Ask anything about your portfolio — what's my total energy spend this week?"
+    placeholder="Ask anything about your portfolio — which properties need attention this week?"
   />
   <div className="flex gap-2">
-    <Chip>energy report</Chip>
+    <Chip>maintenance due</Chip>
     <Chip>vacant units</Chip>
     <Chip>active alerts</Chip>
   </div>
@@ -663,7 +663,7 @@ The same Claude model, different filters, different tone, different tool catalog
 - Tone: precise, professional, action-oriented, data-rich
 - Visual: full conversation panel, all chips visible, AgentRun cost displayed in `cp-meta`
 - Vocabulary: technical, exact figures, percentages
-- Example phrases: "Total energy cost across all 3 properties was £1,247." "I can create an automation."
+- Example phrases: "Across all 3 properties, 2 alerts are unresolved — 1 is critical." "I can create an automation."
 
 **CONCIERGE persona** (short-term Tenants — Airbnb-style)
 - Tone: warm but brief, helpful, no upselling
