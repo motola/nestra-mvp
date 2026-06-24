@@ -129,10 +129,10 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep) -> 
     """
     from integrations.provisioning import (
         connect_hotspot,
-        get_local_subnet,
+        get_device_info,
         reconnect_home,
-        scan_for_device,
         send_wifi_credentials,
+        wait_for_sta_ip,
     )
 
     def sse(type_: str, **kwargs: object) -> str:
@@ -145,27 +145,40 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep) -> 
             return
 
         try:
-            yield sse("status", message="Connecting to your device...")
+            yield sse("status", message="Connecting to your device…")
             await connect_hotspot(payload.hotspot_name)
 
-            yield sse("status", message="Configuring WiFi...")
+            yield sse("status", message="Reading the device…")
+            info = await get_device_info()
+
+            yield sse("status", message="Sending your Wi-Fi details…")
             await send_wifi_credentials(payload.wifi_ssid, payload.wifi_password)
 
-            yield sse("status", message="Your device is joining the network...")
+            # The device keeps its AP up while joining home Wi-Fi, so we ask it
+            # directly which IP it got rather than scanning the home network.
+            yield sse("status", message="Waiting for the device to join your network…")
+            sta_ip = await wait_for_sta_ip()
+
+            yield sse("status", message="Reconnecting you to Wi-Fi…")
             await reconnect_home(payload.wifi_ssid)
 
-            yield sse("status", message="Looking for your device...")
-            subnet = get_local_subnet()
-            device = await scan_for_device(subnet)
-
-            if device:
+            if sta_ip:
+                device = {
+                    "vendor": "shelly",
+                    "name": info.get("name") or info.get("id") or "Shelly device",
+                    "model": info.get("model") or info.get("app") or "Shelly",
+                    "mac": info.get("mac", ""),
+                    "ip": sta_ip,
+                    "vendor_id": info.get("id", ""),
+                }
                 yield sse("status", message="Device ready!")
                 yield sse("device", device=device)
             else:
                 yield sse(
                     "error",
                     message=(
-                        "Device not found on network. Try 'Find on Network' to locate it manually."
+                        "The device didn't report joining your network — "
+                        "double-check the Wi-Fi password and try again."
                     ),
                 )
         except Exception as exc:
