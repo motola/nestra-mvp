@@ -96,6 +96,14 @@ async def list_hotspots() -> list[str]:
     return await scan_shelly_hotspots()
 
 
+@router.get("/wifi-networks")
+async def list_wifi_networks() -> list[str]:
+    """Nearby Wi-Fi networks for the provisioning home-network picker."""
+    from integrations.provisioning import scan_wifi_networks
+
+    return await scan_wifi_networks()
+
+
 # ── Discovery: Shelly provisioning (SSE stream) ───────────────────────────────
 
 

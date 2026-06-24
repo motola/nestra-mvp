@@ -158,6 +158,7 @@ export const integrationsApi = {
 
 export const provisioningApi = {
   hotspots: () => apiFetch<string[]>("/api/v1/integrations/hotspots"),
+  wifiNetworks: () => apiFetch<string[]>("/api/v1/integrations/wifi-networks"),
   scan: () => apiFetch<ScannedDevice[]>("/api/v1/integrations/scan"),
   listDevices: (propertyId?: string) => {
     const qs = propertyId

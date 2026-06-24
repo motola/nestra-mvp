@@ -14,9 +14,12 @@ All netsh commands run via asyncio.to_thread (non-blocking subprocess).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
+import os
 import re
 import subprocess
+import tempfile
 from typing import Any
 
 import httpx
@@ -24,7 +27,7 @@ import httpx
 logger = logging.getLogger(__name__)
 
 _SHELLY_AP_IP = "192.168.33.1"
-_HOTSPOT_WAIT = 5  # seconds after connecting to Shelly AP before HTTP is ready
+_HOTSPOT_WAIT = 8  # seconds after connecting to Shelly AP before HTTP is ready
 _REBOOT_WAIT = 12  # seconds for device to reboot and join home network
 
 
@@ -47,11 +50,75 @@ async def scan_shelly_hotspots() -> list[str]:
     return ssids
 
 
+_OPEN_PROFILE_XML = """<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+  <name>{ssid}</name>
+  <SSIDConfig><SSID><name>{ssid}</name></SSID></SSIDConfig>
+  <connectionType>ESS</connectionType>
+  <connectionMode>manual</connectionMode>
+  <MSM>
+    <security>
+      <authEncryption>
+        <authentication>open</authentication>
+        <encryption>none</encryption>
+        <useOneX>false</useOneX>
+      </authEncryption>
+    </security>
+  </MSM>
+</WLANProfile>"""
+
+
+async def _add_open_profile(ssid: str) -> None:
+    """Register a temporary open-network profile so Windows can join the Shelly AP.
+
+    netsh cannot connect to a brand-new open SSID without a profile, which is why
+    provisioning previously timed out trying to reach the device at 192.168.33.1.
+    """
+    fd, path = tempfile.mkstemp(suffix=".xml")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(_OPEN_PROFILE_XML.format(ssid=ssid))
+        await asyncio.to_thread(
+            subprocess.run,
+            ["netsh", "wlan", "add", "profile", f"filename={path}", "user=current"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    finally:
+        with contextlib.suppress(OSError):
+            os.remove(path)
+
+
+async def scan_wifi_networks() -> list[str]:
+    """Return SSIDs of nearby Wi-Fi networks for the home-network picker.
+
+    Excludes the Shelly setup APs themselves. Scanned from the laptop, which is
+    co-located with the device in AP mode, so it sees the same networks.
+    """
+    result = await asyncio.to_thread(
+        subprocess.run,
+        ["netsh", "wlan", "show", "networks"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    ssids: list[str] = []
+    for line in result.stdout.splitlines():
+        m = re.match(r"^SSID\s+\d+\s*:\s*(.+)$", line.strip())
+        if m:
+            ssid = m.group(1).strip()
+            if ssid and not ssid.upper().startswith("SHELLY") and ssid not in ssids:
+                ssids.append(ssid)
+    return ssids
+
+
 async def connect_hotspot(ssid: str) -> None:
     """Connect the Windows machine to the Shelly device AP and wait for link."""
+    await _add_open_profile(ssid)
     await asyncio.to_thread(
         subprocess.run,
-        ["netsh", "wlan", "connect", f"name={ssid}"],
+        ["netsh", "wlan", "connect", f"name={ssid}", f"ssid={ssid}"],
         capture_output=True,
         text=True,
         timeout=15,
