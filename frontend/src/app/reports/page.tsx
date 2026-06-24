@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart2, Zap, Bell, Building2, Download, X } from "lucide-react";
+import { BarChart2, Bell, Building2, Download, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { PageWrapper, Button } from "@/themes";
 import { cn } from "@/lib/utils";
@@ -17,14 +17,6 @@ interface ReportType {
 
 const REPORT_TYPES: ReportType[] = [
   {
-    id: "energy",
-    icon: Zap,
-    title: "Energy Report",
-    description:
-      "Monthly energy consumption breakdown by property, device type, and time of day. Includes cost estimates and CO₂ savings.",
-    formats: ["PDF", "CSV", "XLSX"],
-  },
-  {
     id: "alerts",
     icon: Bell,
     title: "Alert Summary",
@@ -37,7 +29,7 @@ const REPORT_TYPES: ReportType[] = [
     icon: Building2,
     title: "Portfolio Overview",
     description:
-      "High-level overview of all properties: occupancy, device health, energy consumption, and outstanding maintenance items.",
+      "High-level overview of all properties: occupancy, device health, and outstanding maintenance items.",
     formats: ["PDF"],
   },
   {
