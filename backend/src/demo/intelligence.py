@@ -24,14 +24,14 @@ DEMO_INTELLIGENCE: list[dict[str, Any]] = [
         "id": "intel-001",
         "property_id": "demo-prop-003",
         "property_name": "Cedar Lodge",
-        "type": "energy_anomaly",
+        "type": "maintenance_prediction",
         "severity": "critical",
-        "title": "Boiler Room energy spike detected",
+        "title": "Boiler running continuously — possible fault",
         "detail": (
-            "The energy meter in the Boiler Room has been recording 2.4 kW "
-            "continuously for 18+ hours — "
-            "well above the 0.8 kW baseline. This is consistent with a heating system fault or a "
-            "malfunctioning appliance left running. Recommend immediate inspection."
+            "The smart plug monitoring the Boiler Room boiler shows the unit running "
+            "continuously for 18+ hours, well outside its normal cycling pattern. This is "
+            "consistent with a stuck relay or heating system fault. Recommend immediate "
+            "inspection before it escalates."
         ),
         "generated_at": _ts(2),
         "metric": 2400.0,
@@ -73,13 +73,13 @@ DEMO_INTELLIGENCE: list[dict[str, Any]] = [
         "id": "intel-004",
         "property_id": "demo-prop-006",
         "property_name": "Riverside Flat",
-        "type": "energy_anomaly",
+        "type": "maintenance_prediction",
         "severity": "warning",
-        "title": "Living room energy 2.3× above portfolio average",
+        "title": "Appliance running continuously — Riverside Flat",
         "detail": (
-            "Riverside Flat living room has averaged 1.84 kW over the last 48 hours — 2.3× the "
-            "portfolio average for this device type. Could indicate a high-draw appliance left on "
-            "or a device fault. Review what is plugged into the energy meter."
+            "The living-room smart plug at Riverside Flat has been under continuous high load "
+            "for 48 hours — unusual for this property's pattern. Could indicate an appliance "
+            "left on or a developing device fault. Worth a quick check."
         ),
         "generated_at": _ts(20),
         "metric": 1840.0,
@@ -132,23 +132,6 @@ DEMO_INTELLIGENCE: list[dict[str, Any]] = [
         "generated_at": _ts(24),
         "metric": None,
         "unit": None,
-    },
-    {
-        "id": "intel-008",
-        "property_id": "demo-prop-005",
-        "property_name": "Oak House",
-        "type": "energy_anomaly",
-        "severity": "info",
-        "title": "Oak House energy within normal range",
-        "detail": (
-            "Total energy draw for Oak House is 1.19 kW — consistent with a 2-bedroom property "
-            "in active use. No anomalies detected. The main draw is the kitchen "
-            "energy meter at 890 W, "
-            "consistent with a cooker or washing machine cycle."
-        ),
-        "generated_at": _ts(48),
-        "metric": 1190.0,
-        "unit": "W",
     },
 ]
 
