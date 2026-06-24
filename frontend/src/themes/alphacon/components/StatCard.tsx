@@ -47,7 +47,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "bg-surface border border-border rounded-xl p-4",
+        "bg-surface border border-border rounded-xl p-4 elevate-hover",
         className,
       )}
     >

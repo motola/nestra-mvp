@@ -104,7 +104,7 @@ export function PropertyCard({
     >
       <Link href={`/properties/${property.id}`}>
         <div
-          className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-border-strong transition-colors relative"
+          className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-border-strong elevate-hover relative"
           style={{
             background:
               STATUS_GRADIENT[property.status] + ", var(--color-surface)",
