@@ -7,6 +7,7 @@ import {
   LockOpen,
   Shield,
   Thermometer,
+  Trash2,
   Wifi,
   WifiOff,
   Zap,
@@ -59,9 +60,11 @@ function getLightGradient(
 export function DeviceCard({
   device,
   propertyId,
+  onRemove,
 }: {
   device: AlphaconDevice;
   propertyId?: string;
+  onRemove?: (device: AlphaconDevice) => void;
 }) {
   const href = propertyId
     ? `/properties/${propertyId}/devices/${device.id}`
@@ -126,25 +129,49 @@ export function DeviceCard({
       >
         <div className="flex items-start justify-between mb-3">
           <div className="min-w-0">
-            <p className="font-body text-sm text-text truncate">
-              {device.name}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-body text-sm text-text truncate">
+                {device.name}
+              </p>
+              {device.vendor === "demo" && (
+                <span className="font-mono text-xs uppercase tracking-wider px-1.5 rounded-full bg-surface-2 text-text-3 border border-border flex-shrink-0">
+                  Demo
+                </span>
+              )}
+            </div>
             <p className="font-mono text-xs text-text-3 mt-0.5 capitalize">
               {device.vendor !== "demo" ? `${device.vendor} · ` : ""}
               {device.type}
             </p>
           </div>
-          <span
-            className={cn(
-              "flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full",
-              device.online
-                ? "bg-green-bg text-green border border-green/20"
-                : "bg-surface-2 text-text-3 border border-border",
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span
+              className={cn(
+                "flex items-center gap-1 font-mono text-xs px-2 py-0.5 rounded-full",
+                device.online
+                  ? "bg-green-bg text-green border border-green/20"
+                  : "bg-surface-2 text-text-3 border border-border",
+              )}
+            >
+              {device.online ? <Wifi size={10} /> : <WifiOff size={10} />}
+              {device.online ? "Online" : "Offline"}
+            </span>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRemove(device);
+                }}
+                title="Remove device"
+                aria-label="Remove device"
+                className="text-text-3 hover:text-red transition-colors p-0.5"
+              >
+                <Trash2 size={13} />
+              </button>
             )}
-          >
-            {device.online ? <Wifi size={10} /> : <WifiOff size={10} />}
-            {device.online ? "Online" : "Offline"}
-          </span>
+          </div>
         </div>
 
         <div className="space-y-1.5 font-mono text-xs text-text-3">

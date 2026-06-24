@@ -95,7 +95,7 @@ function RoomSelector({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Room name"
-            className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-3 focus:outline-none focus:border-border-strong"
             onKeyDown={(e) => {
               if (e.key === "Enter" && newName.trim())
                 createMut.mutate(newName.trim());
@@ -105,7 +105,7 @@ function RoomSelector({
           <button
             onClick={() => newName.trim() && createMut.mutate(newName.trim())}
             disabled={createMut.isPending}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-text disabled:opacity-50"
+            className="px-3 py-2 bg-graphite hover:bg-graphite-2 rounded-lg text-sm text-surface disabled:opacity-50 transition-colors"
           >
             {createMut.isPending ? (
               <Loader2 size={14} className="animate-spin" />
@@ -115,7 +115,7 @@ function RoomSelector({
           </button>
           <button
             onClick={() => setAdding(false)}
-            className="px-3 py-2 bg-surface-2 hover:bg-gray-600 rounded-lg text-sm text-text-2"
+            className="px-3 py-2 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-sm text-text-2 transition-colors"
           >
             Cancel
           </button>
@@ -125,7 +125,7 @@ function RoomSelector({
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:border-border-strong"
           >
             <option value="">No room assigned</option>
             {rooms.map((r) => (
@@ -136,7 +136,7 @@ function RoomSelector({
           </select>
           <button
             onClick={() => setAdding(true)}
-            className="px-3 py-2 bg-surface-2 hover:bg-gray-600 rounded-lg text-sm text-text-2 flex items-center gap-1"
+            className="px-3 py-2 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-sm text-text-2 flex items-center gap-1 transition-colors"
           >
             <Plus size={12} /> New room
           </button>
@@ -176,7 +176,7 @@ function SaveDeviceModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter a name for this device"
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text placeholder:text-text-3 focus:outline-none focus:border-border-strong"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ function SaveDeviceModal({
                 setPropertyId(e.target.value);
                 setRoomId("");
               }}
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:border-blue-500"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text focus:outline-none focus:border-border-strong"
             >
               <option value="">No property</option>
               {properties.map((p) => (
@@ -211,13 +211,13 @@ function SaveDeviceModal({
               onSave(propertyId, roomId, name.trim() || device.name)
             }
             disabled={!name.trim()}
-            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-lg text-sm text-text font-medium"
+            className="flex-1 py-2 bg-graphite hover:bg-graphite-2 disabled:opacity-40 rounded-lg text-sm text-surface font-medium transition-colors"
           >
             Add Device
           </button>
           <button
             onClick={onClose}
-            className="flex-1 py-2 bg-surface-2 hover:bg-gray-600 rounded-lg text-sm text-text-2"
+            className="flex-1 py-2 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-sm text-text-2 transition-colors"
           >
             Cancel
           </button>
@@ -590,7 +590,7 @@ export default function IntegrationsPage() {
                 setProvisionPropertyId(e.target.value);
                 setProvisionRoomId("");
               }}
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-blue-500"
+              className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-border-strong"
             >
               <option value="">No property</option>
               {properties.map((p) => (
@@ -610,7 +610,7 @@ export default function IntegrationsPage() {
           <button
             onClick={startProvision}
             disabled={!wifiSsid}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-lg text-sm text-text font-medium mt-2 transition-colors"
+            className="w-full py-2.5 bg-graphite hover:bg-graphite-2 disabled:opacity-40 rounded-lg text-sm text-surface font-medium mt-2 transition-colors"
           >
             Set Up Device
           </button>
@@ -642,7 +642,7 @@ export default function IntegrationsPage() {
         </div>
 
         {provisionDone && provisionError && (
-          <div className="bg-red-900/30 border border-red-700/40 rounded-xl p-4 mb-4">
+          <div className="bg-red-bg border border-red/20 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-2 text-sm text-red">
               <XCircle size={14} />
               {provisionError}
@@ -651,7 +651,7 @@ export default function IntegrationsPage() {
         )}
 
         {provisionDone && provisionedDevice && !provisionError && (
-          <div className="bg-green-900/20 border border-green-700/30 rounded-xl p-4 mb-4">
+          <div className="bg-green-bg border border-green/20 rounded-xl p-4 mb-4">
             <p className="text-sm text-green font-medium mb-1">
               {provisionedDevice.name}
             </p>
@@ -665,14 +665,14 @@ export default function IntegrationsPage() {
               <button
                 onClick={saveProvisionedDevice}
                 disabled={saveMut.isPending}
-                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-text font-medium disabled:opacity-50"
+                className="flex-1 py-2.5 bg-graphite hover:bg-graphite-2 rounded-lg text-sm text-surface font-medium disabled:opacity-50 transition-colors"
               >
                 {saveMut.isPending ? "Saving..." : "Save Device"}
               </button>
             )}
             <button
               onClick={resetAndGoHome}
-              className="flex-1 py-2.5 bg-surface-2 hover:bg-gray-600 rounded-lg text-sm text-text-2"
+              className="flex-1 py-2.5 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-sm text-text-2 transition-colors"
             >
               Done
             </button>
@@ -705,7 +705,7 @@ export default function IntegrationsPage() {
           </div>
           <button
             onClick={() => refetchScan()}
-            className="flex items-center gap-1.5 text-sm text-text-2 hover:text-text-2"
+            className="flex items-center gap-1.5 text-sm text-text-2 hover:text-text transition-colors"
           >
             <Search size={14} /> Scan again
           </button>
@@ -749,7 +749,7 @@ export default function IntegrationsPage() {
                         ) : (
                           <button
                             onClick={() => setSaveTarget(d)}
-                            className="text-sm text-text-2 hover:text-text-2 flex items-center gap-1"
+                            className="text-sm text-text-2 hover:text-text flex items-center gap-1 transition-colors"
                           >
                             <Plus size={13} /> Add
                           </button>
@@ -895,7 +895,7 @@ export default function IntegrationsPage() {
                 value={matterSetupCode}
                 onChange={(e) => setMatterSetupCode(e.target.value)}
                 placeholder="e.g. 1234-567-8901"
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-green-500 font-mono tracking-wide"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-text-3 focus:outline-none focus:border-border-strong font-mono tracking-wide"
               />
             </div>
             <div>
@@ -908,7 +908,7 @@ export default function IntegrationsPage() {
                   setMatterPropertyId(e.target.value);
                   setMatterRoomId("");
                 }}
-                className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-green-500"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-border-strong"
               >
                 <option value="">No property</option>
                 {properties.map((p) => (
@@ -928,7 +928,7 @@ export default function IntegrationsPage() {
             <button
               onClick={startMatterCommission}
               disabled={!matterSetupCode.trim()}
-              className="w-full py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-40 rounded-lg text-sm text-text font-medium transition-colors"
+              className="w-full py-2.5 bg-graphite hover:bg-graphite-2 disabled:opacity-40 rounded-lg text-sm text-surface font-medium transition-colors"
             >
               Commission Device
             </button>
@@ -977,14 +977,14 @@ export default function IntegrationsPage() {
             {commissionError ? "Commissioning Failed" : "Device Added"}
           </h2>
           {commissionError ? (
-            <div className="bg-red-900/30 border border-red-700/40 rounded-xl p-4 mb-4">
+            <div className="bg-red-bg border border-red/20 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-2 text-sm text-red">
                 <XCircle size={14} className="shrink-0 mt-0.5" />
                 {commissionError}
               </div>
             </div>
           ) : (
-            <div className="bg-green-900/20 border border-green-700/30 rounded-xl p-4 mb-4 space-y-1">
+            <div className="bg-green-bg border border-green/20 rounded-xl p-4 mb-4 space-y-1">
               <div className="flex items-center gap-2">
                 <CheckCircle size={15} className="text-green shrink-0" />
                 <p className="text-sm text-text font-medium">{deviceName}</p>
@@ -996,7 +996,7 @@ export default function IntegrationsPage() {
             {commissionError && (
               <button
                 onClick={() => setMatterSubView("commission")}
-                className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 rounded-lg text-sm text-text font-medium"
+                className="flex-1 py-2.5 bg-graphite hover:bg-graphite-2 rounded-lg text-sm text-surface font-medium transition-colors"
               >
                 Try Again
               </button>
@@ -1010,7 +1010,7 @@ export default function IntegrationsPage() {
                 setCommissionedDevice(null);
                 setCommissionError("");
               }}
-              className="flex-1 py-2.5 bg-surface-2 hover:bg-gray-600 rounded-lg text-sm text-text-2"
+              className="flex-1 py-2.5 bg-surface-2 border border-border hover:border-border-strong rounded-lg text-sm text-text-2 transition-colors"
             >
               Done
             </button>
@@ -1035,7 +1035,7 @@ export default function IntegrationsPage() {
             <button
               onClick={runMatterScan}
               disabled={matterScanning}
-              className="flex items-center gap-1.5 text-sm text-green hover:text-green disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm text-text-2 hover:text-text disabled:opacity-50 transition-colors"
             >
               {matterScanning ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -1053,7 +1053,7 @@ export default function IntegrationsPage() {
               </p>
               <button
                 onClick={runMatterScan}
-                className="text-sm text-green hover:text-green"
+                className="text-sm text-text-2 hover:text-text transition-colors"
               >
                 Scan now
               </button>
@@ -1073,7 +1073,7 @@ export default function IntegrationsPage() {
                   </div>
                   <button
                     onClick={() => setSaveTarget(d)}
-                    className="text-sm text-text-2 hover:text-text-2 flex items-center gap-1"
+                    className="text-sm text-text-2 hover:text-text flex items-center gap-1 transition-colors"
                   >
                     <Plus size={13} /> Add
                   </button>
@@ -1138,7 +1138,7 @@ export default function IntegrationsPage() {
             }}
             className="w-full flex items-center gap-4 bg-surface border border-border hover:border-border-strong rounded-xl p-4 text-left transition-colors"
           >
-            <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center shrink-0">
               <Search size={18} className="text-text-2" />
             </div>
             <div className="flex-1">
