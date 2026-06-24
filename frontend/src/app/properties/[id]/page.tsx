@@ -7,14 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useProperty } from "@/hooks/useProperty";
-import {
-  DeviceCard,
-  PageWrapper,
-  SkeletonCard,
-  AlertCard,
-  PropertyIllustration,
-} from "@/themes";
+import { DeviceCard, PageWrapper, SkeletonCard, AlertCard } from "@/themes";
 import { propertiesApi, provisioningApi, roomsApi } from "@/lib/api";
+import { coverUrl } from "@/lib/cover";
 import { RoomManagement } from "@/components/property/RoomManagement";
 import type { AlphaconDevice, Room, SavedDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -31,12 +26,12 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-surface/60 border border-white/20 rounded-xl p-3 backdrop-blur-sm">
-      <p className="font-body font-normal text-xs uppercase tracking-widest text-white/60 mb-1">
+    <div className="bg-white/10 border border-white/15 rounded-xl px-4 py-2.5 backdrop-blur-md min-w-[86px]">
+      <p className="font-body font-normal text-[10px] uppercase tracking-widest text-white/55 mb-0.5">
         {label}
       </p>
-      <p className="font-mono text-xl text-white">{value}</p>
-      {sub && <p className="font-mono text-xs text-white/50 mt-0.5">{sub}</p>}
+      <p className="font-mono text-xl text-white tabular-nums">{value}</p>
+      {sub && <p className="font-mono text-[10px] text-white/45">{sub}</p>}
     </div>
   );
 }
@@ -94,7 +89,6 @@ export default function PropertyPage({
   const hasCritical = propertyAlerts.some((a) => a.severity === "critical");
 
   const onlineCount = alphaDevices.filter((d) => d.online).length;
-  const totalPower = alphaDevices.reduce((s, d) => s + (d.power_draw ?? 0), 0);
 
   const demoByRoom = alphaDevices.reduce<Record<string, AlphaconDevice[]>>(
     (acc, d) => {
@@ -137,10 +131,16 @@ export default function PropertyPage({
         transition={{ duration: 0.3 }}
       >
         {/* Hero banner */}
-        <div className="bg-graphite text-surface px-6 md:px-8 pt-6 pb-0">
+        <div
+          className="relative text-surface px-6 md:px-8 pt-6 pb-0 bg-cover bg-center"
+          style={{
+            backgroundColor: "#1f1d1a",
+            backgroundImage: `linear-gradient(to top, rgba(26,26,23,0.94) 0%, rgba(26,26,23,0.55) 100%), url('${coverUrl(id, 1400)}')`,
+          }}
+        >
           <Link
             href="/portfolio"
-            className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 mb-5 transition-colors w-fit"
+            className="flex items-center gap-1.5 text-sm text-white/60 hover:text-white/90 mb-5 transition-colors w-fit"
           >
             <ArrowLeft size={14} />
             Portfolio
@@ -148,36 +148,23 @@ export default function PropertyPage({
 
           <div className="flex items-end justify-between gap-6 pb-6">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-white/40">
-                  <PropertyIllustration name={property?.name ?? ""} />
-                </span>
-                <h2 className="font-display italic text-3xl text-white">
-                  {property?.name ?? "Property"}
-                </h2>
-              </div>
-              <p className="font-body font-light text-sm text-white/50 ml-[92px]">
+              <h2 className="font-display italic text-3xl text-white leading-tight">
+                {property?.name ?? "Property"}
+              </h2>
+              <p className="font-body font-light text-sm text-white/60 mt-1.5">
                 {property?.address}
               </p>
             </div>
 
             {/* Quick stats */}
             {isDemo && !isLoading && alphaDevices.length > 0 && (
-              <div className="hidden sm:grid grid-cols-4 gap-2 flex-shrink-0">
+              <div className="hidden sm:grid grid-cols-3 gap-2.5 flex-shrink-0">
                 <StatCard label="Devices" value={alphaDevices.length} />
                 <StatCard label="Rooms" value={rooms.length} />
                 <StatCard
                   label="Online"
                   value={onlineCount}
                   sub={`of ${alphaDevices.length}`}
-                />
-                <StatCard
-                  label="Live Power"
-                  value={
-                    totalPower >= 1000
-                      ? `${(totalPower / 1000).toFixed(1)} kW`
-                      : `${Math.round(totalPower)} W`
-                  }
                 />
               </div>
             )}
