@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from property.integrations.bluetooth import router as bluetooth_router
+from integrations.bluetooth import router as bluetooth_router
 
 router = APIRouter()
 
