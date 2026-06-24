@@ -23,7 +23,7 @@ export function AIBar() {
 
   return (
     <div className="px-6 md:px-8 pt-5">
-      <div className="max-w-6xl mx-auto bg-graphite rounded-2xl pl-3 pr-3 py-2.5 flex items-center gap-3">
+      <div className="max-w-6xl mx-auto bg-graphite/90 backdrop-blur-xl border border-white/5 shadow-lg shadow-graphite/10 rounded-2xl pl-3 pr-3 py-2.5 flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg bg-graphite-2 flex items-center justify-center relative flex-shrink-0">
           <span className="font-display italic text-surface text-lg leading-none">
             N

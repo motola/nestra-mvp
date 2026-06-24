@@ -149,7 +149,7 @@ function NotificationPanel({
   return (
     <div
       ref={ref}
-      className="absolute top-12 right-0 w-80 bg-surface border border-border rounded-xl z-50 overflow-hidden"
+      className="absolute top-12 right-0 w-80 bg-surface/90 backdrop-blur-xl border border-border rounded-xl z-50 overflow-hidden shadow-lg shadow-graphite/5"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <p className="font-body font-normal text-sm text-text">Notifications</p>
@@ -265,7 +265,7 @@ export function Header() {
   }
 
   return (
-    <header className="h-14 flex-shrink-0 bg-surface border-b border-border flex items-center justify-between px-4 md:px-6">
+    <header className="h-14 flex-shrink-0 bg-surface/70 backdrop-blur-xl border-b border-border flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <button
           onClick={toggle}
@@ -328,7 +328,7 @@ export function Header() {
             <DropdownMenu.Content
               align="end"
               sideOffset={8}
-              className="w-52 bg-surface border border-border rounded-xl z-50 overflow-hidden shadow-sm"
+              className="w-52 bg-surface/90 backdrop-blur-xl border border-border rounded-xl z-50 overflow-hidden shadow-lg shadow-graphite/5"
             >
               <div className="px-4 py-3 border-b border-border">
                 <p className="font-body font-normal text-sm text-text">
