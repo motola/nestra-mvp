@@ -46,7 +46,9 @@ class TestAuthRoutes(unittest.TestCase):
     def test_auth_routes_registered(self) -> None:
         from main import app
 
-        paths = {route.path for route in app.routes}  # type: ignore[attr-defined]
+        # Read from the OpenAPI schema rather than app.routes internals, which
+        # vary by FastAPI/Starlette version (some wrap included routers).
+        paths = set(app.openapi()["paths"])
         for path in ("/auth/signup", "/auth/login", "/auth/logout", "/me"):
             self.assertIn(path, paths)
 
