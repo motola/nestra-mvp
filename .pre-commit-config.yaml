@@ -36,6 +36,14 @@ repos:
         entry: python3 .github/scripts/validate_commit_msg.py
         stages: [commit-msg]
 
+  # ── Markdown format (Prettier) ────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: \.(md)$
+        types: [markdown]
+
   # ── Frontend format (Prettier) ────────────────────────────────────────────
   - repo: local
     hooks:
