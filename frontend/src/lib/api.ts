@@ -19,11 +19,28 @@ import type {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export const TOKEN_STORAGE_KEY = "nestra_token";
+export const SHOW_DEMO_KEY = "nestra_show_demo";
 
 function authHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
   const token = window.localStorage.getItem(TOKEN_STORAGE_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Whether the hidden "show demo data" toggle is on. Off by default. */
+export function getShowDemo(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(SHOW_DEMO_KEY) === "1";
+}
+
+export function setShowDemo(on: boolean): void {
+  if (typeof window === "undefined") return;
+  if (on) window.localStorage.setItem(SHOW_DEMO_KEY, "1");
+  else window.localStorage.removeItem(SHOW_DEMO_KEY);
+}
+
+function demoHeader(): Record<string, string> {
+  return getShowDemo() ? { "X-Show-Demo": "1" } : {};
 }
 
 export async function apiFetch<T>(
@@ -34,6 +51,7 @@ export async function apiFetch<T>(
     headers: {
       "Content-Type": "application/json",
       ...authHeader(),
+      ...demoHeader(),
       ...init?.headers,
     },
     ...init,
