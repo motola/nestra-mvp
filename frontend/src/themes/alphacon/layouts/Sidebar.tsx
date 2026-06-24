@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAlerts } from "@/hooks/useAlerts";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_SECTIONS = [
   {
@@ -104,7 +105,9 @@ function NavItem({
 
 function SidebarContent() {
   const { data: alerts = [] } = useAlerts();
+  const { user } = useAuth();
   const activeAlerts = alerts.filter((a) => !a.dismissed).length;
+  const accountName = user?.organization?.name ?? user?.full_name ?? "Account";
 
   return (
     <div
@@ -155,13 +158,15 @@ function SidebarContent() {
       <div className="px-4 py-4 border-t border-border">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-full bg-graphite flex items-center justify-center text-surface text-xs font-display italic flex-shrink-0">
-            A
+            {accountName.trim()[0]?.toUpperCase() ?? "N"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-body font-normal text-xs text-text truncate">
-              Alphacon Demo
+              {accountName}
             </p>
-            <span className="font-mono text-[10px] text-text-3">Free plan</span>
+            <span className="font-mono text-[10px] text-text-3 truncate block">
+              {user?.email ?? ""}
+            </span>
           </div>
         </div>
       </div>
