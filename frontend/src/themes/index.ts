@@ -26,7 +26,6 @@ export { InsightCard } from "./alphacon/components/InsightCard";
 export { IntelligenceCard } from "./alphacon/components/IntelligenceCard";
 
 // Charts
-export { EnergyChart } from "./alphacon/charts/EnergyChart";
 export { DonutChart } from "./alphacon/charts/DonutChart";
 export { PowerChart } from "./alphacon/charts/PowerChart";
 
