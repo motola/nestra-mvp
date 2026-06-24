@@ -237,6 +237,7 @@ export default function IntegrationsPage() {
   // Provision flow state
   const [selectedHotspot, setSelectedHotspot] = useState("");
   const [wifiSsid, setWifiSsid] = useState("");
+  const [wifiManual, setWifiManual] = useState(false);
   const [wifiPassword, setWifiPassword] = useState("");
   const [provisionPropertyId, setProvisionPropertyId] = useState("");
   const [provisionRoomId, setProvisionRoomId] = useState("");
@@ -286,6 +287,12 @@ export default function IntegrationsPage() {
     queryKey: ["hotspots"],
     queryFn: provisioningApi.hotspots,
     enabled: view === "hotspot-list",
+  });
+
+  const { data: wifiNetworks = [] } = useQuery({
+    queryKey: ["wifi-networks"],
+    queryFn: provisioningApi.wifiNetworks,
+    enabled: view === "provision-config",
   });
 
   const {
@@ -510,14 +517,42 @@ export default function IntegrationsPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-xs text-text-2 mb-1">
-              Your WiFi Network Name
+              Your Wi-Fi network
             </label>
-            <input
-              value={wifiSsid}
-              onChange={(e) => setWifiSsid(e.target.value)}
-              placeholder="e.g. MyHomeNetwork"
-              className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder-gray-500 focus:outline-none focus:border-blue-500"
-            />
+            {wifiManual ? (
+              <input
+                autoFocus
+                autoComplete="off"
+                value={wifiSsid}
+                onChange={(e) => setWifiSsid(e.target.value)}
+                placeholder="Enter Wi-Fi name"
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text placeholder:text-text-3 focus:outline-none focus:border-border-strong"
+              />
+            ) : (
+              <select
+                value={wifiSsid}
+                onChange={(e) => {
+                  if (e.target.value === "__manual__") {
+                    setWifiManual(true);
+                    setWifiSsid("");
+                  } else {
+                    setWifiSsid(e.target.value);
+                  }
+                }}
+                className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text focus:outline-none focus:border-border-strong"
+              >
+                <option value="">Select your Wi-Fi network…</option>
+                {wifiNetworks.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+                <option value="__manual__">Other (enter manually)…</option>
+              </select>
+            )}
+            <p className="font-body font-light text-xs text-text-3 mt-1">
+              The network the device will join — not the Shelly hotspot.
+            </p>
           </div>
           <div>
             <label className="block text-xs text-text-2 mb-1">
