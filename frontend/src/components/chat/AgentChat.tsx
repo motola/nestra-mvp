@@ -55,6 +55,19 @@ export function AgentChat() {
     setStreaming(false);
   }
 
+  const sendRef = useRef(send);
+  sendRef.current = send;
+
+  useEffect(() => {
+    function onAsk(e: Event) {
+      setOpen(true);
+      const prompt = (e as CustomEvent<string>).detail;
+      if (prompt) void sendRef.current(prompt);
+    }
+    window.addEventListener("nestra:ask", onAsk);
+    return () => window.removeEventListener("nestra:ask", onAsk);
+  }, []);
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
