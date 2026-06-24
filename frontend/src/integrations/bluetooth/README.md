@@ -5,19 +5,20 @@ React hooks and utilities for discovering and managing Bluetooth smart home devi
 ## Overview
 
 Provides type-safe wrappers around the Bluetooth API endpoints:
+
 - **Hooks** — TanStack Query wrappers for device queries and mutations
 - **Scanning** — Web Bluetooth API integration for device discovery
 - **Types** — Shared TypeScript interfaces for type safety
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| `types.ts` | Bluetooth device types and interfaces |
-| `hooks.ts` | useBluetoothDevices, usePairBluetoothDevice, useUnpairBluetoothDevice |
-| `scan.ts` | scanBluetoothDevices Web Bluetooth API utility |
-| `index.ts` | Barrel export (public API) |
-| `README.md` | This file |
+| File        | Purpose                                                               |
+| ----------- | --------------------------------------------------------------------- |
+| `types.ts`  | Bluetooth device types and interfaces                                 |
+| `hooks.ts`  | useBluetoothDevices, usePairBluetoothDevice, useUnpairBluetoothDevice |
+| `scan.ts`   | scanBluetoothDevices Web Bluetooth API utility                        |
+| `index.ts`  | Barrel export (public API)                                            |
+| `README.md` | This file                                                             |
 
 ## Hooks
 
@@ -105,10 +106,12 @@ try {
 ```
 
 **Throws:**
+
 - `Error` if Web Bluetooth API not supported
 - `DOMException` (NotFoundError) if user cancels
 
 **Browser Support:**
+
 - ✅ Chrome 56+
 - ✅ Edge 79+
 - ⚠️ Firefox (disabled by default, enable `dom.bluetooth.enabled`)
@@ -120,28 +123,28 @@ try {
 interface BluetoothDeviceOut {
   id: string;
   property_id: string;
-  mac_address: string;        // AA:BB:CC:DD:EE:FF
+  mac_address: string; // AA:BB:CC:DD:EE:FF
   name: string;
-  device_type: string;        // "light", "sensor", etc
-  rssi: number;               // Signal strength (-100 to -20 dBm)
+  device_type: string; // "light", "sensor", etc
+  rssi: number; // Signal strength (-100 to -20 dBm)
   battery_level: number | null; // 0-100 or null
   is_paired: boolean;
-  last_sync: string;          // ISO 8601
-  created_at: string;         // ISO 8601
+  last_sync: string; // ISO 8601
+  created_at: string; // ISO 8601
 }
 
 interface BluetoothDeviceIn {
   mac_address: string;
   name: string;
   property_id: string;
-  device_type?: string;       // Default: "unknown"
-  rssi?: number;              // Default: -100
+  device_type?: string; // Default: "unknown"
+  rssi?: number; // Default: -100
   battery_level?: number | null;
 }
 
 interface BluetoothPairResponse {
   device_id: string;
-  status: string;             // "paired"
+  status: string; // "paired"
   message: string;
 }
 
@@ -233,6 +236,7 @@ npm run test
 ```
 
 **What's tested:**
+
 - Initial modal state rendering
 - Scanning state and loader
 - Device list display
@@ -240,6 +244,7 @@ npm run test
 - Modal lifecycle (open → scan → select → pair → success)
 
 Mock navigator.bluetooth for testing:
+
 ```typescript
 Object.defineProperty(navigator, "bluetooth", {
   value: { requestDevice: vi.fn() },

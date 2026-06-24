@@ -5,6 +5,7 @@ Business logic, state management, and API clients for all vendor integrations.
 ## Overview
 
 Each integration is self-contained in its own folder with:
+
 - **types.ts** — TypeScript interfaces and types
 - **hooks.ts** — React Query hooks for API communication
 - **scan.ts** (optional) — Device discovery/scanning utilities
@@ -42,7 +43,7 @@ integrations/
 import {
   useBluetoothDevices,
   scanBluetoothDevices,
-  type BluetoothDeviceOut
+  type BluetoothDeviceOut,
 } from "@/integrations/bluetooth";
 
 // ❌ Avoid - importing from submodules
@@ -84,6 +85,7 @@ touch integrations/govee/{types,hooks,index,README}.ts
 ```
 
 Then:
+
 - Define types in `govee/types.ts`
 - Implement hooks calling `/integrations/govee/*` endpoints
 - Export from `integrations/index.ts`: `export * from "./govee"`
@@ -93,6 +95,7 @@ Then:
 ### React Query Cache Keys
 
 Use integration name + resource type:
+
 ```typescript
 const queryKey = ["bluetooth-devices", propertyId];
 const queryKey = ["govee-lights"];
@@ -102,15 +105,17 @@ const queryKey = ["lifx-scenes"];
 ### Mutation Invalidation
 
 Invalidate on success to keep UI in sync:
+
 ```typescript
 onSuccess: () => {
   queryClient.invalidateQueries({ queryKey: ["bluetooth-devices"] });
-}
+};
 ```
 
 ### Error Handling
 
 Let hooks return TanStack Query state (isLoading, error, data):
+
 ```typescript
 const { data, isLoading, error } = useBluetoothDevices();
 
@@ -122,11 +127,13 @@ return <DeviceList devices={data} />;
 ## Testing
 
 Each integration should have:
+
 - Hook tests in `frontend/tests/[vendor].test.tsx`
 - Mock API responses via `vi.mock("@/lib/api/client")`
 - Test loading, error, and success states
 
 Run tests:
+
 ```bash
 npm run test
 ```

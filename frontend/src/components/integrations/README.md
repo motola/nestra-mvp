@@ -27,6 +27,7 @@ Allows users to discover and pair Bluetooth smart home devices through the web i
 ## Testing
 
 ### Manual (Localhost)
+
 ```bash
 # Terminal 1: Backend
 cd backend && python -m uvicorn src.main:app --reload
@@ -40,6 +41,7 @@ cd frontend && npm run dev
 ```
 
 ### Unit Tests
+
 ```bash
 # Backend (8 tests)
 cd backend && make test
@@ -51,6 +53,7 @@ cd frontend && npm run test
 ## API Endpoints
 
 ### Pair Device
+
 ```
 POST /integrations/bluetooth/pair
 {
@@ -64,11 +67,13 @@ POST /integrations/bluetooth/pair
 ```
 
 ### Unpair Device
+
 ```
 POST /integrations/bluetooth/unpair?device_id=uuid
 ```
 
 ### List Devices
+
 ```
 GET /integrations/bluetooth/devices?property_id=uuid (optional filter)
 ```
@@ -76,27 +81,35 @@ GET /integrations/bluetooth/devices?property_id=uuid (optional filter)
 ## React Hooks
 
 ### useBluetoothDevices(propertyId?)
+
 Fetch paired devices.
+
 ```typescript
 const { data: devices } = useBluetoothDevices(propertyId);
 ```
 
 ### usePairBluetoothDevice()
+
 Pair a new device.
+
 ```typescript
 const { mutateAsync } = usePairBluetoothDevice();
 await mutateAsync({ mac_address, name, property_id, ... });
 ```
 
 ### useUnpairBluetoothDevice()
+
 Unpair a device.
+
 ```typescript
 const { mutateAsync } = useUnpairBluetoothDevice();
 await mutateAsync(deviceId);
 ```
 
 ### scanBluetoothDevices()
+
 Scan for nearby devices.
+
 ```typescript
 const devices = await scanBluetoothDevices();
 // Returns: Array<{ name, mac_address }>
@@ -116,6 +129,7 @@ initial → scanning → selecting → pairing → success/error
 ```
 
 ### States
+
 - **initial:** Shows scan button
 - **scanning:** Loading indicator + status message
 - **selecting:** Device list for user to choose from
@@ -129,25 +143,25 @@ initial → scanning → selecting → pairing → success/error
 interface BluetoothDeviceOut {
   id: string;
   property_id: string;
-  mac_address: string;        // AA:BB:CC:DD:EE:FF
-  name: string;               // "Living Room Light"
-  device_type: string;        // "light", "sensor", etc
-  rssi: number;               // Signal strength (-100 to -20)
+  mac_address: string; // AA:BB:CC:DD:EE:FF
+  name: string; // "Living Room Light"
+  device_type: string; // "light", "sensor", etc
+  rssi: number; // Signal strength (-100 to -20)
   battery_level: number | null; // 0-100, or null
   is_paired: boolean;
-  last_sync: string;          // ISO 8601 timestamp
-  created_at: string;         // ISO 8601 timestamp
+  last_sync: string; // ISO 8601 timestamp
+  created_at: string; // ISO 8601 timestamp
 }
 ```
 
 ## Troubleshooting
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| "Web Bluetooth not supported" | Browser doesn't support API | Use Chrome/Edge |
-| Scan times out | No devices nearby | Turn on a Bluetooth device |
-| "Device already paired" (409) | MAC already in DB | Use different device |
-| Modal closes | Network error | Check backend logs |
+| Issue                         | Cause                       | Fix                        |
+| ----------------------------- | --------------------------- | -------------------------- |
+| "Web Bluetooth not supported" | Browser doesn't support API | Use Chrome/Edge            |
+| Scan times out                | No devices nearby           | Turn on a Bluetooth device |
+| "Device already paired" (409) | MAC already in DB           | Use different device       |
+| Modal closes                  | Network error               | Check backend logs         |
 
 ## Future Work
 
