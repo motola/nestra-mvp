@@ -203,7 +203,6 @@ export default function DashboardPage() {
                 value={properties.length}
                 icon={Building2}
                 animate
-                trend="properties-trend"
                 sub="all monitored"
               />
               <StatCard
@@ -211,7 +210,6 @@ export default function DashboardPage() {
                 value={deviceCount}
                 icon={Cpu}
                 animate
-                trend="devices-trend"
                 sub={`${onlineCount} online`}
               />
               <StatCard
@@ -219,7 +217,6 @@ export default function DashboardPage() {
                 value={activeAlerts.length}
                 icon={Bell}
                 animate
-                trend="alerts-trend"
                 sub={`${criticalCount} critical`}
                 className={
                   activeAlerts.length > 0 ? "border-amber/20 bg-amber-bg" : ""
@@ -230,7 +227,6 @@ export default function DashboardPage() {
                 value={affectedProps}
                 icon={AlertTriangle}
                 animate
-                trend="risk-trend"
                 sub="properties"
                 className={affectedProps > 0 ? "border-red/20 bg-red-bg" : ""}
               />
