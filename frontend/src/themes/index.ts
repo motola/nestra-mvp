@@ -27,6 +27,7 @@ export { IntelligenceCard } from "./alphacon/components/IntelligenceCard";
 
 // Charts
 export { DonutChart } from "./alphacon/charts/DonutChart";
+export { TrendChart } from "./alphacon/charts/TrendChart";
 export { PowerChart } from "./alphacon/charts/PowerChart";
 
 // Layouts
