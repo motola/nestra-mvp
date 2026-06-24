@@ -5,13 +5,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle, Cpu } from "lucide-react";
 import type { Property, PropertyStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { seededSparklineValues } from "./Sparkline";
-
-const STATUS_LINE: Record<PropertyStatus, string> = {
-  all_clear: "#2d6b2d",
-  needs_attention: "#9a5e15",
-  critical: "#8b2020",
-};
+import { coverUrl } from "@/lib/cover";
 
 const STATUS_DOT: Record<PropertyStatus, string> = {
   all_clear: "bg-green",
@@ -24,75 +18,6 @@ const STATUS_LABEL: Record<PropertyStatus, string> = {
   needs_attention: "Needs Attention",
   critical: "Critical",
 };
-
-function BottomSparkline({
-  seed,
-  status,
-}: {
-  seed: string;
-  status: PropertyStatus;
-}) {
-  const vals = seededSparklineValues(seed);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const range = max - min || 1;
-  const h = 32;
-  const w = 100;
-  const pts = vals
-    .map((v, i) => {
-      const x = (i / (vals.length - 1)) * w;
-      const y = h - ((v - min) / range) * (h - 4) - 2;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
-      className="w-full"
-      style={{ height: h }}
-    >
-      <defs>
-        <linearGradient id={`spk-${seed}`} x1="0" y1="0" x2="0" y2="1">
-          <stop
-            offset="0%"
-            stopColor={STATUS_LINE[status]}
-            stopOpacity="0.15"
-          />
-          <stop offset="100%" stopColor={STATUS_LINE[status]} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={STATUS_LINE[status]}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// Curated architectural photos (verified). Mapped deterministically per
-// property; the gradient scrim + fallback colour mean it never looks broken.
-const COVERS = [
-  "1568605114967-8130f3a36994",
-  "1570129477492-45c003edd2be",
-  "1512917774080-9991f1c4c750",
-  "1486406146926-c627a92ad1ab",
-  "1416331108676-a22ccb276e35",
-  "1554995207-c18c203602cb",
-  "1502005229762-cf1b2da7c5d6",
-  "1564013799919-ab600027ffc6",
-];
-
-function coverUrl(seed: string): string {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return `https://images.unsplash.com/photo-${COVERS[h % COVERS.length]}?w=600&q=70&auto=format&fit=crop`;
-}
 
 export function PropertyCard({
   property,
@@ -155,9 +80,6 @@ export function PropertyCard({
               )}
             </div>
           </div>
-
-          {/* Full-width sparkline strip */}
-          <BottomSparkline seed={property.id} status={property.status} />
         </div>
       </Link>
     </motion.div>
