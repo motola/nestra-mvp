@@ -6,16 +6,6 @@ import { AlertTriangle, Cpu } from "lucide-react";
 import type { Property, PropertyStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { seededSparklineValues } from "./Sparkline";
-import { PropertyIllustration } from "../ui/PropertyIllustration";
-
-const STATUS_GRADIENT: Record<PropertyStatus, string> = {
-  all_clear:
-    "linear-gradient(to bottom, rgba(45,107,45,0.03) 0%, transparent 60%)",
-  needs_attention:
-    "linear-gradient(to bottom, rgba(154,94,21,0.04) 0%, transparent 60%)",
-  critical:
-    "linear-gradient(to bottom, rgba(139,32,32,0.05) 0%, transparent 60%)",
-};
 
 const STATUS_LINE: Record<PropertyStatus, string> = {
   all_clear: "#2d6b2d",
@@ -85,6 +75,25 @@ function BottomSparkline({
   );
 }
 
+// Curated architectural photos (verified). Mapped deterministically per
+// property; the gradient scrim + fallback colour mean it never looks broken.
+const COVERS = [
+  "1568605114967-8130f3a36994",
+  "1570129477492-45c003edd2be",
+  "1512917774080-9991f1c4c750",
+  "1486406146926-c627a92ad1ab",
+  "1416331108676-a22ccb276e35",
+  "1554995207-c18c203602cb",
+  "1502005229762-cf1b2da7c5d6",
+  "1564013799919-ab600027ffc6",
+];
+
+function coverUrl(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return `https://images.unsplash.com/photo-${COVERS[h % COVERS.length]}?w=600&q=70&auto=format&fit=crop`;
+}
+
 export function PropertyCard({
   property,
   index = 0,
@@ -103,42 +112,34 @@ export function PropertyCard({
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
     >
       <Link href={`/properties/${property.id}`}>
-        <div
-          className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-border-strong elevate-hover relative"
-          style={{
-            background:
-              STATUS_GRADIENT[property.status] + ", var(--color-surface)",
-          }}
-        >
-          {/* Card body */}
-          <div className="px-5 pt-5 pb-4 relative">
-            {/* SVG illustration top-right */}
-            <div className="absolute top-3 right-3 text-border opacity-40 pointer-events-none">
-              <PropertyIllustration name={property.name} />
-            </div>
-
-            {/* Status row */}
-            <div className="flex items-center gap-2 mb-3">
+        <div className="bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-border-strong elevate-hover relative">
+          {/* Cover photo with scrim + name overlay */}
+          <div
+            className="h-28 bg-surface-2 bg-cover bg-center relative"
+            style={{
+              backgroundImage: `linear-gradient(to top, rgba(26,26,23,0.62) 0%, rgba(26,26,23,0.05) 60%), url('${coverUrl(property.id)}')`,
+            }}
+          >
+            {/* Frosted status pill */}
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md rounded-full pl-2 pr-2.5 py-1 border border-white/30">
               <span className={cn("w-2 h-2 rounded-full flex-shrink-0", dot)} />
-              <span className="font-body font-light text-xs text-text-3">
+              <span className="font-body font-light text-[11px] text-text-2">
                 {label}
               </span>
             </div>
 
-            {/* Property name */}
-            <p className="font-display italic text-[18px] text-text leading-tight mb-1 pr-20">
+            {/* Property name on image */}
+            <p className="absolute bottom-2.5 left-4 right-4 font-display italic text-[18px] text-white leading-tight truncate drop-shadow">
               {property.name}
             </p>
+          </div>
 
-            {/* Address */}
-            <p className="font-body font-light text-xs text-text-3 truncate mb-4">
+          {/* Card body */}
+          <div className="px-5 pt-3 pb-4">
+            <p className="font-body font-light text-xs text-text-3 truncate mb-3">
               {property.address.split(",").slice(-2).join(",").trim()}
             </p>
 
-            {/* Divider */}
-            <div className="border-t border-border mb-3" />
-
-            {/* Stats row */}
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 font-mono text-xs text-text-2">
                 <Cpu size={10} className="text-text-3" />
@@ -156,9 +157,7 @@ export function PropertyCard({
           </div>
 
           {/* Full-width sparkline strip */}
-          <div className="-mx-0 mt-0">
-            <BottomSparkline seed={property.id} status={property.status} />
-          </div>
+          <BottomSparkline seed={property.id} status={property.status} />
         </div>
       </Link>
     </motion.div>
