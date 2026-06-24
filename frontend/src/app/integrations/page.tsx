@@ -17,6 +17,7 @@ import {
   Cloud,
   Sun,
   Cpu,
+  Bluetooth,
 } from "lucide-react";
 import {
   provisioningApi,
@@ -40,7 +41,8 @@ type View =
   | "provision-config"
   | "provision-progress"
   | "scan-network"
-  | "matter";
+  | "matter"
+  | "ble";
 type MatterSubView =
   | "choose"
   | "commission"
@@ -260,6 +262,10 @@ export default function IntegrationsPage() {
   const [matterDevices, setMatterDevices] = useState<ScannedDevice[]>([]);
   const [matterScanning, setMatterScanning] = useState(false);
 
+  // Bluetooth (BLE) scan state
+  const [bleDevices, setBleDevices] = useState<ScannedDevice[]>([]);
+  const [bleScanning, setBleScanning] = useState(false);
+
   // Queries
   const { data: properties = [] } = useQuery({
     queryKey: ["properties"],
@@ -413,6 +419,17 @@ export default function IntegrationsPage() {
       setMatterDevices(devices);
     } finally {
       setMatterScanning(false);
+    }
+  }
+
+  async function runBleScan() {
+    setBleScanning(true);
+    setBleDevices([]);
+    try {
+      const devices = await integrationsApi.scanBle();
+      setBleDevices(devices);
+    } finally {
+      setBleScanning(false);
     }
   }
 
@@ -695,6 +712,96 @@ export default function IntegrationsPage() {
                     );
                   })}
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {saveTarget && (
+          <SaveDeviceModal
+            device={saveTarget}
+            properties={properties}
+            onSave={(propId, roomId, name) => {
+              saveMut.mutate({
+                vendor: saveTarget.vendor,
+                name,
+                model: saveTarget.model,
+                ip: saveTarget.ip,
+                mac: saveTarget.mac,
+                property_id: propId,
+                room_id: roomId || null,
+              });
+            }}
+            onClose={() => setSaveTarget(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (view === "ble") {
+    return (
+      <div className="p-6 md:p-8 max-w-2xl mx-auto">
+        <BackButton onClick={() => setView("main")} />
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-bold text-text">Bluetooth Devices</h2>
+            <p className="text-sm text-text-2">
+              Scan for nearby Bluetooth (BLE) devices in range
+            </p>
+          </div>
+          <button
+            onClick={runBleScan}
+            disabled={bleScanning}
+            className="flex items-center gap-1.5 text-sm text-text-2 hover:text-text disabled:opacity-50"
+          >
+            {bleScanning ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Search size={14} />
+            )}
+            {bleScanning ? "Scanning…" : "Scan"}
+          </button>
+        </div>
+
+        {bleDevices.length === 0 && !bleScanning && (
+          <div className="bg-surface border border-border rounded-xl p-8 text-center">
+            <Bluetooth size={22} className="text-text-3 mx-auto mb-3" />
+            <p className="text-text-2 text-sm mb-1">
+              No Bluetooth devices found yet.
+            </p>
+            <p className="text-text-3 text-xs mb-4">
+              Make sure the device is powered on and in range of this machine.
+            </p>
+            <button
+              onClick={runBleScan}
+              className="text-sm text-text-2 hover:text-text"
+            >
+              Scan now
+            </button>
+          </div>
+        )}
+
+        {bleDevices.length > 0 && (
+          <div className="space-y-2">
+            {bleDevices.map((d, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Bluetooth size={15} className="text-text-2" />
+                  <div>
+                    <p className="text-sm text-text font-medium">{d.name}</p>
+                    <p className="font-mono text-xs text-text-3">{d.model}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSaveTarget(d)}
+                  className="text-sm text-text-2 hover:text-text flex items-center gap-1"
+                >
+                  <Plus size={13} /> Add
+                </button>
               </div>
             ))}
           </div>
@@ -1009,6 +1116,7 @@ export default function IntegrationsPage() {
 
   const shellyConnected = realDevices.some((d) => d.vendor === "shelly");
   const matterConnected = realDevices.some((d) => d.vendor === "matter");
+  const bleConnected = realDevices.some((d) => d.vendor === "ble");
   const goveeConnected =
     integrations.find((i) => i.vendor === "govee")?.connected ?? false;
   const lifxConnected =
@@ -1061,6 +1169,17 @@ export default function IntegrationsPage() {
         setView("matter");
         setMatterSubView("choose");
       },
+    },
+    {
+      key: "ble",
+      icon: Bluetooth,
+      iconBg: "bg-surface-2",
+      iconColor: "text-text-2",
+      name: "Bluetooth",
+      connectionType: "Local radio (BLE)",
+      connected: bleConnected,
+      deviceCount: realDevices.filter((d) => d.vendor === "ble").length,
+      onAction: () => setView("ble"),
     },
   ];
 
@@ -1203,6 +1322,14 @@ export default function IntegrationsPage() {
                 setView("matter");
                 setMatterSubView("choose");
               },
+            },
+            {
+              icon: Bluetooth,
+              title: "Bluetooth Device",
+              desc: "Scan for nearby Bluetooth (BLE) devices",
+              iconBg: "bg-surface-2",
+              iconColor: "text-text-2",
+              onClick: () => setView("ble"),
             },
           ].map(({ icon: Icon, title, desc, iconBg, iconColor, onClick }) => (
             <motion.button
