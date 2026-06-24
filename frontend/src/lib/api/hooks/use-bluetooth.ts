@@ -1,6 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
-import type { BluetoothDeviceOut } from "@/lib/api/types";
+
+interface BluetoothDeviceOut {
+  id: string;
+  property_id: string;
+  mac_address: string;
+  name: string;
+  device_type: string;
+  rssi: number;
+  battery_level: number | null;
+  is_paired: boolean;
+  last_sync: string;
+  created_at: string;
+}
 
 interface BluetoothDeviceIn {
   mac_address: string;
@@ -20,6 +32,22 @@ interface BluetoothPairResponse {
 interface BluetoothUnpairResponse {
   status: string;
   message: string;
+}
+
+// Extend Navigator to include bluetooth API
+declare global {
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options: {
+        acceptAllDevices: boolean;
+        optionalServices?: string[];
+      }): Promise<{
+        name?: string;
+        id: string;
+        gatt?: { connect(): Promise<void> };
+      }>;
+    };
+  }
 }
 
 export function useBluetoothDevices(propertyId?: string) {

@@ -191,7 +191,7 @@ class TestBluetoothIntegration(unittest.TestCase):
         for i, mac in enumerate(macs):
             device_in = BluetoothDeviceIn(
                 mac_address=mac,
-                name=f"Device {i+1}",
+                name=f"Device {i + 1}",
                 property_id=property_id,
             )
             result = asyncio.run(pair_device(device_in, self.settings))

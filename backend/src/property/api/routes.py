@@ -82,7 +82,7 @@ async def unpair_device(
 @router.get("/devices", response_model=list[BluetoothDeviceOut])
 async def list_devices(
     property_id: UUID | None = None,
-    settings: SettingsDep = None,
+    settings: SettingsDep | None = None,
 ) -> list[BluetoothDeviceOut]:
     """List Bluetooth devices (RLS will filter by org in production)."""
     devices = list(_MOCK_DEVICES.values())
