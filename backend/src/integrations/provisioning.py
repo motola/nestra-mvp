@@ -179,7 +179,12 @@ async def scan_networks_via_shelly(hotspot_ssid: str) -> list[dict[str, Any]]:
 
 
 async def send_wifi_credentials(home_ssid: str, home_password: str) -> None:
-    """POST home WiFi credentials to Shelly device at 192.168.33.1, then reboot."""
+    """Set the Shelly's home WiFi (STA) credentials over its own AP.
+
+    The device joins the home network while keeping its AP up, so we can keep
+    talking to it at 192.168.33.1 and ask it which IP it got. No reboot — that
+    drops the AP (and is why the old Shelly.Reboot call returned 400).
+    """
     payload = {
         "config": {
             "sta": {
@@ -190,8 +195,41 @@ async def send_wifi_credentials(home_ssid: str, home_password: str) -> None:
         }
     }
     async with httpx.AsyncClient(timeout=10.0) as client:
-        await client.post(f"http://{_SHELLY_AP_IP}/rpc/WiFi.SetConfig", json=payload)
-        await client.post(f"http://{_SHELLY_AP_IP}/rpc/Shelly.Reboot")
+        r = await client.post(f"http://{_SHELLY_AP_IP}/rpc/WiFi.SetConfig", json=payload)
+        r.raise_for_status()
+
+
+async def get_device_info() -> dict[str, Any]:
+    """Read the Shelly's identity (id, mac, model) over its AP. Tolerant: returns
+    an empty dict if the device doesn't answer."""
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            r = await client.get(f"http://{_SHELLY_AP_IP}/rpc/Shelly.GetDeviceInfo")
+            r.raise_for_status()
+            return dict(r.json())
+    except Exception as exc:
+        logger.warning("Shelly.GetDeviceInfo failed: %s", exc)
+        return {}
+
+
+async def wait_for_sta_ip(attempts: int = 12, gap: float = 3.0) -> str | None:
+    """Poll the Shelly (over its AP) until it reports the IP it got on the home
+    network. The device knows its own STA IP, so there is no need to scan the
+    home LAN for it.
+    """
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        for _ in range(attempts):
+            try:
+                r = await client.get(f"http://{_SHELLY_AP_IP}/rpc/WiFi.GetStatus")
+                if r.status_code == 200:
+                    data = r.json()
+                    sta_ip = data.get("sta_ip")
+                    if sta_ip and data.get("status") in ("got ip", "connected"):
+                        return str(sta_ip)
+            except Exception:
+                pass
+            await asyncio.sleep(gap)
+    return None
 
 
 async def reconnect_home(home_ssid: str) -> None:
