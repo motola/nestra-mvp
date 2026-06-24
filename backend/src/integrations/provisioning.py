@@ -31,8 +31,63 @@ _HOTSPOT_WAIT = 8  # seconds after connecting to Shelly AP before HTTP is ready
 _REBOOT_WAIT = 12  # seconds for device to reboot and join home network
 
 
+def _force_wifi_scan() -> None:
+    """Trigger a fresh Windows Wi-Fi scan via the native WlanScan API.
+
+    `netsh wlan show networks` only reports Windows' last cached scan, so without
+    this the Rescan button just re-reads stale results. WlanScan asks the radio
+    to scan now; results land a couple of seconds later. Best-effort.
+    """
+    try:
+        import ctypes
+        from ctypes import POINTER, Structure, byref, c_ubyte, wintypes
+
+        class GUID(Structure):
+            _fields_ = [
+                ("Data1", wintypes.DWORD),
+                ("Data2", wintypes.WORD),
+                ("Data3", wintypes.WORD),
+                ("Data4", c_ubyte * 8),
+            ]
+
+        class WLAN_INTERFACE_INFO(Structure):
+            _fields_ = [
+                ("InterfaceGuid", GUID),
+                ("strInterfaceDescription", wintypes.WCHAR * 256),
+                ("isState", wintypes.DWORD),
+            ]
+
+        class WLAN_INTERFACE_INFO_LIST(Structure):
+            _fields_ = [
+                ("dwNumberOfItems", wintypes.DWORD),
+                ("dwIndex", wintypes.DWORD),
+                ("InterfaceInfo", WLAN_INTERFACE_INFO * 8),
+            ]
+
+        wlan = ctypes.windll.wlanapi
+        handle = wintypes.HANDLE()
+        version = wintypes.DWORD()
+        if wlan.WlanOpenHandle(2, None, byref(version), byref(handle)) != 0:
+            return
+        try:
+            ptr = POINTER(WLAN_INTERFACE_INFO_LIST)()
+            if wlan.WlanEnumInterfaces(handle, None, byref(ptr)) != 0:
+                return
+            info = ptr.contents
+            for i in range(min(info.dwNumberOfItems, 8)):
+                guid = info.InterfaceInfo[i].InterfaceGuid
+                wlan.WlanScan(handle, byref(guid), None, None, None)
+            wlan.WlanFreeMemory(ptr)
+        finally:
+            wlan.WlanCloseHandle(handle, None)
+    except Exception as exc:
+        logger.warning("WlanScan force-scan failed: %s", exc)
+
+
 async def scan_shelly_hotspots() -> list[str]:
-    """Return SSIDs of nearby Shelly device APs found by netsh."""
+    """Force a fresh Wi-Fi scan, then return nearby Shelly device APs."""
+    await asyncio.to_thread(_force_wifi_scan)
+    await asyncio.sleep(2.5)  # let the radio finish the scan before reading
     result = await asyncio.to_thread(
         subprocess.run,
         ["netsh", "wlan", "show", "networks", "mode=bssid"],
