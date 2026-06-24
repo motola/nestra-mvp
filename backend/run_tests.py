@@ -13,9 +13,9 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
 
     # Load test modules explicitly to avoid discovery issues
+    from property.integrations.bluetooth.tests import test_bluetooth
     from tests.demo import test_providers
     from tests.identity import test_domain, test_repository_models, test_signup_service
-    from tests.property import test_bluetooth
 
     suite.addTests(loader.loadTestsFromModule(test_providers))
     suite.addTests(loader.loadTestsFromModule(test_signup_service))
