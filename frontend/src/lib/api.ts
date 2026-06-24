@@ -151,6 +151,7 @@ export const integrationsApi = {
         body: JSON.stringify({ api_key: apiKey }),
       },
     ),
+  scanBle: () => apiFetch<ScannedDevice[]>("/api/v1/integrations/scan/ble"),
 };
 
 // ── Provisioning & device registry ───────────────────────────────────────────

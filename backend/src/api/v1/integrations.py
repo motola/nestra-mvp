@@ -188,6 +188,17 @@ async def scan_matter_devices() -> dict[str, Any]:
     return {"devices": devices}
 
 
+# ── Discovery: Bluetooth (BLE) scan ───────────────────────────────────────────
+
+
+@router.get("/scan/ble")
+async def scan_ble_devices() -> list[dict[str, Any]]:
+    """Scan for nearby Bluetooth (BLE) devices in range of this machine."""
+    from integrations.scanner import scan_ble
+
+    return await scan_ble()
+
+
 # ── Matter: commission ────────────────────────────────────────────────────────
 
 

@@ -29,6 +29,39 @@ from integrations.provisioning import get_local_subnet
 
 logger = logging.getLogger(__name__)
 
+
+async def scan_ble(timeout: float = 6.0) -> list[dict[str, Any]]:
+    """Discover nearby Bluetooth Low Energy devices.
+
+    Requires the optional ``bleak`` dependency and a Bluetooth radio on the host.
+    Returns an empty list (not an error) when bleak is unavailable, so the UI
+    degrades gracefully rather than 500-ing.
+    """
+    try:
+        from bleak import BleakScanner
+    except ImportError:
+        logger.info("bleak not installed — BLE scan unavailable")
+        return []
+
+    try:
+        discovered = await BleakScanner.discover(timeout=timeout)
+    except Exception as exc:
+        logger.warning("BLE scan failed: %s", exc)
+        return []
+
+    return [
+        {
+            "vendor": "ble",
+            "name": d.name or "Unknown BLE device",
+            "model": d.address,
+            "ip": "",
+            "mac": d.address,
+        }
+        for d in discovered
+        if d.name
+    ]
+
+
 _SCAN_TIMEOUT = 10.0
 _HTTP_TIMEOUT = 0.3
 _UDP_TIMEOUT = 3.0
