@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
-import { devicesApi } from "@/lib/api";
+import toast from "react-hot-toast";
+import { devicesApi, provisioningApi } from "@/lib/api";
+import { summarizeDevices } from "@/lib/deviceStats";
 import type { AlphaconDevice, DeviceType, VendorName } from "@/lib/types";
 import { PageWrapper, DeviceCard, SkeletonCard, EmptyState } from "@/themes";
 import { cn } from "@/lib/utils";
@@ -56,8 +58,28 @@ export default function DevicesPage() {
   const [search, setSearch] = useState("");
   const [onlineOnly, setOnlineOnly] = useState(false);
 
+  const queryClient = useQueryClient();
+  const removeMut = useMutation({
+    mutationFn: (id: string) => provisioningApi.deleteDeviceById(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      toast.success("Device removed");
+    },
+    onError: () => toast.error("Couldn't remove device"),
+  });
+
+  function handleRemove(device: AlphaconDevice) {
+    if (
+      window.confirm(`Remove "${device.name}"? This unlinks it from Nestra.`)
+    ) {
+      removeMut.mutate(device.id);
+    }
+  }
+
   const filtered = useMemo(() => {
     return devices.filter((d) => {
+      // Real hardware by default; demo devices only under the Demo filter.
+      if (vendorFilter !== "demo" && d.vendor === "demo") return false;
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (vendorFilter !== "all" && d.vendor !== vendorFilter) return false;
       if (onlineOnly && !d.online) return false;
@@ -73,13 +95,7 @@ export default function DevicesPage() {
     });
   }, [devices, typeFilter, vendorFilter, search, onlineOnly]);
 
-  const onlineCount = devices.filter((d) => d.online).length;
-  const offlineCount = devices.length - onlineCount;
-  const totalPowerW = devices.reduce((s, d) => s + (d.power_draw ?? 0), 0);
-  const powerLabel =
-    totalPowerW >= 1000
-      ? `${(totalPowerW / 1000).toFixed(1)} kW`
-      : `${Math.round(totalPowerW)} W`;
+  const stats = useMemo(() => summarizeDevices(devices), [devices]);
 
   return (
     <PageWrapper>
@@ -95,17 +111,23 @@ export default function DevicesPage() {
           <p className="font-body font-light text-sm text-text-3 mt-1">
             {isLoading
               ? "Loading…"
-              : `${onlineCount} of ${devices.length} online`}
+              : `${stats.online} of ${stats.real} connected online${
+                  stats.demo > 0 ? ` · ${stats.demo} demo` : ""
+                }`}
           </p>
         </div>
 
         {/* Stats row */}
         {!isLoading && devices.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <StatPill label="Total" value={devices.length} />
-            <StatPill label="Online" value={onlineCount} />
-            <StatPill label="Offline" value={offlineCount} />
-            <StatPill label="Live Power" value={powerLabel} />
+            <StatPill
+              label="Connected"
+              value={stats.real}
+              sub="real hardware"
+            />
+            <StatPill label="Online" value={stats.online} />
+            <StatPill label="Offline" value={stats.offline} />
+            <StatPill label="Demo" value={stats.demo} sub="sample data" />
           </div>
         )}
 
@@ -180,7 +202,9 @@ export default function DevicesPage() {
               description={
                 search
                   ? `No devices match "${search}"`
-                  : "Try adjusting your filters."
+                  : vendorFilter === "demo"
+                    ? "No demo devices."
+                    : "No real devices yet — connect one from Integrations, or tap the Demo filter to see sample devices."
               }
             />
           </div>
@@ -197,7 +221,12 @@ export default function DevicesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04 }}
                 >
-                  <DeviceCard device={device} />
+                  <DeviceCard
+                    device={device}
+                    onRemove={
+                      device.vendor !== "demo" ? handleRemove : undefined
+                    }
+                  />
                 </motion.div>
               ))}
             </div>
