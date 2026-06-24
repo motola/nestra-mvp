@@ -69,7 +69,7 @@ function ChartCard({
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
       className={cn(
-        "bg-surface border border-border rounded-xl p-5 elevate-hover",
+        "bg-surface border border-border rounded-xl p-5 elevate elevate-hover",
         className,
       )}
     >
@@ -150,7 +150,7 @@ export default function DashboardPage() {
 
   return (
     <PageWrapper>
-      <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-6">
         {/* Hero jumbotron */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
