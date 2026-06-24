@@ -29,7 +29,7 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
         "severity": "info",
         "message": "Temperature stable at 19.8°C with 52% humidity. Within expected range.",
     },
-    "demo-dev-mc-007": {"severity": "info", "message": "Heater is off. No energy being consumed."},
+    "demo-dev-mc-007": {"severity": "info", "message": "Heater is off. Not drawing power."},
     # Brunswick House
     "demo-dev-bh-001": {
         "severity": "info",
@@ -42,8 +42,8 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     "demo-dev-bh-003": {
         "severity": "warning",
         "message": (
-            "Energy meter drawing 340W — 23% above the 7-day average. "
-            "Has been elevated for 4 hours. Consider checking the connected appliance."
+            "Smart plug drawing 340W — 23% above its 7-day average, elevated for 4 hours. "
+            "Consider checking the connected appliance for a fault."
         ),
     },
     "demo-dev-bh-004": {
@@ -111,7 +111,7 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     },
     "demo-dev-ta-003": {
         "severity": "info",
-        "message": "Fridge drawing 45W. Normal standby consumption.",
+        "message": "Fridge drawing 45W. Normal standby draw.",
     },
     "demo-dev-ta-004": {
         "severity": "critical",
@@ -128,7 +128,7 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     # Oak House
     "demo-dev-oh-001": {
         "severity": "info",
-        "message": "TV drawing 120W. Normal operating consumption.",
+        "message": "TV drawing 120W. Normal operating draw.",
     },
     "demo-dev-oh-002": {
         "severity": "info",
@@ -140,7 +140,7 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     },
     "demo-dev-oh-004": {
         "severity": "info",
-        "message": "Kitchen energy meter drawing 890W. Likely cooking activity underway.",
+        "message": "Kitchen smart plug drawing 890W. Likely cooking activity underway.",
     },
     "demo-dev-oh-005": {
         "severity": "info",
@@ -148,7 +148,7 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     },
     "demo-dev-oh-006": {
         "severity": "info",
-        "message": "Laptop charger drawing 65W. Normal consumption for device charging.",
+        "message": "Laptop charger drawing 65W. Normal draw for device charging.",
     },
     "demo-dev-oh-007": {
         "severity": "info",
@@ -158,8 +158,8 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
     "demo-dev-rf-001": {
         "severity": "warning",
         "message": (
-            "Energy meter drawing 1840W — higher than average. "
-            "Could indicate multiple appliances running simultaneously."
+            "Smart plug drawing 1840W — higher than usual. "
+            "Could indicate multiple appliances running simultaneously, or one left on."
         ),
     },
     "demo-dev-rf-002": {"severity": "info", "message": "Front door locked. No issues."},
@@ -195,7 +195,6 @@ _INSIGHTS: dict[str, dict[str, Any]] = {
 
 
 def get_demo_insight(device_id: str) -> dict[str, Any] | None:
-
     d = get_demo_device(device_id)
     if not d:
         return None
