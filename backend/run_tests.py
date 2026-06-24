@@ -13,6 +13,7 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
 
     # Load test modules explicitly to avoid discovery issues
+    from integrations.august.tests import test_august
     from integrations.bluetooth.tests import test_bluetooth
     from tests.demo import test_providers
     from tests.identity import test_domain, test_repository_models, test_signup_service
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     suite.addTests(loader.loadTestsFromModule(test_domain))
     suite.addTests(loader.loadTestsFromModule(test_repository_models))
     suite.addTests(loader.loadTestsFromModule(test_bluetooth))
+    suite.addTests(loader.loadTestsFromModule(test_august))
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
