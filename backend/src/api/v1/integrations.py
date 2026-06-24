@@ -104,6 +104,18 @@ async def list_wifi_networks() -> list[str]:
     return await scan_wifi_networks()
 
 
+class ShellyScanPayload(BaseModel):
+    hotspot_name: str
+
+
+@router.post("/shelly/scan")
+async def shelly_scan(payload: ShellyScanPayload) -> list[dict[str, Any]]:
+    """Connect to the Shelly AP and return the Wi-Fi networks the device itself sees."""
+    from integrations.provisioning import scan_networks_via_shelly
+
+    return await scan_networks_via_shelly(payload.hotspot_name)
+
+
 # ── Discovery: Shelly provisioning (SSE stream) ───────────────────────────────
 
 

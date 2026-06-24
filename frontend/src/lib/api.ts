@@ -159,6 +159,11 @@ export const integrationsApi = {
 export const provisioningApi = {
   hotspots: () => apiFetch<string[]>("/api/v1/integrations/hotspots"),
   wifiNetworks: () => apiFetch<string[]>("/api/v1/integrations/wifi-networks"),
+  shellyScan: (hotspotName: string) =>
+    apiFetch<{ ssid: string; rssi: number | null; open: boolean }[]>(
+      "/api/v1/integrations/shelly/scan",
+      { method: "POST", body: JSON.stringify({ hotspot_name: hotspotName }) },
+    ),
   scan: () => apiFetch<ScannedDevice[]>("/api/v1/integrations/scan"),
   listDevices: (propertyId?: string) => {
     const qs = propertyId
