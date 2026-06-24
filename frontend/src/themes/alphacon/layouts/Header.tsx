@@ -11,8 +11,6 @@ import {
   LogOut,
   Menu,
   Search,
-  Settings,
-  User,
   X,
   XCircle,
 } from "lucide-react";
@@ -341,21 +339,6 @@ export function Header() {
                     {user?.email ?? ""}
                   </span>
                 </div>
-              </div>
-              <div className="py-1">
-                {[
-                  { icon: User, label: "Profile Settings" },
-                  { icon: Bell, label: "Notification Preferences" },
-                  { icon: Settings, label: "Account Settings" },
-                ].map(({ icon: Icon, label }) => (
-                  <DropdownMenu.Item
-                    key={label}
-                    className="flex items-center gap-2.5 px-4 py-2 text-sm font-body text-text-2 hover:bg-surface-2 hover:text-text cursor-pointer outline-none"
-                  >
-                    <Icon size={14} />
-                    {label}
-                  </DropdownMenu.Item>
-                ))}
               </div>
               <div className="border-t border-border py-1">
                 <DropdownMenu.Item
