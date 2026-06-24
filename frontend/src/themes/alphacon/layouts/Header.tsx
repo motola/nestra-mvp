@@ -7,6 +7,7 @@ import {
   Bell,
   CheckCircle,
   ChevronRight,
+  FlaskConical,
   LogOut,
   Menu,
   Search,
@@ -17,12 +18,12 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { format } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAlerts, useDismissAlert } from "@/hooks/useAlerts";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { propertiesApi, devicesApi } from "@/lib/api";
+import { propertiesApi, devicesApi, getShowDemo, setShowDemo } from "@/lib/api";
 import type { Alert, AlertSeverity } from "@/lib/types";
 
 const SEVERITY_ICON: Record<AlertSeverity, typeof CheckCircle> = {
@@ -244,14 +245,25 @@ export function Header() {
   const { toggle } = useSidebar();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: alerts = [] } = useAlerts();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [showDemo, setShowDemoState] = useState(false);
+  useEffect(() => setShowDemoState(getShowDemo()), []);
   const activeAlerts = alerts.filter((a) => !a.dismissed).length;
   const initial = user?.full_name?.trim()?.[0]?.toUpperCase() ?? "?";
 
   function handleSignOut() {
     logout();
     router.push("/login");
+  }
+
+  function toggleDemo() {
+    const next = !showDemo;
+    setShowDemo(next);
+    setShowDemoState(next);
+    // Refetch everything so demo data appears/disappears across the app.
+    queryClient.invalidateQueries();
   }
 
   return (
@@ -344,6 +356,30 @@ export function Header() {
                     {label}
                   </DropdownMenu.Item>
                 ))}
+              </div>
+              <div className="border-t border-border py-1">
+                <DropdownMenu.Item
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    toggleDemo();
+                  }}
+                  className="flex items-center justify-between gap-2.5 px-4 py-2 text-sm font-body text-text-2 hover:bg-surface-2 hover:text-text cursor-pointer outline-none"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <FlaskConical size={14} />
+                    Show demo data
+                  </span>
+                  <span
+                    className={cn(
+                      "font-mono text-xs px-1.5 py-0.5 rounded-full border",
+                      showDemo
+                        ? "bg-amber-bg text-amber border-amber/20"
+                        : "bg-surface-2 text-text-3 border-border",
+                    )}
+                  >
+                    {showDemo ? "On" : "Off"}
+                  </span>
+                </DropdownMenu.Item>
               </div>
               <div className="border-t border-border py-1">
                 <DropdownMenu.Item
