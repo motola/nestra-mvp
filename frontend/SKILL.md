@@ -1,6 +1,6 @@
 # frontend/SKILL.md
 
-*Always-on conventions for the AlphaCon frontend. Claude Code re-reads this when touching `frontend/` files. The deep brief is `prompts/claude_code_frontend.md`; this is the condensed reminder. Both are subordinate to the root `CLAUDE.md`, `prompts/claude_design.md`, and `frontend/DESIGN_SYSTEM.md` — those are the source of truth.*
+_Always-on conventions for the AlphaCon frontend. Claude Code re-reads this when touching `frontend/` files. The deep brief is `prompts/claude_code_frontend.md`; this is the condensed reminder. Both are subordinate to the root `CLAUDE.md`, `prompts/claude_design.md`, and `frontend/DESIGN_SYSTEM.md` — those are the source of truth._
 
 **Stack:** Next.js 15 (App Router) · TypeScript 5 strict · Tailwind CSS 4 · shadcn/ui · TanStack Query · react-hook-form + zod.
 
