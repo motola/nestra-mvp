@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { AlertTriangle, Zap } from "lucide-react";
+import { AlertTriangle, Cpu } from "lucide-react";
 import type { Property, PropertyStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { seededSparklineValues } from "./Sparkline";
@@ -92,8 +92,6 @@ export function PropertyCard({
   property: Property;
   index?: number;
 }) {
-  const vals = seededSparklineValues(property.id);
-  const avgPower = Math.round(vals.reduce((s, v) => s + v, 0) / vals.length);
   const dot = STATUS_DOT[property.status];
   const label = STATUS_LABEL[property.status];
 
@@ -143,12 +141,9 @@ export function PropertyCard({
             {/* Stats row */}
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 font-mono text-xs text-text-2">
-                <Zap size={10} className="text-text-3" />
+                <Cpu size={10} className="text-text-3" />
                 {property.device_count} device
                 {property.device_count !== 1 ? "s" : ""}
-              </span>
-              <span className="font-mono text-xs text-text-3">
-                ~{avgPower} W avg
               </span>
               {property.alert_count > 0 && (
                 <span className="flex items-center gap-1 font-mono text-xs text-amber ml-auto">

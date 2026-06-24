@@ -78,8 +78,8 @@ export default function DevicesPage() {
 
   const filtered = useMemo(() => {
     return devices.filter((d) => {
-      // Real hardware by default; demo devices only under the Demo filter.
-      if (vendorFilter !== "demo" && d.vendor === "demo") return false;
+      // Demo visibility is controlled globally (account-menu toggle + backend
+      // gate); the list shows whatever the API returns, no extra demo hiding.
       if (typeFilter !== "all" && d.type !== typeFilter) return false;
       if (vendorFilter !== "all" && d.vendor !== vendorFilter) return false;
       if (onlineOnly && !d.online) return false;
@@ -202,9 +202,7 @@ export default function DevicesPage() {
               description={
                 search
                   ? `No devices match "${search}"`
-                  : vendorFilter === "demo"
-                    ? "No demo devices."
-                    : "No real devices yet — connect one from Integrations, or tap the Demo filter to see sample devices."
+                  : "No devices yet — connect one from Integrations (or turn on “Show demo data” in the account menu to preview sample devices)."
               }
             />
           </div>
