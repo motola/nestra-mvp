@@ -166,7 +166,6 @@ export interface StateHistoryEvent {
 
 export type IntelligenceSeverity = "info" | "warning" | "critical";
 export type IntelligenceType =
-  | "energy_anomaly"
   | "maintenance_prediction"
   | "risk_score"
   | "occupancy_pattern"

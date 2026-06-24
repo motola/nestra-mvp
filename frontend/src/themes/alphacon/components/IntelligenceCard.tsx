@@ -10,7 +10,6 @@ import {
   MapPin,
   Shield,
   XCircle,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -58,7 +57,6 @@ const TYPE_CONFIG: Record<
   IntelligenceType,
   { label: string; icon: typeof Brain }
 > = {
-  energy_anomaly: { label: "Energy", icon: Zap },
   environmental: { label: "Environment", icon: Droplets },
   maintenance_prediction: { label: "Maintenance", icon: Gauge },
   occupancy_pattern: { label: "Occupancy", icon: Shield },

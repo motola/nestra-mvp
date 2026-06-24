@@ -112,7 +112,7 @@ const NOTIFICATION_PREFS = [
   {
     key: "weekly_digest",
     label: "Weekly Digest",
-    description: "Weekly summary of energy usage and property health",
+    description: "Weekly summary of device activity and property health",
   },
   {
     key: "device_offline",
@@ -250,7 +250,7 @@ function BillingTab() {
           {[
             "Unlimited properties and devices",
             "AI-powered predictive maintenance",
-            "Advanced energy analytics",
+            "Cross-property benchmarking",
             "Priority support",
             "Custom report templates",
             "API access",

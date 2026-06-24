@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const SUGGESTED_PROMPTS = [
   "Which properties have active alerts?",
-  "What's the highest energy consuming device?",
+  "Which properties need maintenance soon?",
   "Are any doors unlocked right now?",
   "Summarise my portfolio status",
 ];
