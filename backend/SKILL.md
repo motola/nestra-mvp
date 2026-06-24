@@ -42,6 +42,20 @@
 - ❌ `# type: ignore` without a justifying comment.
 - ❌ Assertions in production code paths (tests only).
 
+## Hard rules (must never break)
+
+1. All vendor adapters extend `BaseVendorAdapter` in `src/integrations/__init__.py`.
+2. All vendor normalisers output `AlphaconDevice` only.
+3. Nothing outside `integrations/` references vendor field names.
+4. Demo data lives only in `src/demo/`; `DEMO_MODE` (env) controls all demo
+   behaviour, and demo is additionally gated per-request by `X-Show-Demo` so
+   customers never see it (see `api/dependencies.get_effective_settings`).
+5. Never store or log WiFi passwords.
+6. Never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend.
+7. Never display IP addresses in API responses that reach the frontend.
+8. All database tables are created automatically on startup.
+9. If the database is unavailable at startup, log and continue.
+
 ## Current state (mid-migration — do not assume the target structure exists yet)
 
 The build predates this structure and is being brought into line with the docs. As of this writing: code is laid out flat (`src/api/v1/`, `src/models/`, `src/services/`, `src/integrations/`, `src/demo/`), **not** in bounded-context folders. Auth (User/Session/JWT), RLS, the `org_scope` manager, ARQ workers, and Alembic migrations (the `versions/` folder is empty) **do not exist yet**. The agent (`api/v1/chat.py`) is a single Claude call, not a tool-use loop. When you add new work, build it in the documented structure; when you touch old code, migrate it toward the docs rather than extending the flat layout. See `docs/progress.md` for what's done vs. outstanding.
