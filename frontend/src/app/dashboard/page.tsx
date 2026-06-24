@@ -17,13 +17,12 @@ import {
 } from "@/themes";
 import { cn } from "@/lib/utils";
 
-const DEVICE_TYPE_DATA = [
-  { name: "Lights", value: 38, color: "#b17d3a" },
-  { name: "Plugs", value: 27, color: "#9a5e15" },
-  { name: "Sensors", value: 12, color: "#c4a166" },
-  { name: "Locks", value: 5, color: "#e8dece" },
-  { name: "Other", value: 18, color: "#d4c9b5" },
-];
+const TYPE_META: Record<string, { label: string; color: string }> = {
+  light: { label: "Lights", color: "#b17d3a" },
+  plug: { label: "Plugs", color: "#9a5e15" },
+  sensor: { label: "Sensors", color: "#c4a166" },
+  lock: { label: "Locks", color: "#e8dece" },
+};
 
 function seededSeries(
   seed: string,
@@ -99,18 +98,29 @@ export default function DashboardPage() {
   ).length;
   const infoCount = activeAlerts.filter((a) => a.severity === "info").length;
 
-  const deviceCount = devices.length || 31;
-  const onlineCount = devices.length
-    ? devices.filter((d) => d.online).length
-    : 27;
+  const deviceCount = devices.length;
+  const onlineCount = devices.filter((d) => d.online).length;
   const offlineCount = Math.max(deviceCount - onlineCount, 0);
+
+  const deviceTypeData = Object.entries(
+    devices.reduce<Record<string, number>>((acc, d) => {
+      acc[d.type] = (acc[d.type] ?? 0) + 1;
+      return acc;
+    }, {}),
+  ).map(([type, value]) => ({
+    name: TYPE_META[type]?.label ?? "Other",
+    value,
+    color: TYPE_META[type]?.color ?? "#d4c9b5",
+  }));
 
   const affectedProps = new Set(activeAlerts.map((a) => a.property_id)).size;
   const healthy = properties.filter((p) => p.status === "all_clear").length;
   const needs = properties.filter((p) => p.status === "needs_attention").length;
   const critical = properties.filter((p) => p.status === "critical").length;
 
-  const activityData = seededSeries("portfolio-activity", 14, 40, 80);
+  const activityData = devices.length
+    ? seededSeries("portfolio-activity", 14, 40, 80)
+    : [];
   const severityData = [
     { name: "Critical", value: criticalCount, color: "#9a2828" },
     { name: "Warning", value: warningCount, color: "#9a5e15" },
@@ -251,7 +261,7 @@ export default function DashboardPage() {
           </ChartCard>
           <ChartCard label="Devices" title="By type">
             <DonutChart
-              data={DEVICE_TYPE_DATA}
+              data={deviceTypeData}
               total={deviceCount}
               label="devices"
               height={200}
