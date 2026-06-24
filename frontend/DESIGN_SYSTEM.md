@@ -2,53 +2,74 @@
 
 Reference this file for every UI decision. No arbitrary colours or deviations.
 
+> This reflects the current direction: **Stripe IA + Linear precision + a warm
+> architectural brand** — a premium property-operations command centre. Light
+> warm-grey canvas, white surfaces, one sans-serif (Inter), bronze as a brand
+> accent only. It supersedes the earlier cream/serif system. The single source
+> of these values is `src/app/globals.css` (`@theme`); if they ever disagree,
+> `globals.css` wins.
+
+---
+
+## The organizing rule
+
+**Tables for operational data, cards for summaries, charts for trends, AI for
+explanations.** Avoid a beige wash everywhere and avoid a button in every card.
+
 ---
 
 ## Colour Tokens
 
-| Token                                      | Hex       | Usage                             |
-| ------------------------------------------ | --------- | --------------------------------- |
-| `--bg` / `bg-bg`                           | `#f4f1eb` | Warm cream — main page background |
-| `--surface` / `bg-surface`                 | `#fbf9f4` | Card and panel background         |
-| `--surface-2` / `bg-surface-2`             | `#efebe2` | Subtle section background         |
-| `--text` / `text-text`                     | `#1a1814` | Primary text                      |
-| `--text-2` / `text-text-2`                 | `#5a564e` | Secondary text                    |
-| `--text-3` / `text-text-3`                 | `#a39d8e` | Placeholder, labels, muted        |
-| `--graphite` / `bg-graphite`               | `#28241e` | Primary buttons, dark elements    |
-| `--graphite-2` / `bg-graphite-2`           | `#3a3530` | Button hover state                |
-| `--border` / `border-border`               | `#e0dbcf` | Default border                    |
-| `--border-strong` / `border-border-strong` | `#cdc6b8` | Focused or prominent borders      |
-| `--green` / `text-green`                   | `#2d6b2d` | Success, online, all clear        |
-| `--green-bg` / `bg-green-bg`               | `#eef5ee` | Green tinted background           |
-| `--amber` / `text-amber`                   | `#9a5e15` | Warning, needs attention          |
-| `--amber-bg` / `bg-amber-bg`               | `#fbf2e3` | Amber tinted background           |
-| `--red` / `text-red`                       | `#8b2020` | Critical, offline, error          |
-| `--red-bg` / `bg-red-bg`                   | `#fdf0f0` | Red tinted background             |
+| Token                                      | Hex       | Usage                                       |
+| ------------------------------------------ | --------- | ------------------------------------------- |
+| `--color-bg` / `bg-bg`                     | `#f5f4f2` | Warm light-grey — app canvas                |
+| `--color-surface` / `bg-surface`           | `#ffffff` | White — card and panel background           |
+| `--color-surface-2` / `bg-surface-2`       | `#f1f0ed` | Subtle section background                   |
+| `--color-text` / `text-text`               | `#1a1a17` | Primary text (near-black charcoal)          |
+| `--color-text-2` / `text-text-2`           | `#5b5a55` | Secondary text                              |
+| `--color-text-3` / `text-text-3`           | `#94938d` | Placeholder, labels, muted                  |
+| `--color-graphite` / `bg-graphite`         | `#1f1d1a` | Primary buttons, AI surface                 |
+| `--color-graphite-2` / `bg-graphite-2`     | `#34322e` | Button / graphite hover                     |
+| `--color-border` / `border-border`         | `#e7e6e2` | Default 1px border                          |
+| `--color-border-strong` / `border-border-strong` | `#d6d4cf` | Focused or prominent borders          |
+| `--color-accent` / `text-accent`           | `#9a5e15` | **Bronze brand accent** — selected nav, chart highlights, brand moments only |
+| `--color-accent-2` / `text-accent-2`       | `#b07a2e` | Accent hover / secondary accent             |
+| `--color-green` / `text-green`             | `#2d6b2d` | Success, online, all clear                  |
+| `--color-green-bg` / `bg-green-bg`         | `#ecf4ec` | Green tint                                  |
+| `--color-amber` / `text-amber`             | `#9a5e15` | Warning, needs attention                    |
+| `--color-amber-bg` / `bg-amber-bg`         | `#faf1e1` | Amber tint                                  |
+| `--color-red` / `text-red`                 | `#b3261e` | Critical, offline, error                    |
+| `--color-red-bg` / `bg-red-bg`             | `#fcecea` | Red tint                                    |
+| `--color-info` / `text-info`               | `#44566b` | Informational (blue-grey)                   |
+| `--color-info-bg` / `bg-info-bg`           | `#eef1f4` | Info tint                                   |
+
+Status colours and the bronze accent are used **sparingly** — most of the UI is
+charcoal text on white over a warm-grey canvas.
 
 ---
 
 ## Typography
 
-### Display — Instrument Serif
+One sans-serif across the whole product (Inter). Serif is for the marketing site
+only, never the app.
 
-- Use for: page titles, property names, large headings
-- Weight: 400 (regular and italic)
+### Display — Inter
+
+- Use for: page titles, headings, KPI numbers
 - Tailwind: `font-display`
-- Example: `<h1 className="font-display text-3xl text-text">`
+- Sizes: page title 28–32, KPI 28–36
 
-### Body — DM Sans
+### Body — Inter
 
 - Use for: all body text, labels, UI copy, buttons
-- Weight: 300 (default body), 400 (emphasis), 500 (strong labels)
-- Tailwind: `font-body`
-- Example: `<p className="font-body font-light text-text-2">`
+- Weight: 300 (body), 400 (emphasis), 500/600 (strong labels)
+- Tailwind: `font-body` (e.g. `font-body font-light text-text-2`)
+- Sizes: body 14, table 13–14, labels 11–12
 
 ### Mono — DM Mono
 
 - Use for: device IDs, readings, numbers, timestamps, badges
-- Weight: 400 (default), 500 (emphasis)
 - Tailwind: `font-mono`
-- Example: `<span className="font-mono text-text-3 text-xs">`
 
 ---
 
@@ -57,7 +78,7 @@ Reference this file for every UI decision. No arbitrary colours or deviations.
 ### Cards
 
 ```
-bg-surface border border-border rounded-xl p-6
+bg-surface border border-border rounded-xl p-6   (10–12px radius, not toy-like 16–24)
 Hover: border-border-strong
 ```
 
@@ -66,6 +87,16 @@ Hover: border-border-strong
 ```
 bg-graphite hover:bg-graphite-2 text-surface
 rounded-lg px-5 py-2.5 font-body font-normal text-sm
+```
+
+Secondary: `bg-surface border border-border`. Tertiary: text only. Destructive:
+`text-red`. Not a button in every card.
+
+### Inputs
+
+```
+bg-bg border border-border rounded-lg px-3 py-2.5 text-sm text-text
+placeholder:text-text-3 focus:outline-none focus:border-border-strong
 ```
 
 ### Status Badges
@@ -90,20 +121,12 @@ font-body font-normal text-xs uppercase tracking-widest text-text-3
 text-sm text-text-3 hover:text-text-2 flex items-center gap-1.5
 ```
 
-### Insight Card Severity Borders
-
-```
-info:     border-l-4 border-l-[#2d6b2d] bg-green-bg
-warning:  border-l-4 border-l-amber      bg-amber-bg
-critical: border-l-4 border-l-red        bg-red-bg
-```
-
 ### Sidebar
 
 ```
 Background: bg-surface
 Right border: border-r border-border
-Nav active: border-l-2 border-l-graphite text-text font-normal
+Nav active: text-text font-normal, bronze accent marker
 Nav inactive: text-text-2 font-light hover:text-text
 ```
 
@@ -111,17 +134,15 @@ Nav inactive: text-text-2 font-light hover:text-text
 
 ## Spacing
 
-- Page padding: `p-6` or `p-8`
-- Card padding: `p-6`
-- Card gap in grids: `gap-4`
-- Section gap: `space-y-6`
-- Component internal gap: `gap-3` or `gap-4`
+8px grid. Page padding `p-6`/`p-8`; card padding `p-4`–`p-6`; grid gap `gap-3`/`gap-4`;
+section gap `space-y-6`. Avoid excessive vertical space and huge headings.
 
 ---
 
 ## Do Not Use
 
-- Any `gray-*`, `blue-*`, `green-*` (Tailwind defaults) — use tokens above
-- `box-shadow` — use borders
-- Any font other than DM Sans, Instrument Serif, DM Mono
-- Dark backgrounds except `bg-graphite` on buttons
+- Any `gray-*`, `blue-*`, `green-*` Tailwind defaults — use the tokens above
+- `box-shadow` for layout — use 1px borders (elevation only for overlays)
+- Any font other than Inter and DM Mono (serif is marketing-site only)
+- Dark page backgrounds — the app canvas is warm light-grey; charcoal is for
+  buttons and the AI surface only
