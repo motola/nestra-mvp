@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { AgentChat } from "@/components/chat/AgentChat";
+import { AIBar } from "@/components/chat/AIBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { CommandPalette, Header, Sidebar } from "@/themes";
@@ -54,7 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <Header />
-          <main className="flex-1 overflow-y-auto bg-bg">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-bg">
+            <AIBar />
+            {children}
+          </main>
         </div>
       </div>
       <AgentChat />
