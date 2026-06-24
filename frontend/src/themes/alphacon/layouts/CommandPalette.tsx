@@ -23,7 +23,6 @@ const PAGES = [
   { label: "Alerts", href: "/alerts", icon: Bell },
   { label: "Intelligence", href: "/intelligence", icon: Brain },
   { label: "Devices", href: "/devices", icon: Zap },
-  { label: "Energy", href: "/energy", icon: Zap },
   { label: "Reports", href: "/reports", icon: Zap },
   { label: "Integrations", href: "/integrations", icon: Cable },
   { label: "Settings", href: "/settings", icon: Settings },

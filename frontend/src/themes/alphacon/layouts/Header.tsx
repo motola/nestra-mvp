@@ -43,7 +43,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   alerts: "Alerts",
   intelligence: "Intelligence",
   devices: "Devices",
-  energy: "Energy",
   reports: "Reports",
   tenants: "Tenants",
   maintenance: "Maintenance",

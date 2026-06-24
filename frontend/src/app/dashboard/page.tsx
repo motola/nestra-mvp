@@ -1,9 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Cpu, Bell, Zap, TrendingDown } from "lucide-react";
+import { Building2, Cpu, Bell, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
 import { useProperties } from "@/hooks/useProperty";
 import { useAlerts, useDismissAlert } from "@/hooks/useAlerts";
 import { devicesApi } from "@/lib/api";
@@ -11,25 +10,11 @@ import type { AlphaconDevice } from "@/lib/types";
 import {
   PageWrapper,
   StatCard,
-  EnergyChart,
   DonutChart,
   SkeletonCard,
   AlertCard,
 } from "@/themes";
 import { cn } from "@/lib/utils";
-
-function seededEnergy(days: number): { label: string; value: number }[] {
-  let s = 42;
-  const lcg = () => {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return (s >>> 0) / 4294967296;
-  };
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (days - 1 - i));
-    return { label: format(d, "d MMM"), value: 18 + lcg() * 14 };
-  });
-}
 
 const DONUT_DATA = [
   { name: "Lights", value: 38, color: "#b17d3a" },
@@ -63,8 +48,6 @@ export default function DashboardPage() {
   const warningCount = activeAlerts.filter(
     (a) => a.severity === "warning",
   ).length;
-  const totalPower = devices.reduce((sum, d) => sum + (d.power_draw ?? 0), 0);
-  const energyData = seededEnergy(14);
 
   const affectedProps = new Set(activeAlerts.map((a) => a.property_id)).size;
   const statusMsg =
@@ -136,52 +119,32 @@ export default function DashboardPage() {
                 }
               />
               <StatCard
-                label="Live Power"
-                value={totalPower > 0 ? Math.round(totalPower) : 2140}
-                unit="W"
-                icon={Zap}
+                label="At Risk"
+                value={affectedProps}
+                icon={AlertTriangle}
                 animate
+                className={
+                  affectedProps > 0 ? "border-amber/20 bg-amber-bg" : ""
+                }
               />
             </>
           )}
         </div>
 
-        {/* Charts row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Energy trend */}
-          <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3">
-                  Energy Consumption
-                </p>
-                <p className="font-display italic text-lg text-text mt-0.5">
-                  Last 14 days
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 text-green">
-                <TrendingDown size={13} />
-                <span className="font-mono text-xs">-8.2% vs prior period</span>
-              </div>
-            </div>
-            <EnergyChart data={energyData} height={180} />
-          </div>
-
-          {/* Device breakdown */}
-          <div className="bg-surface border border-border rounded-xl p-5">
-            <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">
-              Device Types
-            </p>
-            <p className="font-display italic text-lg text-text mb-4">
-              Breakdown
-            </p>
-            <DonutChart
-              data={DONUT_DATA}
-              total={devices.length || 47}
-              label="devices"
-              height={180}
-            />
-          </div>
+        {/* Device breakdown */}
+        <div className="bg-surface border border-border rounded-xl p-5">
+          <p className="font-body font-normal text-xs uppercase tracking-widest text-text-3 mb-1">
+            Device Types
+          </p>
+          <p className="font-display italic text-lg text-text mb-4">
+            Breakdown
+          </p>
+          <DonutChart
+            data={DONUT_DATA}
+            total={devices.length || 47}
+            label="devices"
+            height={180}
+          />
         </div>
 
         {/* Recent alerts */}

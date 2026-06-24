@@ -16,7 +16,6 @@ import {
   Users,
   Wrench,
   X,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -48,10 +47,7 @@ const NAV_SECTIONS = [
   },
   {
     label: "Analytics",
-    items: [
-      { href: "/reports", label: "Reports", icon: BarChart2 },
-      { href: "/energy", label: "Energy", icon: Zap },
-    ],
+    items: [{ href: "/reports", label: "Reports", icon: BarChart2 }],
   },
   {
     label: "Settings",
