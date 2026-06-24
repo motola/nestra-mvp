@@ -7,7 +7,7 @@ from config import get_settings
 class TestBluetoothPairing(unittest.TestCase):
     """Test Bluetooth device pairing and unpairing."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Clear mock storage before each test."""
         # Import here to get fresh state
         import property.integrations.bluetooth.routes as routes
@@ -16,7 +16,7 @@ class TestBluetoothPairing(unittest.TestCase):
         routes._MOCK_INTEGRATIONS.clear()
         self.settings = get_settings()
 
-    def test_pair_device_success(self):
+    def test_pair_device_success(self) -> None:
         """Test successfully pairing a new Bluetooth device."""
         import asyncio
 
@@ -37,7 +37,7 @@ class TestBluetoothPairing(unittest.TestCase):
         self.assertEqual(result.status, "paired")
         self.assertIn("success", result.message.lower())
 
-    def test_pair_duplicate_device_fails(self):
+    def test_pair_duplicate_device_fails(self) -> None:
         """Test that pairing same MAC twice fails."""
         import asyncio
 
@@ -62,7 +62,7 @@ class TestBluetoothPairing(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 409)  # Conflict
 
-    def test_unpair_device_success(self):
+    def test_unpair_device_success(self) -> None:
         """Test successfully unpairing a device."""
         import asyncio
 
@@ -82,7 +82,7 @@ class TestBluetoothPairing(unittest.TestCase):
 
         self.assertEqual(unpair_result.status, "unpaired")
 
-    def test_unpair_nonexistent_device_fails(self):
+    def test_unpair_nonexistent_device_fails(self) -> None:
         """Test that unpairing a nonexistent device fails."""
         import asyncio
 
@@ -95,7 +95,7 @@ class TestBluetoothPairing(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 404)
 
-    def test_list_devices_empty(self):
+    def test_list_devices_empty(self) -> None:
         """Test listing devices when none are paired."""
         import asyncio
 
@@ -105,7 +105,7 @@ class TestBluetoothPairing(unittest.TestCase):
 
         self.assertEqual(len(devices), 0)
 
-    def test_list_devices_filters_by_property(self):
+    def test_list_devices_filters_by_property(self) -> None:
         """Test that list_devices filters by property_id when provided."""
         import asyncio
 
@@ -136,7 +136,7 @@ class TestBluetoothPairing(unittest.TestCase):
         self.assertEqual(len(devices_p1), 1)
         self.assertEqual(devices_p1[0].property_id, property_id_1)
 
-    def test_paired_device_has_valid_data(self):
+    def test_paired_device_has_valid_data(self) -> None:
         """Test that paired device contains all expected fields."""
         import asyncio
 
@@ -169,14 +169,14 @@ class TestBluetoothPairing(unittest.TestCase):
 class TestBluetoothIntegration(unittest.TestCase):
     """Integration tests for Bluetooth feature."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         import property.integrations.bluetooth.routes as routes
 
         routes._MOCK_DEVICES.clear()
         routes._MOCK_INTEGRATIONS.clear()
         self.settings = get_settings()
 
-    def test_full_pairing_workflow(self):
+    def test_full_pairing_workflow(self) -> None:
         """Test complete: discover → pair → list → unpair."""
         import asyncio
 
