@@ -101,10 +101,12 @@ async def list_properties(session: AsyncSession, settings: Settings) -> list[Pro
         result = await session.execute(select(DBProperty).order_by(DBProperty.name))
         rows = list(result.scalars().all())
 
-        if settings.demo_mode:
-            from demo.data import is_demo_property
+        # Always drop DB-seeded demo rows from the "real" set. Whether demo data
+        # is shown at all is decided below by settings.demo_mode — so when demo
+        # is gated off, these never leak through as if they were real.
+        from demo.data import is_demo_property
 
-            rows = [r for r in rows if not is_demo_property(str(r.id))]
+        rows = [r for r in rows if not is_demo_property(str(r.id))]
 
         if rows:
             device_rows = await list_devices(session)

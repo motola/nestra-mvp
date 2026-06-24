@@ -13,7 +13,24 @@ from db import AsyncSessionLocal, get_session
 from identity.security import decode_access_token
 from shared.tenant import set_org_context
 
-SettingsDep = Annotated[Settings, Depends(get_settings)]
+
+def get_effective_settings(
+    x_show_demo: Annotated[str | None, Header()] = None,
+) -> Settings:
+    """Settings for the request, with demo data hidden unless explicitly asked for.
+
+    Demo seeding only appears when the deployment enables it (``DEMO_MODE``) AND
+    the request opts in with ``X-Show-Demo: 1``. So by default — and for any
+    client that doesn't send the header (i.e. anyone a customer would see) — no
+    demo data is served anywhere. The toggle is a deliberate, hidden opt-in.
+    """
+    settings = get_settings()
+    if settings.demo_mode and x_show_demo != "1":
+        return settings.model_copy(update={"demo_mode": False})
+    return settings
+
+
+SettingsDep = Annotated[Settings, Depends(get_effective_settings)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
