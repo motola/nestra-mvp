@@ -2,33 +2,43 @@
 
 @theme {
   /* ── Fonts ─────────────────────────────────────────────────────────────── */
-  --font-display: var(--font-instrument-serif), "Georgia", serif;
-  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), "Courier New", monospace;
 
   /* ── Colours ───────────────────────────────────────────────────────────── */
-  --color-bg: #f4f1eb;
-  --color-surface: #fbf9f4;
-  --color-surface-2: #efebe2;
+  /* Light warm-grey canvas, white content surfaces, crisp borders. */
+  --color-bg: #f5f4f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f0ed;
 
-  --color-text: #1a1814;
-  --color-text-2: #5a564e;
-  --color-text-3: #a39d8e;
+  --color-text: #1a1a17;
+  --color-text-2: #5b5a55;
+  --color-text-3: #94938d;
 
-  --color-graphite: #28241e;
-  --color-graphite-2: #3a3530;
+  /* Charcoal — primary buttons / AI surface. */
+  --color-graphite: #1f1d1a;
+  --color-graphite-2: #34322e;
 
-  --color-border: #e0dbcf;
-  --color-border-strong: #cdc6b8;
+  --color-border: #e7e6e2;
+  --color-border-strong: #d6d4cf;
+
+  /* Brand accent — bronze. Selected nav, chart highlights, brand moments. */
+  --color-accent: #9a5e15;
+  --color-accent-2: #b07a2e;
 
   --color-green: #2d6b2d;
-  --color-green-bg: #eef5ee;
+  --color-green-bg: #ecf4ec;
 
   --color-amber: #9a5e15;
-  --color-amber-bg: #fbf2e3;
+  --color-amber-bg: #faf1e1;
 
-  --color-red: #8b2020;
-  --color-red-bg: #fdf0f0;
+  --color-red: #b3261e;
+  --color-red-bg: #fcecea;
+
+  /* Informational — blue-grey. */
+  --color-info: #44566b;
+  --color-info-bg: #eef1f4;
 }
 
 /* ── Base resets ───────────────────────────────────────────────────────────── */
