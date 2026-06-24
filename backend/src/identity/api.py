@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -53,7 +53,7 @@ class MeResponse(BaseModel):
 async def current_user(
     session: SessionDep,
     authorization: Annotated[str | None, Header()] = None,
-) -> tuple[User, dict]:
+) -> tuple[User, dict[str, Any]]:
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     payload = decode_access_token(authorization.split(" ", 1)[1])
@@ -65,7 +65,7 @@ async def current_user(
     return user, payload
 
 
-CurrentUser = Annotated[tuple[User, dict], Depends(current_user)]
+CurrentUser = Annotated[tuple[User, dict[str, Any]], Depends(current_user)]
 
 
 @router.post("/auth/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)

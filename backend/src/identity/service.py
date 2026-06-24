@@ -8,6 +8,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import col
 
 from identity.enums import AuthMethod, OrgRole
 from identity.models import OrgMembership, Portfolio, Session, User
@@ -34,7 +35,7 @@ async def signup(
     organization_name: str | None,
 ) -> tuple[User, Organisation, str]:
     """Create an Organisation, owner User, default Portfolio and membership atomically."""
-    if await session.scalar(select(User).where(User.email == email)) is not None:
+    if await session.scalar(select(User).where(col(User.email) == email)) is not None:
         raise EmailAlreadyRegistered(email)
 
     org = Organisation(name=organization_name or f"{full_name}'s organisation")
@@ -61,12 +62,14 @@ async def signup(
 
 
 async def login(session: AsyncSession, *, email: str, password: str) -> str:
-    user = await session.scalar(select(User).where(User.email == email))
+    user = await session.scalar(select(User).where(col(User.email) == email))
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
         raise InvalidCredentials
     org_id = await session.scalar(
-        select(OrgMembership.organisation_id).where(OrgMembership.user_id == user.id)
+        select(col(OrgMembership.organisation_id)).where(col(OrgMembership.user_id) == user.id)
     )
+    if org_id is None:
+        raise InvalidCredentials
     user.last_login_at = datetime.utcnow()
     token = await _issue_session(session, user, org_id)
     await session.commit()
