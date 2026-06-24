@@ -63,9 +63,13 @@ function ChartCard({
   className?: string;
 }) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
       className={cn(
-        "bg-surface border border-border rounded-xl p-5",
+        "bg-surface border border-border rounded-xl p-5 elevate-hover",
         className,
       )}
     >
@@ -76,7 +80,7 @@ function ChartCard({
         {title}
       </p>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -147,15 +151,28 @@ export default function DashboardPage() {
   return (
     <PageWrapper>
       <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-        {/* Hero greeting */}
-        <div>
-          <h1 className="font-display italic text-[28px] text-text leading-tight">
+        {/* Hero jumbotron */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
+          className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-2 px-6 py-7 md:px-8 md:py-8 elevate"
+        >
+          <div className="pointer-events-none absolute -top-16 -right-12 w-64 h-64 rounded-full bg-accent/5 blur-3xl" />
+          <p className="font-mono text-[11px] uppercase tracking-widest text-text-3 mb-2">
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+          <h1 className="font-display italic text-[32px] md:text-[36px] text-text leading-[1.05]">
             {getGreeting()}.
           </h1>
-          <p className="font-body font-light text-[15px] text-text-3 mt-1">
+          <p className="font-body font-light text-[15px] text-text-2 mt-2 max-w-lg">
             {statusMsg}
           </p>
-        </div>
+        </motion.div>
 
         {/* Critical banner */}
         {criticalCount > 0 && (
