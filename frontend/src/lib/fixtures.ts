@@ -218,6 +218,29 @@ export const PROPERTIES: Property[] = [
   },
 ];
 
+// ─── Rooms ────────────────────────────────────────────────────────────────────
+
+export interface Room {
+  id: string;
+  name: string;
+  type: string;
+  devices: number;
+}
+
+export const ROOMS_MAPLE: Room[] = [
+  { id: "r_3b_living", name: "Flat 3B · Living", type: "LIVING", devices: 4 },
+  { id: "r_3b_bed", name: "Flat 3B · Bedroom", type: "BEDROOM", devices: 3 },
+  {
+    id: "r_3b_kitchen",
+    name: "Flat 3B · Kitchen",
+    type: "KITCHEN",
+    devices: 2,
+  },
+  { id: "r_3b_bath", name: "Flat 3B · Bathroom", type: "BATHROOM", devices: 2 },
+  { id: "r_entry", name: "Communal · Entry", type: "ENTRY", devices: 3 },
+  { id: "r_hall", name: "Communal · Hallway", type: "OTHER", devices: 2 },
+];
+
 // ─── Devices ──────────────────────────────────────────────────────────────────
 
 export type DeviceCategory =

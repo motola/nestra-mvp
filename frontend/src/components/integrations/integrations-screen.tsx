@@ -1,7 +1,7 @@
 "use client"; // Client: tab switching
 
 import { useState } from "react";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, Wifi } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
 import type { Integration, Vendor } from "@/lib/fixtures";
@@ -13,6 +13,8 @@ import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
+import { BluetoothPairingModal } from "@/components/integrations/bluetooth-pairing-modal";
+import { useBluetoothDevices } from "@/integrations/bluetooth";
 
 // ─── Vendor logo placeholder (graphite chip + initials) ───────────────────────
 
@@ -94,7 +96,11 @@ function IntegrationCard({ item: i }: { item: Integration }) {
   );
 }
 
-function ConnectedTab() {
+function ConnectedTab({
+  bluetoothDevices,
+}: {
+  bluetoothDevices: Array<{ id: string; name: string; mac_address: string }>;
+}) {
   const reauth = INTEGRATIONS.find((i) => i.needsReauth);
   return (
     <>
@@ -109,13 +115,41 @@ function ConnectedTab() {
       )}
       <SectionHead
         title="Connected vendors"
-        sub={`${INTEGRATIONS.length} INTEGRATIONS · OWNED BY THE PORTFOLIO`}
+        sub={`${INTEGRATIONS.length} integrations · ${bluetoothDevices.length} Bluetooth devices`}
       />
       <div className="grid grid-cols-2 gap-3">
         {INTEGRATIONS.map((i) => (
           <IntegrationCard key={i.id} item={i} />
         ))}
       </div>
+
+      {bluetoothDevices.length > 0 && (
+        <>
+          <SectionHead
+            title="Bluetooth devices"
+            sub={`${bluetoothDevices.length} PAIRED DEVICES`}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            {bluetoothDevices.map((device) => (
+              <Card key={device.id} hoverable className="p-[18px]">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-[10px] bg-accent/10 flex items-center justify-center">
+                    <Wifi size={20} className="text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-text truncate">
+                      {device.name}
+                    </p>
+                    <p className="text-[11px] font-mono text-text-3">
+                      {device.mac_address}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -158,7 +192,32 @@ function VendorCard({ v }: { v: Vendor }) {
   );
 }
 
-function CatalogTab() {
+function BluetoothVendorCard({ onPair }: { onPair: () => void }) {
+  return (
+    <Card hoverable className="p-[18px] flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-[7px] bg-accent flex items-center justify-center">
+          <Wifi size={18} className="text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-text m-0">Bluetooth</p>
+          <p className="text-[12px] text-text-3 mt-0.5 m-0">
+            Web Bluetooth API
+          </p>
+        </div>
+      </div>
+      <div className="h-px bg-border" />
+      <div className="flex justify-between items-center">
+        <MonoLabel>pair device</MonoLabel>
+        <Button variant="primary" size="sm" onClick={onPair}>
+          Pair
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function CatalogTab({ onBluetoothPair }: { onBluetoothPair: () => void }) {
   const [cat, setCat] = useState("All vendors");
   return (
     <>
@@ -174,6 +233,7 @@ function CatalogTab() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-3">
+        <BluetoothVendorCard onPair={onBluetoothPair} />
         {VENDORS.map((v) => (
           <VendorCard key={v.id} v={v} />
         ))}
@@ -389,6 +449,8 @@ function ErrorsTab() {
 
 export function IntegrationsScreen() {
   const [tab, setTab] = useState("connected");
+  const [showBluetoothModal, setShowBluetoothModal] = useState(false);
+  const { data: bluetoothDevices = [] } = useBluetoothDevices();
   const active = INTEGRATIONS.filter((i) => i.status === "ACTIVE").length;
 
   return (
@@ -423,11 +485,23 @@ export function IntegrationsScreen() {
       </div>
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        {tab === "connected" && <ConnectedTab />}
-        {tab === "catalog" && <CatalogTab />}
+        {tab === "connected" && (
+          <ConnectedTab bluetoothDevices={bluetoothDevices} />
+        )}
+        {tab === "catalog" && (
+          <CatalogTab onBluetoothPair={() => setShowBluetoothModal(true)} />
+        )}
         {tab === "webhooks" && <WebhooksTab />}
         {tab === "errors" && <ErrorsTab />}
       </div>
+
+      {showBluetoothModal && (
+        <BluetoothPairingModal
+          propertyId="550e8400-e29b-41d4-a716-446655440000"
+          onSuccess={() => setShowBluetoothModal(false)}
+          onCancel={() => setShowBluetoothModal(false)}
+        />
+      )}
     </>
   );
 }
