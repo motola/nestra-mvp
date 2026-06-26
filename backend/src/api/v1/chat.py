@@ -100,9 +100,9 @@ async def chat(
             ) as stream_ctx:
                 async for text in stream_ctx.text_stream:
                     yield f"data: {json.dumps({'type': 'text', 'text': text})}\n\n"
-        except Exception as exc:
-            logger.error("Chat stream error: %s", exc)
-            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+        except Exception:
+            logger.exception("Chat stream error")
+            yield f"data: {json.dumps({'type': 'error', 'message': 'An internal error has occurred.'})}\n\n"
         finally:
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
