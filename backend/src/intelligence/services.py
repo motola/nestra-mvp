@@ -109,27 +109,45 @@ class ConversationService:
 
 
 class ClaudeService:
-    """Claude API integration with streaming."""
+    """Claude API integration with streaming and tool use."""
 
     def __init__(self, settings: Settings):
         self.settings = settings
 
     async def stream_response(
-        self, system_prompt: str, messages: list[dict[str, str]]
+        self,
+        system_prompt: str,
+        messages: list[dict[str, str]],
+        tools: list | None = None,  # type: ignore[type-arg]
     ) -> AsyncGenerator[str, None]:
-        """Stream a Claude response."""
+        """Stream a Claude response with optional tool use."""
         try:
             import anthropic
 
             client = anthropic.AsyncAnthropic(api_key=self.settings.anthropic_api_key)
-            async with client.messages.stream(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=1024,
-                system=system_prompt,
-                messages=messages,
-            ) as stream:
+
+            stream_kwargs = {
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 1024,
+                "system": system_prompt,
+                "messages": messages,
+            }
+            if tools:
+                stream_kwargs["tools"] = tools
+
+            async with client.messages.stream(**stream_kwargs) as stream:
                 async for text in stream.text_stream:
                     yield f"data: {json.dumps({'type': 'text', 'text': text})}\n\n"
+
+                final_message = await stream.get_final_message()
+                for block in final_message.content:
+                    if block.type == "tool_use":
+                        tool_use_data = {
+                            "type": "tool_use",
+                            "tool_name": block.name,
+                            "tool_input": block.input,
+                        }
+                        yield f"data: {json.dumps(tool_use_data)}\n\n"
         except Exception as exc:
             logger.error("Claude stream error: %s", exc)
             yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"

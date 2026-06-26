@@ -12,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import get_settings
 from intelligence.domain import ChatRequest, Conversation
+from intelligence.executor import DeviceExecutor
 from intelligence.services import ClaudeService, ConversationService
+from intelligence.tools import DEVICE_TOOLS
 from shared.db import SessionLocal
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
@@ -72,21 +74,44 @@ async def chat(
     messages = [{"role": m.role, "content": m.content} for m in request.history]
     messages.append({"role": "user", "content": request.message})
 
+    executor = DeviceExecutor(session)
+
     async def stream_and_save() -> AsyncGenerator[str, None]:
         full_response = ""
-        async for chunk in claude_service.stream_response(system_prompt, messages):
+        tool_uses: list[dict[str, object]] = []
+
+        async for chunk in claude_service.stream_response(
+            system_prompt, messages, tools=DEVICE_TOOLS
+        ):
             if chunk.startswith("data: "):
                 data_str = chunk[6:].strip()
                 try:
                     data = json.loads(data_str)
                     if data.get("type") == "text" and data.get("text"):
                         full_response += data["text"]
+                    elif data.get("type") == "tool_use":
+                        tool_uses.append(data)
                 except json.JSONDecodeError:
                     pass
             yield chunk
 
-        if full_response:
-            await conv_service.add_message(conversation_id, "assistant", full_response)
+        for tool_use in tool_uses:
+            tool_name = tool_use.get("tool_name")
+            tool_input = tool_use.get("tool_input", {})
+            if isinstance(tool_name, str) and isinstance(tool_input, dict):
+                result = await executor.execute_tool(tool_name, tool_input)
+            else:
+                result = "Error: Invalid tool use format"
+            tool_result = {
+                "type": "tool_result",
+                "tool_name": tool_name,
+                "result": result,
+            }
+            yield f"data: {json.dumps(tool_result)}\n\n"
+
+        if full_response or tool_uses:
+            response_text = full_response or f"Executed {len(tool_uses)} tool(s)"
+            await conv_service.add_message(conversation_id, "assistant", response_text)
             await session.commit()
 
     return StreamingResponse(
