@@ -1,38 +1,57 @@
-# Dependencies & build output
-/frontend/node_modules
-frontend/node_modules/
-frontend/.next/
-/frontend/dist
-/backend/node_modules
-/backend/dist
-
-# Environment files (contain secrets — never commit)
+CLAUDE.md
+.venv
+.python-version
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+/docs/
+/claude_design/
+/prompts/
+/frontend/node_modules/
+/frontend/dist/
+/backend/node_modules/
+/backend/dist/
+node_modules/
 /.env
+/backend/SKILL.md
+/frontend/SKILL.md
+.claude/
+
+# Environment files]
 .env
 .env.local
-.env.production
-**/.env
+.env.*.local
 **/.env.local
-frontend/.env
-frontend/.env.local
+**/.env.*.local
 
-# Python
-backend/.venv/
-backend/venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/**/*.pyc
-*.pyc
-*.pyo
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Claude Code local settings
-.claude
+# Secrets
+*.key
+*.pem
+*.p12
+*.pfx
 
 # OS
 .DS_Store
-*.log
-*.log.*
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Python lock files (not committed — use pyproject.toml only)
+poetry.lock
+
+# Next.js build output
+frontend/.next/
+
+# Misc local artifacts
+devtools.zip
+/claude_design

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, DM_Mono } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+import { DM_Mono, DM_Sans, Instrument_Serif } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -20,9 +20,24 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+const sans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const mono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+});
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-serif",
+});
+
 export const metadata: Metadata = {
-  title: "Nestra",
-  description: "Smart property intelligence for property managers",
 };
 
 export default function RootLayout({
@@ -31,27 +46,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${dmMono.variable}`}>
-      <body className="bg-bg text-text font-body antialiased h-full">
-        <Providers>
-          <AuthProvider>
-            <AppShell>{children}</AppShell>
-          </AuthProvider>
-        </Providers>
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "#ffffff",
-              border: "1px solid #e7e6e2",
-              color: "#1a1a17",
-              fontFamily: "var(--font-inter)",
-              fontSize: "14px",
-              borderRadius: "10px",
-              padding: "12px 16px",
-            },
-          }}
-        />
+    <html
+      lang="en"
+      className={`${sans.variable} ${mono.variable} ${serif.variable}`}
+    >
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
