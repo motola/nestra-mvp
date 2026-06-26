@@ -38,6 +38,10 @@ def _force_wifi_scan() -> None:
     this the Rescan button just re-reads stale results. WlanScan asks the radio
     to scan now; results land a couple of seconds later. Best-effort.
     """
+    import sys
+
+    if sys.platform != "win32":
+        return  # WlanScan is Windows-only; nothing to do elsewhere (e.g. Linux CI).
     try:
         import ctypes
         from ctypes import POINTER, Structure, byref, c_ubyte, wintypes
