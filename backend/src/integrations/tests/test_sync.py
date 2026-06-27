@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 import unittest
 
-from devices.spire import DeviceIdentity, SpireDevice, SpireIdentifier, VendorRef
-from devices.traits import Trait
 from integrations.factory import create_device_data
 from integrations.sync import DeviceSyncService
+from spire.device import DeviceIdentity, SpireDevice, SpireIdentifier, VendorRef
+from spire.traits import Trait
 
 
 def _device(value: str = "AA::H6159") -> SpireDevice:

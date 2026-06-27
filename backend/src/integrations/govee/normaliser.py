@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from devices.models import SpireDevice
-from devices.traits import derive_traits
+from spire.traits import derive_traits
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.

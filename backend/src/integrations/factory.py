@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from devices.spire import SpireDevice
+from spire.device import SpireDevice
 
 
 def create_device_data(

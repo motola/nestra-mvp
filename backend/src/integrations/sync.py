@@ -14,8 +14,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 
-from devices.spire import SpireDevice
 from integrations.factory import create_device_data
+from spire.device import SpireDevice
 
 logger = logging.getLogger(__name__)
 

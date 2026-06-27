@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from devices.models import SpireDevice
-from devices.traits import derive_traits
+from spire.traits import derive_traits
 
 
 def normalise_device(raw: dict[str, Any]) -> SpireDevice:

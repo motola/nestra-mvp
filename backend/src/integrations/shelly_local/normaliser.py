@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from devices.models import SpireDevice
-from devices.traits import derive_traits
+from spire.traits import derive_traits
 
 _SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 

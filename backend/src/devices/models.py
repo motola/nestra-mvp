@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from devices.traits import Trait, derive_traits
+from spire.traits import Trait, derive_traits
 
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 

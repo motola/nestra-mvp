@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from core.tables import Device as DBDevice
-from devices.spire import SpireDevice
+from spire.device import SpireDevice
 
 logger = logging.getLogger(__name__)
 

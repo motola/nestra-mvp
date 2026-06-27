@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from devices.spire import (
+from spire.device import (
     AuditMeta,
     Connectivity,
     DeviceCategory,
@@ -16,7 +16,7 @@ from devices.spire import (
     SpireIdentifier,
     VendorRef,
 )
-from devices.traits import Trait
+from spire.traits import Trait
 
 
 def _device(**overrides: object) -> SpireDevice:

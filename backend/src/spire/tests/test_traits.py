@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 
 from devices.models import SpireDevice
-from devices.traits import Trait, derive_traits
+from spire.traits import Trait, derive_traits
 
 
 class DeriveCapabilitiesTest(unittest.TestCase):

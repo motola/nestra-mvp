@@ -28,7 +28,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from devices.traits import Trait
+from spire.traits import Trait
 
 # Fixed namespace so a device's logical id is deterministic from its business
 # identifier — the same physical device gets the same id on every sync.
