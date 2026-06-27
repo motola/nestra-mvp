@@ -47,7 +47,9 @@ class AlphaconDevice(BaseModel):
     last_seen: datetime = Field(default_factory=lambda: datetime.now(UTC))
     supported_commands: list[str] = Field(default_factory=list)
 
-    # Capabilities, derived centrally from the canonical fields above (see below).
+    # Capabilities. Each normaliser sets these from the vendor's declared
+    # capabilities; the validator below is only a fallback for producers that
+    # don't (e.g. the state-only poll path and seed data).
     traits: list[Trait] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -60,8 +62,8 @@ class AlphaconDevice(BaseModel):
 
     @model_validator(mode="after")
     def _ensure_traits(self) -> AlphaconDevice:
-        """Derive traits from the canonical capabilities when none are supplied,
-        so every vendor gets a consistent capability set with no per-vendor code."""
+        """Fallback: derive traits from the canonical fields if a producer didn't
+        set them, so no device is ever left without a capability set."""
         if not self.traits:
             self.traits = derive_traits(
                 self.supported_commands,

@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from devices.models import AlphaconDevice
+from devices.traits import derive_traits
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.
@@ -63,7 +64,9 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
     """
     model: str = raw.get("model", "")
     mac: str = raw.get("device", "")
-    support_cmds: list[str] = raw.get("supportCmds", [])
+    # supportCmds is Govee's capability declaration — the source of truth for
+    # what this device can do. Map it to canonical commands, then to traits.
+    commands = _map_commands(raw.get("supportCmds", []))
 
     return AlphaconDevice(
         vendor_id=f"{mac}::{model}",
@@ -74,7 +77,8 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         controllable=bool(raw.get("controllable", False)),
         state={},
         last_seen=datetime.now(UTC),
-        supported_commands=_map_commands(support_cmds),
+        supported_commands=commands,
+        traits=derive_traits(commands),
     )
 
 

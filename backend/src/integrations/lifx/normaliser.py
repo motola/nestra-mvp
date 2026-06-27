@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from devices.models import AlphaconDevice
+from devices.traits import derive_traits
 
 
 def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
@@ -46,4 +47,5 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         state=state,
         last_seen=datetime.now(UTC),
         supported_commands=commands,
+        traits=derive_traits(commands),
     )
