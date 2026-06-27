@@ -17,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
-_VENDORS = ("govee", "shelly", "lifx", "matter")
-
 
 # ── Pydantic request models ───────────────────────────────────────────────────
 
@@ -47,32 +45,17 @@ class SaveDevicePayload(BaseModel):
 
 @router.get("/")
 async def list_integrations(settings: SettingsDep) -> list[dict[str, Any]]:
-    """Return cloud API connection status for all supported vendors."""
+    """Return connection status for all supported vendors, from the registry."""
+    from integrations.registry import VENDOR_REGISTRY
+
     return [
         {
-            "vendor": "govee",
-            "connected": bool(settings.govee_api_key),
-            "display_name": "Govee",
-            "description": "Smart lights and plugs",
-        },
-        {
-            "vendor": "shelly",
-            "connected": bool(settings.shelly_auth_key),
-            "display_name": "Shelly",
-            "description": "Smart plugs and switches",
-        },
-        {
-            "vendor": "lifx",
-            "connected": bool(settings.lifx_api_token),
-            "display_name": "LIFX",
-            "description": "Wi-Fi smart bulbs",
-        },
-        {
-            "vendor": "matter",
-            "connected": True,
-            "display_name": "Matter",
-            "description": "Universal smart home standard",
-        },
+            "vendor": spec.name,
+            "connected": spec.is_connected(settings),
+            "display_name": spec.display_name,
+            "description": spec.description,
+        }
+        for spec in VENDOR_REGISTRY
     ]
 
 
@@ -80,7 +63,9 @@ async def list_integrations(settings: SettingsDep) -> list[dict[str, Any]]:
 async def connect_vendor(
     vendor: str, payload: dict[str, Any], settings: SettingsDep
 ) -> dict[str, Any]:
-    if vendor not in _VENDORS:
+    from integrations.registry import VENDOR_NAMES
+
+    if vendor not in VENDOR_NAMES:
         raise HTTPException(status_code=400, detail=f"Unknown vendor: {vendor}")
     return {"vendor": vendor, "status": "connect_not_yet_implemented"}
 

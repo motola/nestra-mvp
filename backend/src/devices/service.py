@@ -15,8 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
 from devices.models import AlphaconDevice
-from integrations.govee.client import GoveeAdapter
-from integrations.lifx.client import LIFXAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -33,27 +31,20 @@ async def list_all_devices(settings: Settings, session: AsyncSession) -> list[Al
 
         devices.extend([AlphaconDevice(**demo_device_as_alphacon(d)) for d in DEMO_DEVICES])
 
-    if settings.govee_api_key:
-        try:
-            adapter = GoveeAdapter(settings.govee_api_key)
-            govee_devices = await adapter.list_devices()
-            devices.extend(govee_devices)
-            logger.info("Govee: fetched %d devices", len(govee_devices))
-        except Exception as exc:
-            logger.error("Govee poll failed: %s", exc)
-    else:
-        logger.debug("Govee: skipped (no API key)")
+    # Poll every cloud vendor that has a configured credential — driven entirely
+    # by the vendor registry, so adding a vendor needs no change here.
+    from integrations.registry import VENDOR_REGISTRY
 
-    if settings.lifx_api_token:
+    for spec in VENDOR_REGISTRY:
+        adapter = spec.build_adapter(settings)
+        if adapter is None:
+            continue
         try:
-            lifx_adapter = LIFXAdapter(settings.lifx_api_token)
-            lifx_devices = await lifx_adapter.list_devices()
-            devices.extend(lifx_devices)
-            logger.info("LIFX: fetched %d devices", len(lifx_devices))
+            vendor_devices = await adapter.list_devices()
+            devices.extend(vendor_devices)
+            logger.info("%s: fetched %d devices", spec.display_name, len(vendor_devices))
         except Exception as exc:
-            logger.error("LIFX poll failed: %s", exc)
-    else:
-        logger.debug("LIFX: skipped (no API token)")
+            logger.error("%s poll failed: %s", spec.display_name, exc)
 
     try:
         from devices.registry import list_devices as _list_registry

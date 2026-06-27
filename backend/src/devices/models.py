@@ -14,7 +14,6 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
-VendorName = Literal["govee", "shelly", "lifx"]
 
 
 class AlphaconDevice(BaseModel):
