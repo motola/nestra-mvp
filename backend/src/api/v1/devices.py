@@ -3,15 +3,25 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import SessionDep, SettingsDep
 from devices import service as device_service
 from devices.models import AlphaconDevice
+from devices.schemas import (
+    AssignRoomPayload,
+    ControlPayload,
+    DeleteResult,
+    DeviceCommandResult,
+    MatterCommandPayload,
+    MatterDeviceState,
+)
+
+if TYPE_CHECKING:
+    from integrations.matter.server import MatterServerClient
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +42,8 @@ async def list_devices(settings: SettingsDep, session: SessionDep) -> list[Alpha
 
 # ── Matter device control (must be declared before /{device_id}) ──────────────
 
-
-class MatterCommandPayload(BaseModel):
-    command: str  # "on_off" | "brightness" | "color_temperature"
-    value: Any = None
+# Matter transition options shared by level/colour commands.
+_MATTER_TRANSITION = {"TransitionTime": 0, "OptionsMask": 0, "OptionsOverride": 0}
 
 
 async def _resolve_matter_node_id(device_id: str, session: AsyncSession) -> str:
@@ -50,48 +58,35 @@ async def _resolve_matter_node_id(device_id: str, session: AsyncSession) -> str:
     return str(node_id)
 
 
+async def _dispatch_matter_command(
+    client: MatterServerClient, node_id: str, payload: MatterCommandPayload
+) -> dict[str, Any]:
+    """Translate a high-level command into the matching Matter cluster command."""
+    if payload.command == "on_off":
+        return await client.send_command(node_id, 1, 6, "on" if payload.value else "off", {})
+    if payload.command == "brightness":
+        args = {"Level": int(payload.value), **_MATTER_TRANSITION}
+        return await client.send_command(node_id, 1, 8, "move_to_level", args)
+    if payload.command == "color_temperature":
+        args = {"ColorTemperatureMireds": int(payload.value), **_MATTER_TRANSITION}
+        return await client.send_command(node_id, 1, 768, "move_to_color_temperature", args)
+    raise HTTPException(status_code=400, detail=f"Unknown command: {payload.command}")
+
+
 @router.post("/matter/{device_id}/command")
 async def matter_command(
     device_id: str, payload: MatterCommandPayload, session: SessionDep
 ) -> dict[str, Any]:
-    """Send an on/off, brightness, or color_temperature command to a Matter device."""
+    """Send an on/off, brightness, or color_temperature command to a Matter device.
+
+    The result is the Matter server's raw response, so it stays untyped.
+    """
     from integrations.matter.server import MatterServerClient
 
     node_id = await _resolve_matter_node_id(device_id, session)
-
     try:
         async with MatterServerClient() as client:
-            if payload.command == "on_off":
-                cmd = "on" if payload.value else "off"
-                result = await client.send_command(node_id, 1, 6, cmd, {})
-            elif payload.command == "brightness":
-                result = await client.send_command(
-                    node_id,
-                    1,
-                    8,
-                    "move_to_level",
-                    {
-                        "Level": int(payload.value),
-                        "TransitionTime": 0,
-                        "OptionsMask": 0,
-                        "OptionsOverride": 0,
-                    },
-                )
-            elif payload.command == "color_temperature":
-                result = await client.send_command(
-                    node_id,
-                    1,
-                    768,
-                    "move_to_color_temperature",
-                    {
-                        "ColorTemperatureMireds": int(payload.value),
-                        "TransitionTime": 0,
-                        "OptionsMask": 0,
-                        "OptionsOverride": 0,
-                    },
-                )
-            else:
-                raise HTTPException(status_code=400, detail=f"Unknown command: {payload.command}")
+            result = await _dispatch_matter_command(client, node_id, payload)
     except HTTPException:
         raise
     except TimeoutError as exc:
@@ -102,13 +97,21 @@ async def matter_command(
     return result or {"ok": True}
 
 
-@router.get("/matter/{device_id}/state")
-async def matter_device_state(device_id: str, session: SessionDep) -> dict[str, Any]:
+def _read_cluster_attr(attrs: dict[str, Any], cluster: str, name: str) -> Any:
+    """Read a Matter cluster attribute, trying endpoint 1 then 0, name then index 0."""
+    for endpoint in ("1", "0"):
+        cluster_attrs = attrs.get(endpoint, {}).get(cluster, {})
+        if cluster_attrs:
+            return cluster_attrs.get(name, cluster_attrs.get("0"))
+    return None
+
+
+@router.get("/matter/{device_id}/state", response_model=MatterDeviceState)
+async def matter_device_state(device_id: str, session: SessionDep) -> MatterDeviceState:
     """Return the current attribute state for a Matter device from the server's cache."""
     from integrations.matter.server import MatterServerClient
 
     node_id = await _resolve_matter_node_id(device_id, session)
-
     try:
         async with MatterServerClient() as client:
             node = await client.get_node(node_id)
@@ -121,105 +124,38 @@ async def matter_device_state(device_id: str, session: SessionDep) -> dict[str, 
         raise HTTPException(status_code=404, detail="Matter node not found on server")
 
     attrs: dict[str, Any] = node.get("attributes") or {}
-
-    on_off = None
-    brightness = None
-    for ep in ("1", "0"):
-        ep_attrs = attrs.get(ep, {})
-        c6 = ep_attrs.get("6", {})
-        if c6:
-            on_off = c6.get("OnOff", c6.get("0"))
-            break
-    for ep in ("1", "0"):
-        ep_attrs = attrs.get(ep, {})
-        c8 = ep_attrs.get("8", {})
-        if c8:
-            brightness = c8.get("CurrentLevel", c8.get("0"))
-            break
-
-    return {
-        "device_id": device_id,
-        "node_id": node_id,
-        "online": node.get("available", False),
-        "on_off": on_off,
-        "brightness": brightness,
-    }
+    return MatterDeviceState(
+        device_id=device_id,
+        node_id=node_id,
+        online=node.get("available", False),
+        on_off=_read_cluster_attr(attrs, "6", "OnOff"),
+        brightness=_read_cluster_attr(attrs, "8", "CurrentLevel"),
+    )
 
 
 # ── Shelly local control ──────────────────────────────────────────────────────
 
 
-class ControlPayload(BaseModel):
-    command: str  # "turn_on" | "turn_off"
-    value: Any = None
-
-
-@router.post("/{device_id}/control")
-async def control_device(
-    device_id: str, payload: ControlPayload, settings: SettingsDep, session: SessionDep
-) -> dict[str, Any]:
-    """Send turn_on / turn_off to a Shelly device using its saved IP address."""
-    if settings.demo_mode:
-        from demo.data import is_demo_device
-
-        if is_demo_device(device_id):
-            return {"success": True, "state": payload.command == "turn_on"}
-
-    from devices.registry import get_device_by_id
-    from devices.state_history import record_state_change
+async def _run_shelly_switch(ip: str, command: str) -> tuple[bool, str]:
+    """Execute a Shelly on/off command, returning (succeeded, event_type)."""
     from integrations.shelly_local.controller import ShellyLocalController
-
-    row = await get_device_by_id(device_id, session)
-    if not row:
-        raise HTTPException(status_code=404, detail="Device not found")
-    ip = row.get("ip_address") or ""
-    if not ip:
-        raise HTTPException(status_code=422, detail="Device has no IP address stored")
 
     ctrl = ShellyLocalController(ip)
     try:
-        if payload.command == "turn_on":
-            ok = await ctrl.turn_on()
-            event_type = "turned_on"
-        elif payload.command == "turn_off":
-            ok = await ctrl.turn_off()
-            event_type = "turned_off"
-        else:
-            raise HTTPException(status_code=400, detail=f"Unknown command: {payload.command}")
-    except HTTPException:
-        raise
+        if command == "turn_on":
+            return await ctrl.turn_on(), "turned_on"
+        if command == "turn_off":
+            return await ctrl.turn_off(), "turned_off"
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-
-    if ok:
-        await record_state_change(
-            device_id=device_id,
-            event_type=event_type,
-            session=session,
-            property_id=row.get("property_id"),
-        )
-
-    return {"success": ok, "state": payload.command == "turn_on"}
+    raise HTTPException(status_code=400, detail=f"Unknown command: {command}")
 
 
-@router.get("/{device_id}/state")
-async def device_state(
-    device_id: str, settings: SettingsDep, session: SessionDep
-) -> dict[str, Any]:
-    """Return live on/off + power draw for a locally-reachable Shelly device."""
-    if settings.demo_mode:
-        from demo.data import demo_device_state as _demo_state
-        from demo.data import get_demo_device, is_demo_device
-
-        if is_demo_device(device_id):
-            d = get_demo_device(device_id)
-            if not d:
-                raise HTTPException(status_code=404, detail="Device not found")
-            return _demo_state(d)
-
+async def _require_device_and_ip(
+    device_id: str, session: AsyncSession
+) -> tuple[dict[str, Any], str]:
+    """Load a device row and its stored IP address, or raise 404 / 422."""
     from devices.registry import get_device_by_id
-    from devices.state_history import record_state_change
-    from integrations.shelly_local.controller import ShellyLocalController
 
     row = await get_device_by_id(device_id, session)
     if not row:
@@ -227,6 +163,15 @@ async def device_state(
     ip = row.get("ip_address") or ""
     if not ip:
         raise HTTPException(status_code=422, detail="Device has no IP address stored")
+    return row, ip
+
+
+async def _shelly_live_state(
+    device_id: str, ip: str, row: dict[str, Any], session: AsyncSession
+) -> dict[str, Any]:
+    """Fetch a Shelly device's live state, recording a power reading or an offline event."""
+    from devices.state_history import record_state_change
+    from integrations.shelly_local.controller import ShellyLocalController
 
     try:
         state = await ShellyLocalController(ip).get_state()
@@ -246,8 +191,55 @@ async def device_state(
         property_id=row.get("property_id"),
         value=str(state["power"]),
     )
-
     return {"device_id": device_id, "online": True, **state}
+
+
+@router.post("/{device_id}/control", response_model=DeviceCommandResult)
+async def control_device(
+    device_id: str, payload: ControlPayload, settings: SettingsDep, session: SessionDep
+) -> DeviceCommandResult:
+    """Send turn_on / turn_off to a Shelly device using its saved IP address."""
+    if settings.demo_mode:
+        from demo.data import is_demo_device
+
+        if is_demo_device(device_id):
+            return DeviceCommandResult(success=True, state=payload.command == "turn_on")
+
+    from devices.state_history import record_state_change
+
+    row, ip = await _require_device_and_ip(device_id, session)
+    ok, event_type = await _run_shelly_switch(ip, payload.command)
+    if ok:
+        await record_state_change(
+            device_id=device_id,
+            event_type=event_type,
+            session=session,
+            property_id=row.get("property_id"),
+        )
+    return DeviceCommandResult(success=ok, state=payload.command == "turn_on")
+
+
+@router.get("/{device_id}/state")
+async def device_state(
+    device_id: str, settings: SettingsDep, session: SessionDep
+) -> dict[str, Any]:
+    """Return live on/off + power draw for a locally-reachable Shelly device.
+
+    Shape differs between the demo and live paths (a known inconsistency), so the
+    response stays untyped until the two are unified.
+    """
+    if settings.demo_mode:
+        from demo.data import demo_device_state as _demo_state
+        from demo.data import get_demo_device, is_demo_device
+
+        if is_demo_device(device_id):
+            d = get_demo_device(device_id)
+            if not d:
+                raise HTTPException(status_code=404, detail="Device not found")
+            return _demo_state(d)
+
+    row, ip = await _require_device_and_ip(device_id, session)
+    return await _shelly_live_state(device_id, ip, row, session)
 
 
 @router.get("/{device_id}/power-history")
@@ -287,10 +279,6 @@ async def device_history(
 # ── Room assignment ───────────────────────────────────────────────────────────
 
 
-class AssignRoomPayload(BaseModel):
-    room_id: str | None
-
-
 @router.patch("/{device_id}")
 async def assign_device_room(
     device_id: str, payload: AssignRoomPayload, session: SessionDep
@@ -320,8 +308,8 @@ async def assign_device_room(
 # ── Delete device ─────────────────────────────────────────────────────────────
 
 
-@router.delete("/{device_id}")
-async def delete_device_endpoint(device_id: str, session: SessionDep) -> dict[str, Any]:
+@router.delete("/{device_id}", response_model=DeleteResult)
+async def delete_device_endpoint(device_id: str, session: SessionDep) -> DeleteResult:
     """Delete a device and its state history from the registry."""
     from devices.registry import delete_device, get_device_by_id
     from devices.state_history import delete_device_history
@@ -336,7 +324,7 @@ async def delete_device_endpoint(device_id: str, session: SessionDep) -> dict[st
         logger.warning("Could not delete state history for %s: %s", device_id, exc)
 
     await delete_device(device_id, session)
-    return {"deleted": device_id}
+    return DeleteResult(deleted=device_id)
 
 
 # ── Generic device lookup ─────────────────────────────────────────────────────
