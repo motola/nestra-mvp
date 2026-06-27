@@ -1,4 +1,4 @@
-"""August Smart Locks adapter — normalizes August locks to unified Device model."""
+"""Hikvision adapter — normalizes Hikvision cameras to unified Device model."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from uuid import UUID
 from property.domain import Device
 
 
-class AugustAdapter:
-    """Adapter for August Smart Lock devices."""
+class HikvisionAdapter:
+    """Adapter for Hikvision IP camera devices."""
 
-    vendor = "august"
+    vendor = "hikvision"
 
     async def fetch_devices(
         self,
@@ -20,20 +20,20 @@ class AugustAdapter:
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:
-        """Fetch August locks from API and normalize to Device objects.
+        """Fetch Hikvision cameras and normalize to Device objects.
 
         Mock implementation — returns empty list. Real implementation
-        would call August API and parse response.
+        would call Hikvision API and parse cameras.
         """
-        # TODO: Call August API, parse locks, build Device objects with create_device_data()
+        # TODO: Call Hikvision API, parse cameras, build Device objects with create_device_data()
         return []
 
     async def fetch_state(self, device: Device) -> Device:
-        """Refresh device state from August API.
+        """Refresh camera state from Hikvision API.
 
         Mock implementation — returns device unchanged.
         """
-        # TODO: Call August API to get lock state
+        # TODO: Call Hikvision API to get camera status
         return Device(
             id=device.id,
             organization_id=device.organization_id,
@@ -51,8 +51,8 @@ class AugustAdapter:
         )
 
     async def execute(self, device: Device, command: str, params: dict[str, object]) -> bool:
-        """Execute lock/unlock command on August lock.
+        """Execute control command on Hikvision camera.
 
-        Mock implementation — returns True for lock/unlock commands.
+        Mock implementation — returns True for IR/zoom commands.
         """
-        return command in ("lock", "unlock")
+        return command in ("ir_on", "ir_off", "zoom_in", "zoom_out")

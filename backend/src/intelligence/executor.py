@@ -3,8 +3,15 @@
 from __future__ import annotations
 
 import logging
+from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from integrations.registry import create_registry
+from integrations.sync import DeviceSyncService
+from property.persistence.device_repository import DeviceRepository
+from property.repository.models import DeviceModel
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +21,9 @@ class DeviceExecutor:
 
     def __init__(self, session: AsyncSession):
         self.session = session
+        self._registry = create_registry()
+        self._repository = DeviceRepository(session)
+        self._sync_service = DeviceSyncService(self._registry, self._repository)
 
     async def execute_tool(
         self,
@@ -39,39 +49,93 @@ class DeviceExecutor:
             return f"Error executing {tool_name}: {str(exc)}"
 
     async def _list_devices(self, tool_input: dict[str, str | float | bool]) -> str:
-        """List all devices for a property."""
-        return (
-            "Available devices in property:\n"
-            "- Lock (August): Front Door, Battery 85%\n"
-            "- Thermostat (Ecobee): Main Floor, Current: 72°F, Target: 70°F\n"
-            "- Camera (Hikvision): Front Door, Online\n"
-            "- Plug (TP-Link): Living Room, On, 42W\n"
-            "- Speaker (Bluetooth): Kitchen, Connected\n"
+        """List all devices for a property from repository."""
+        property_id = tool_input.get("property_id")
+        if not property_id:
+            return "Error: property_id required"
+
+        result = await self.session.execute(
+            select(DeviceModel).where(DeviceModel.property_id == UUID(str(property_id)))
         )
+        devices = result.scalars().all()
+
+        if not devices:
+            return "No devices found for this property."
+
+        lines = ["Available devices:"]
+        for device in devices:
+            lines.append(
+                f"- {device.device_type.value} ({device.vendor}): "
+                f"{device.vendor_name or 'Unknown'}, Online: {device.online}"
+            )
+        return "\n".join(lines)
 
     async def _control_lock(self, tool_input: dict[str, str | float | bool]) -> str:
         """Control a smart lock."""
+        device_id = tool_input.get("device_id")
         action = tool_input.get("action")
-        return f"✓ Front Door lock {action}ed successfully"
+
+        if not device_id or not action:
+            return "Error: device_id and action required"
+
+        device = await self._repository.get_by_id(UUID(str(device_id)))
+        if not device:
+            return f"Error: Device {device_id} not found"
+
+        adapter = self._registry.resolve(device.vendor)
+        success = await adapter.execute(device, str(action), {})
+        return f"✓ Lock {action}ed successfully" if success else "✗ Lock control failed"
 
     async def _set_temperature(self, tool_input: dict[str, str | float | bool]) -> str:
         """Set thermostat temperature."""
+        device_id = tool_input.get("device_id")
         temperature = tool_input.get("temperature")
-        return f"✓ Thermostat set to {temperature}°C (was 70°C)"
+
+        if not device_id or temperature is None:
+            return "Error: device_id and temperature required"
+
+        device = await self._repository.get_by_id(UUID(str(device_id)))
+        if not device:
+            return f"Error: Device {device_id} not found"
+
+        adapter = self._registry.resolve(device.vendor)
+        success = await adapter.execute(device, "set_temperature", {"temperature": temperature})
+        return f"✓ Thermostat set to {temperature}°C" if success else "✗ Temperature control failed"
 
     async def _toggle_plug(self, tool_input: dict[str, str | float | bool]) -> str:
         """Control a smart plug."""
+        device_id = tool_input.get("device_id")
         power_state = tool_input.get("power_state")
+
+        if not device_id or power_state is None:
+            return "Error: device_id and power_state required"
+
+        device = await self._repository.get_by_id(UUID(str(device_id)))
+        if not device:
+            return f"Error: Device {device_id} not found"
+
+        adapter = self._registry.resolve(device.vendor)
+        command = "turn_on" if power_state else "turn_off"
+        success = await adapter.execute(device, command, {"power_state": power_state})
         state_label = "on" if power_state else "off"
-        return f"✓ Smart plug turned {state_label}"
+        return f"✓ Plug turned {state_label}" if success else "✗ Plug control failed"
 
     async def _get_device_status(self, tool_input: dict[str, str | float | bool]) -> str:
         """Get device status."""
+        device_id = tool_input.get("device_id")
+
+        if not device_id:
+            return "Error: device_id required"
+
+        device = await self._repository.get_by_id(UUID(str(device_id)))
+        if not device:
+            return f"Error: Device {device_id} not found"
+
         return (
-            "Device Status:\n"
-            "Type: Smart Lock (August)\n"
-            "Name: Front Door\n"
-            "Status: Locked\n"
-            "Battery: 85%\n"
-            "Last Activity: 2 hours ago (locked by key)"
+            f"Device Status:\n"
+            f"Type: {device.device_type.value} ({device.vendor})\n"
+            f"Name: {device.vendor_name or 'Unknown'}\n"
+            f"Status: {'Online' if device.online else 'Offline'}\n"
+            f"Last Sync: {device.last_sync.isoformat()}\n"
+            f"State: {device.raw_state}"
         )

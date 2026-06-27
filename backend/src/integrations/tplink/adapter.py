@@ -1,4 +1,4 @@
-"""August Smart Locks adapter — normalizes August locks to unified Device model."""
+"""TP-Link adapter — normalizes TP-Link smart plugs to unified Device model."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from uuid import UUID
 from property.domain import Device
 
 
-class AugustAdapter:
-    """Adapter for August Smart Lock devices."""
+class TPLinkAdapter:
+    """Adapter for TP-Link smart plug and switch devices."""
 
-    vendor = "august"
+    vendor = "tplink"
 
     async def fetch_devices(
         self,
@@ -20,20 +20,20 @@ class AugustAdapter:
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:
-        """Fetch August locks from API and normalize to Device objects.
+        """Fetch TP-Link devices and normalize to Device objects.
 
         Mock implementation — returns empty list. Real implementation
-        would call August API and parse response.
+        would call TP-Link Kasa API and parse plugs/switches.
         """
-        # TODO: Call August API, parse locks, build Device objects with create_device_data()
+        # TODO: Call TP-Link Kasa API, parse devices, build Device objects with create_device_data()
         return []
 
     async def fetch_state(self, device: Device) -> Device:
-        """Refresh device state from August API.
+        """Refresh device state from TP-Link API.
 
         Mock implementation — returns device unchanged.
         """
-        # TODO: Call August API to get lock state
+        # TODO: Call TP-Link API to get plug/switch state
         return Device(
             id=device.id,
             organization_id=device.organization_id,
@@ -51,8 +51,8 @@ class AugustAdapter:
         )
 
     async def execute(self, device: Device, command: str, params: dict[str, object]) -> bool:
-        """Execute lock/unlock command on August lock.
+        """Execute control command on TP-Link device.
 
-        Mock implementation — returns True for lock/unlock commands.
+        Mock implementation — returns True for on/off commands.
         """
-        return command in ("lock", "unlock")
+        return command in ("turn_on", "turn_off")
