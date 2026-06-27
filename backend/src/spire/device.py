@@ -28,11 +28,13 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from spire.traits import Trait
+from spire.traits import Trait, derive_traits
 
 # Fixed namespace so a device's logical id is deterministic from its business
 # identifier — the same physical device gets the same id on every sync.
 _SPIRE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "spire:device")
+
+_READING_KEYS = ("power", "temperature", "humidity", "leak_detected")
 
 
 class DeviceStatus(StrEnum):
@@ -138,6 +140,56 @@ class SpireDevice(BaseModel):
     state: dict[str, Any] = Field(default_factory=dict)
     meta: AuditMeta = Field(default_factory=AuditMeta)
 
+    @classmethod
+    def from_vendor(
+        cls,
+        *,
+        vendor: str,
+        vendor_id: str,
+        name: str | None = None,
+        device_type: str = "other",
+        online: bool = False,
+        state: dict[str, Any] | None = None,
+        power_draw: float | None = None,
+        temperature: float | None = None,
+        humidity: float | None = None,
+        leak_detected: bool | None = None,
+        ip_address: str | None = None,
+        mac: str | None = None,
+        supported_commands: list[str] | None = None,
+        traits: list[Trait] | None = None,
+    ) -> SpireDevice:
+        """Assemble a SPIRE device from the flat pieces a vendor adapter interprets.
+
+        Readings fold into ``state``; traits derive from the commands when not given.
+        Keeps adapters from having to know the grouped structure.
+        """
+        merged_state = dict(state or {})
+        readings = (power_draw, temperature, humidity, leak_detected)
+        for key, value in zip(_READING_KEYS, readings, strict=True):
+            if value is not None:
+                merged_state[key] = value
+        commands = supported_commands or []
+        return cls(
+            identity=DeviceIdentity(identifier=SpireIdentifier(system=vendor, value=vendor_id)),
+            category=_to_category(device_type),
+            vendor=VendorRef(vendor=vendor, vendor_name=name),
+            connectivity=Connectivity(online=online, ip_address=ip_address, mac=mac),
+            traits=(
+                traits
+                if traits is not None
+                else derive_traits(
+                    commands,
+                    reports_power=power_draw is not None,
+                    reports_temperature=temperature is not None,
+                    reports_humidity=humidity is not None,
+                    reports_leak=leak_detected is not None,
+                )
+            ),
+            supported_commands=commands,
+            state=merged_state,
+        )
+
     @property
     def label(self) -> str:
         """The name to show a user: their own name first, then the vendor's, then a fallback."""
@@ -192,3 +244,11 @@ class SpireDevice(BaseModel):
 _ACTUATOR_TRAITS = frozenset(
     {Trait.ON_OFF, Trait.DIMMABLE, Trait.COLOR, Trait.COLOR_TEMP, Trait.LOCKABLE}
 )
+
+
+def _to_category(device_type: str) -> DeviceCategory:
+    """Map a coarse type string to a category, defaulting to OTHER for unknowns."""
+    try:
+        return DeviceCategory(device_type)
+    except ValueError:
+        return DeviceCategory.OTHER
