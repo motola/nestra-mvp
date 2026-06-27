@@ -134,6 +134,7 @@ class SpireDevice(BaseModel):
     placement: DevicePlacement = Field(default_factory=DevicePlacement)
     connectivity: Connectivity = Field(default_factory=Connectivity)
     traits: list[Trait] = Field(default_factory=list)
+    supported_commands: list[str] = Field(default_factory=list)
     state: dict[str, Any] = Field(default_factory=dict)
     meta: AuditMeta = Field(default_factory=AuditMeta)
 
@@ -154,3 +155,40 @@ class SpireDevice(BaseModel):
     def supports(self, trait: Trait) -> bool:
         """Whether this device exposes a given trait."""
         return trait in self.traits
+
+    @property
+    def controllable(self) -> bool:
+        """True if the device exposes any actuator trait (not a pure sensor)."""
+        return any(trait in _ACTUATOR_TRAITS for trait in self.traits)
+
+    def to_api(self) -> dict[str, Any]:
+        """Flatten to the wire shape the current frontend consumes.
+
+        The internal model is rich and grouped; the API contract stays flat so
+        the read path and frontend are untouched while we migrate onto SPIRE.
+        """
+        state = self.state
+        return {
+            "id": self.identity.id,
+            "vendor_id": self.identity.identifier.value,
+            "vendor": self.vendor.vendor,
+            "name": self.label,
+            "type": self.category.value,
+            "online": self.connectivity.online,
+            "controllable": self.controllable,
+            "state": state,
+            "power_draw": state.get("power"),
+            "temperature": state.get("temperature"),
+            "humidity": state.get("humidity"),
+            "leak_detected": state.get("leak_detected"),
+            "property_id": self.placement.property_id,
+            "room_id": self.placement.room_id,
+            "last_seen": self.meta.last_synced_at or self.meta.updated_at,
+            "supported_commands": self.supported_commands,
+            "traits": [trait.value for trait in self.traits],
+        }
+
+
+_ACTUATOR_TRAITS = frozenset(
+    {Trait.ON_OFF, Trait.DIMMABLE, Trait.COLOR, Trait.COLOR_TEMP, Trait.LOCKABLE}
+)

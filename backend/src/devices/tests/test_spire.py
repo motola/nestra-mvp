@@ -89,5 +89,29 @@ class LifecycleAndPlacementTest(unittest.TestCase):
         self.assertEqual(device.connectivity.ip_address, "10.0.0.5")
 
 
+class ApiSerialisationTest(unittest.TestCase):
+    def test_controllable_derives_from_actuator_traits(self) -> None:
+        self.assertTrue(_device(traits=[Trait.ON_OFF]).controllable)
+        self.assertFalse(_device(traits=[Trait.REPORTS_POWER]).controllable)
+
+    def test_to_api_produces_flat_frontend_shape(self) -> None:
+        device = _device(
+            category=DeviceCategory.LIGHT,
+            connectivity=Connectivity(online=True),
+            placement=DevicePlacement(property_id="p1", room_id="r1"),
+            traits=[Trait.ON_OFF, Trait.DIMMABLE],
+            supported_commands=["turn_on", "set_brightness"],
+            state={"on": True, "power": 12.3},
+        )
+        api = device.to_api()
+        self.assertEqual(api["vendor_id"], "AA::H6159")
+        self.assertEqual(api["type"], "light")
+        self.assertTrue(api["online"])
+        self.assertTrue(api["controllable"])
+        self.assertEqual(api["power_draw"], 12.3)
+        self.assertEqual(api["property_id"], "p1")
+        self.assertEqual(api["traits"], ["on_off", "dimmable"])
+
+
 if __name__ == "__main__":
     unittest.main()
