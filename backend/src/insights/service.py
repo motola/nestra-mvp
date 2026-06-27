@@ -22,8 +22,8 @@ import anthropic
 import httpx
 
 from config import Settings
+from insights.models import Insight, InsightSeverity
 from models.device import AlphaconDevice
-from models.insight import Insight, InsightSeverity
 
 logger = logging.getLogger(__name__)
 
