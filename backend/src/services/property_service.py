@@ -93,7 +93,7 @@ def _demo_properties() -> list[Property]:
 
 
 async def list_properties(session: AsyncSession, settings: Settings) -> list[Property]:
-    from services.alert_service import get_alert_counts
+    from alerts.service import get_alert_counts
     from services.device_registry import list_devices
 
     real_props: list[Property] = []
@@ -175,7 +175,7 @@ async def get_property(
     if not row:
         return None
 
-    from services.alert_service import get_alert_counts
+    from alerts.service import get_alert_counts
     from services.device_registry import list_devices
 
     device_rows = await list_devices(session, property_id=property_id)

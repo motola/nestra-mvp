@@ -8,7 +8,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from models.alert import Alert
+from alerts.models import Alert
 from models.database import Alert as DBAlert
 
 logger = logging.getLogger(__name__)

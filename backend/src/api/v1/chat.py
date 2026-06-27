@@ -30,7 +30,7 @@ class ChatRequest(BaseModel):
 
 
 async def _build_portfolio_context(settings: Settings, session: AsyncSession) -> str:
-    from services.alert_service import list_active_alerts
+    from alerts.service import list_active_alerts
     from services.property_service import list_properties
 
     try:
@@ -41,8 +41,8 @@ async def _build_portfolio_context(settings: Settings, session: AsyncSession) ->
         return ""
 
     if settings.demo_mode:
+        from alerts.models import Alert
         from demo.alerts import get_demo_alerts
-        from models.alert import Alert
 
         demo_alerts = [Alert(**a) for a in get_demo_alerts() if not a.get("dismissed")]
         alerts = list(alerts) + demo_alerts

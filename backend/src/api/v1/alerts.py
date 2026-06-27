@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from alerts import service as alert_service
+from alerts.models import Alert
 from api.dependencies import SessionDep, SettingsDep
-from models.alert import Alert
-from services import alert_service
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
