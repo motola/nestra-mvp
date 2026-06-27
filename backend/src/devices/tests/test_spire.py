@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import unittest
 
-from devices.capabilities import Capability
 from devices.spire import (
     AuditMeta,
     DeviceIdentity,
@@ -13,6 +12,7 @@ from devices.spire import (
     SpireIdentifier,
     VendorRef,
 )
+from devices.traits import Trait
 
 
 def _device(**overrides: object) -> SpireDevice:
@@ -52,9 +52,9 @@ class LabelTest(unittest.TestCase):
 
 class CapabilityTest(unittest.TestCase):
     def test_supports(self) -> None:
-        device = _device(capabilities=[Capability.ON_OFF, Capability.DIMMABLE])
-        self.assertTrue(device.supports(Capability.ON_OFF))
-        self.assertFalse(device.supports(Capability.COLOR))
+        device = _device(traits=[Trait.ON_OFF, Trait.DIMMABLE])
+        self.assertTrue(device.supports(Trait.ON_OFF))
+        self.assertFalse(device.supports(Trait.COLOR))
 
 
 class OwnershipGroupsTest(unittest.TestCase):

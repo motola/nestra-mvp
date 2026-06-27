@@ -4,21 +4,21 @@ from __future__ import annotations
 
 import unittest
 
-from devices.capabilities import Capability, derive_capabilities
 from devices.models import SpireDevice
+from devices.traits import Trait, derive_traits
 
 
 class DeriveCapabilitiesTest(unittest.TestCase):
     def test_actuator_traits_come_from_commands(self) -> None:
-        capabilities = derive_capabilities(["turn_on", "turn_off", "set_brightness", "set_color"])
-        self.assertEqual(capabilities, [Capability.ON_OFF, Capability.DIMMABLE, Capability.COLOR])
+        capabilities = derive_traits(["turn_on", "turn_off", "set_brightness", "set_color"])
+        self.assertEqual(capabilities, [Trait.ON_OFF, Trait.DIMMABLE, Trait.COLOR])
 
     def test_reporting_traits_come_from_readings(self) -> None:
-        capabilities = derive_capabilities([], reports_temperature=True, reports_leak=True)
-        self.assertEqual(capabilities, [Capability.REPORTS_TEMPERATURE, Capability.REPORTS_LEAK])
+        capabilities = derive_traits([], reports_temperature=True, reports_leak=True)
+        self.assertEqual(capabilities, [Trait.REPORTS_TEMPERATURE, Trait.REPORTS_LEAK])
 
     def test_no_capabilities_yields_no_traits(self) -> None:
-        self.assertEqual(derive_capabilities([]), [])
+        self.assertEqual(derive_traits([]), [])
 
 
 class SpireDeviceTest(unittest.TestCase):
@@ -32,7 +32,7 @@ class SpireDeviceTest(unittest.TestCase):
             controllable=True,
             supported_commands=["turn_on", "set_brightness"],
         )
-        self.assertEqual(device.capabilities, [Capability.ON_OFF, Capability.DIMMABLE])
+        self.assertEqual(device.traits, [Trait.ON_OFF, Trait.DIMMABLE])
 
     def test_same_vendor_identity_yields_same_id(self) -> None:
         first = SpireDevice(

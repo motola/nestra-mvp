@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from devices.capabilities import derive_capabilities
 from devices.models import SpireDevice
+from devices.traits import derive_traits
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.
@@ -78,7 +78,7 @@ def normalise_device(raw: dict[str, Any]) -> SpireDevice:
         state={},
         last_seen=datetime.now(UTC),
         supported_commands=commands,
-        capabilities=derive_capabilities(commands),
+        traits=derive_traits(commands),
     )
 
 

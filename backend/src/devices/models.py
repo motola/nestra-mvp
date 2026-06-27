@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from devices.capabilities import Capability, derive_capabilities
+from devices.traits import Trait, derive_traits
 
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 
@@ -50,7 +50,7 @@ class SpireDevice(BaseModel):
     # Capabilities. Each normaliser sets these from the vendor's declared
     # capabilities; the validator below is only a fallback for producers that
     # don't (e.g. the state-only poll path and seed data).
-    capabilities: list[Capability] = Field(default_factory=list)
+    traits: list[Trait] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _ensure_stable_id(self) -> SpireDevice:
@@ -61,11 +61,11 @@ class SpireDevice(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _ensure_capabilities(self) -> SpireDevice:
+    def _ensure_traits(self) -> SpireDevice:
         """Fallback: derive capabilities from the canonical fields if a producer didn't
         set them, so no device is ever left without a capability set."""
-        if not self.capabilities:
-            self.capabilities = derive_capabilities(
+        if not self.traits:
+            self.traits = derive_traits(
                 self.supported_commands,
                 reports_power=self.power_draw is not None,
                 reports_temperature=self.temperature is not None,

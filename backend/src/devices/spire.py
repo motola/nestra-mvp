@@ -22,7 +22,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from devices.capabilities import Capability
+from devices.traits import Trait
 
 # Fixed namespace so a device's logical id is deterministic from its business
 # identifier — the same physical device gets the same id on every sync.
@@ -83,7 +83,7 @@ class SpireDevice(BaseModel):
     identity: DeviceIdentity
     vendor: VendorRef
     naming: DeviceNaming = Field(default_factory=DeviceNaming)
-    capabilities: list[Capability] = Field(default_factory=list)
+    traits: list[Trait] = Field(default_factory=list)
     online: bool = False
     raw_state: dict[str, Any] = Field(default_factory=dict)
     meta: AuditMeta = Field(default_factory=AuditMeta)
@@ -97,6 +97,6 @@ class SpireDevice(BaseModel):
             or f"Device {self.identity.identifier.value}"
         )
 
-    def supports(self, capability: Capability) -> bool:
+    def supports(self, capability: Trait) -> bool:
         """Whether this device exposes a given capability."""
-        return capability in self.capabilities
+        return capability in self.traits
