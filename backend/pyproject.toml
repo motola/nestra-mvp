@@ -28,7 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.4",
+    "ruff==0.15.20",  # pinned: CI installs this exact version so local == CI (no lint drift)
     "mypy>=1.10",
     "types-passlib",
     "types-python-jose",

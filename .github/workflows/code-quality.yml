@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install ruff
+      - run: pip install ruff==0.15.20  # pinned to match pyproject [dev] so local == CI
       - run: ruff check .
       - run: ruff format --check .
 
