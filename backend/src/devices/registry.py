@@ -14,6 +14,15 @@ from core.tables import Device as DBDevice
 
 logger = logging.getLogger(__name__)
 
+# Same namespace + scheme as the cloud-poll path (devices.models), so a device
+# saved here and the same device polled live resolve to ONE logical id.
+_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "alphacon:device")
+
+
+def spire_device_id(vendor: str, vendor_id: str) -> uuid.UUID:
+    """Deterministic logical id from the business identity (vendor + vendor_id)."""
+    return uuid.uuid5(_DEVICE_NAMESPACE, f"{vendor}:{vendor_id}")
+
 
 def _to_dict(d: DBDevice) -> dict[str, Any]:
     return {
@@ -42,17 +51,39 @@ async def list_devices(
 
 
 async def save_device(data: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
-    device = DBDevice(
-        property_id=uuid.UUID(data["property_id"]) if data.get("property_id") else None,
-        room_id=uuid.UUID(data["room_id"]) if data.get("room_id") else None,
-        vendor=data["vendor"],
-        vendor_id=data.get("vendor_id") or data.get("mac") or "",
-        name=data["name"],
-        model=data.get("model") or "",
-        ip_address=data.get("ip") or "",
-        mac=data.get("mac") or "",
-    )
-    session.add(device)
+    """Upsert a device, keyed on its business identity (vendor + vendor_id).
+
+    Saving the same physical device twice updates the one row rather than creating
+    a duplicate. Vendor-owned fields (model, ip, mac) refresh on every save; the
+    user-owned ``name`` is preserved once set — the sync never clobbers a rename.
+    """
+    vendor = data["vendor"]
+    vendor_id = data.get("vendor_id") or data.get("mac") or ""
+    device_id = spire_device_id(vendor, vendor_id)
+
+    device = await session.get(DBDevice, device_id)
+    if device is not None:
+        device.model = data.get("model") or device.model
+        device.ip_address = data.get("ip") or device.ip_address
+        device.mac = data.get("mac") or device.mac
+        if data.get("property_id"):
+            device.property_id = uuid.UUID(data["property_id"])
+        if data.get("room_id"):
+            device.room_id = uuid.UUID(data["room_id"])
+    else:
+        device = DBDevice(
+            id=device_id,
+            property_id=uuid.UUID(data["property_id"]) if data.get("property_id") else None,
+            room_id=uuid.UUID(data["room_id"]) if data.get("room_id") else None,
+            vendor=vendor,
+            vendor_id=vendor_id,
+            name=data["name"],
+            model=data.get("model") or "",
+            ip_address=data.get("ip") or "",
+            mac=data.get("mac") or "",
+        )
+        session.add(device)
+
     await session.flush()
     await session.refresh(device)
     await session.commit()

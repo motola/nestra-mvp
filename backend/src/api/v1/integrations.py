@@ -76,7 +76,7 @@ async def connect_vendor(
 @router.get("/hotspots")
 async def list_hotspots() -> list[str]:
     """Scan for nearby Shelly device access points using netsh (Windows)."""
-    from integrations.provisioning import scan_shelly_hotspots
+    from integrations.shelly_local.provisioning import scan_shelly_hotspots
 
     return await scan_shelly_hotspots()
 
@@ -84,7 +84,7 @@ async def list_hotspots() -> list[str]:
 @router.get("/wifi-networks")
 async def list_wifi_networks() -> list[str]:
     """Nearby Wi-Fi networks for the provisioning home-network picker."""
-    from integrations.provisioning import scan_wifi_networks
+    from integrations.shelly_local.provisioning import scan_wifi_networks
 
     return await scan_wifi_networks()
 
@@ -96,7 +96,7 @@ class ShellyScanPayload(BaseModel):
 @router.post("/shelly/scan")
 async def shelly_scan(payload: ShellyScanPayload) -> list[dict[str, Any]]:
     """Connect to the Shelly AP and return the Wi-Fi networks the device itself sees."""
-    from integrations.provisioning import scan_networks_via_shelly
+    from integrations.shelly_local.provisioning import scan_networks_via_shelly
 
     return await scan_networks_via_shelly(payload.hotspot_name)
 
@@ -112,7 +112,7 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep) -> 
     SSE event format: data: {"type": "status"|"device"|"error"|"done", ...}
     WiFi credentials come from the request body and are never stored.
     """
-    from integrations.provisioning import (
+    from integrations.shelly_local.provisioning import (
         connect_hotspot,
         get_device_info,
         reconnect_home,
@@ -185,8 +185,8 @@ async def provision_device(payload: ProvisionPayload, settings: SettingsDep) -> 
 @router.get("/scan")
 async def scan_network() -> list[dict[str, Any]]:
     """Scan the local network for all supported smart device vendors."""
-    from integrations.provisioning import get_local_subnet
     from integrations.scanner import scan_shelly
+    from integrations.shelly_local.provisioning import get_local_subnet
 
     subnet = get_local_subnet()
     logger.debug("Scanning subnet %s", subnet)
