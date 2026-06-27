@@ -19,7 +19,7 @@ DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 
 # Fixed namespace so a device's id is deterministic from its vendor identity —
 # the same physical device gets the same id on every poll, across runs/machines.
-_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "alphacon:device")
+_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "spire:device")
 
 
 class SpireDevice(BaseModel):

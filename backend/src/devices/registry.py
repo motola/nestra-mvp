@@ -11,12 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from core.tables import Device as DBDevice
+from devices.spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 
 # Same namespace + scheme as the cloud-poll path (devices.models), so a device
 # saved here and the same device polled live resolve to ONE logical id.
-_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "alphacon:device")
+_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "spire:device")
 
 
 def spire_device_id(vendor: str, vendor_id: str) -> uuid.UUID:
@@ -88,6 +89,43 @@ async def save_device(data: dict[str, Any], session: AsyncSession) -> dict[str, 
     await session.refresh(device)
     await session.commit()
     return _to_dict(device)
+
+
+async def upsert_device(device: SpireDevice, session: AsyncSession) -> dict[str, Any]:
+    """Insert or update a device from a SPIRE resource, keyed on its identity.
+
+    The repository entry point for the sync pipeline. Vendor-owned fields refresh;
+    the user's ``name`` is preserved on update — a re-sync never clobbers a rename.
+    """
+    device_id = uuid.UUID(device.identity.id)
+    row = await session.get(DBDevice, device_id)
+    if row is not None:
+        row.model = device.vendor.model_number or row.model
+        row.ip_address = device.connectivity.ip_address or row.ip_address
+        row.mac = device.connectivity.mac or row.mac
+        if device.placement.property_id:
+            row.property_id = uuid.UUID(device.placement.property_id)
+        if device.placement.room_id:
+            row.room_id = uuid.UUID(device.placement.room_id)
+    else:
+        row = DBDevice(
+            id=device_id,
+            vendor=device.vendor.vendor,
+            vendor_id=device.identity.identifier.value,
+            name=device.label,
+            model=device.vendor.model_number or "",
+            ip_address=device.connectivity.ip_address or "",
+            mac=device.connectivity.mac or "",
+            property_id=(
+                uuid.UUID(device.placement.property_id) if device.placement.property_id else None
+            ),
+            room_id=uuid.UUID(device.placement.room_id) if device.placement.room_id else None,
+        )
+        session.add(row)
+    await session.flush()
+    await session.refresh(row)
+    await session.commit()
+    return _to_dict(row)
 
 
 async def get_device_by_id(device_id: str, session: AsyncSession) -> dict[str, Any] | None:
