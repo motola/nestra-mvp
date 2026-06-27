@@ -1,9 +1,10 @@
 """Intelligence service tests."""
 
 import unittest
+from typing import Any, ClassVar
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from intelligence.services import ConversationService
@@ -13,11 +14,14 @@ from shared.db import Base
 class TestConversationService(unittest.TestCase):
     """Test conversation management."""
 
+    engine: ClassVar[AsyncEngine]
+    AsyncSessionLocal: ClassVar[Any]
+
     @classmethod
     def setUpClass(cls) -> None:
         """Set up test database."""
         cls.engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-        cls.AsyncSessionLocal = sessionmaker(
+        cls.AsyncSessionLocal = sessionmaker(  # type: ignore[call-overload]
             cls.engine, class_=AsyncSession, expire_on_commit=False
         )
 

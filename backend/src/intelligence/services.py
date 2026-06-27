@@ -126,7 +126,7 @@ class ClaudeService:
 
             client = anthropic.AsyncAnthropic(api_key=self.settings.anthropic_api_key)
 
-            stream_kwargs = {
+            stream_kwargs: dict[str, object] = {
                 "model": "claude-haiku-4-5-20251001",
                 "max_tokens": 1024,
                 "system": system_prompt,
