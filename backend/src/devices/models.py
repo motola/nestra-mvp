@@ -11,15 +11,19 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
+
+# Fixed namespace so a device's id is deterministic from its vendor identity —
+# the same physical device gets the same id on every poll, across runs/machines.
+_DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "alphacon:device")
 
 
 class AlphaconDevice(BaseModel):
     """Vendor-agnostic device representation. Output type for all normalisers."""
 
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: str = ""  # derived deterministically from vendor identity if not supplied
     vendor_id: str
     vendor: str
     name: str
@@ -40,3 +44,11 @@ class AlphaconDevice(BaseModel):
     room_id: str | None = None
     last_seen: datetime = Field(default_factory=lambda: datetime.now(UTC))
     supported_commands: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _ensure_stable_id(self) -> AlphaconDevice:
+        """Derive a deterministic id from the vendor identity when one isn't given,
+        so the same physical device keeps the same id across every poll/sync."""
+        if not self.id:
+            self.id = str(uuid.uuid5(_DEVICE_NAMESPACE, f"{self.vendor}:{self.vendor_id}"))
+        return self
