@@ -58,9 +58,8 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Run DB migrations
     try:
-        from alembic.config import Config
-
         from alembic import command
+        from alembic.config import Config
 
         alembic_cfg = Config(str(_BACKEND_ROOT / "alembic.ini"))
         logger.info("Running Alembic migrations...")
@@ -119,10 +118,7 @@ app = FastAPI(title="AlphaCon API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=get_settings().cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

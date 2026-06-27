@@ -21,7 +21,6 @@ from typing import Any
 import httpx
 
 from integrations import BaseVendorAdapter
-from integrations.govee.normaliser import normalise_device, normalise_state
 from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
@@ -29,6 +28,31 @@ logger = logging.getLogger(__name__)
 _BASE_URL = "https://developer-api.govee.com/v1"
 _TIMEOUT = 10.0
 _MAX_RETRIES = 3
+
+# Maps Govee model prefixes to Alphacon device types.
+# Govee model naming: first 4 chars identify the product line.
+_MODEL_TYPE_MAP: dict[str, str] = {
+    # Light strips
+    "H617": "light",
+    "H618": "light",
+    "H619": "light",
+    "H615": "light",
+    "H614": "light",
+    # Bulbs / lamps
+    "H600": "light",
+    "H601": "light",
+    "H604": "light",
+    "H606": "light",
+    "H607": "light",
+    "H608": "light",
+    # Smart plugs
+    "H500": "plug",
+    "H501": "plug",
+    # Thermo-hygrometers / sensors
+    "H518": "sensor",
+    "H507": "sensor",
+    "H517": "sensor",
+}
 
 
 class GoveeAdapter(BaseVendorAdapter):
@@ -137,3 +161,96 @@ def _translate_command(command: dict[str, Any]) -> dict[str, Any]:
             },
         }
     raise ValueError(f"Unsupported command action for Govee: {action!r}")
+
+
+def _infer_type(model: str) -> str:
+    """Infer device type from Govee model number prefix."""
+    prefix = model[:4].upper()
+    return _MODEL_TYPE_MAP.get(prefix, "light")
+
+
+def _flatten_properties(props: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Govee state returns properties as a list of single-key dicts.
+    Flatten them into one dict for easy access.
+    Example: [{"online": true}, {"powerState": "on"}] → {"online": true, "powerState": "on"}
+    """
+    result: dict[str, Any] = {}
+    for item in props:
+        result.update(item)
+    return result
+
+
+def _map_commands(govee_cmds: list[str]) -> list[str]:
+    """Translate Govee supportCmds into Alphacon command names."""
+    mapping = {
+        "turn": ["turn_on", "turn_off"],
+        "brightness": ["set_brightness"],
+        "color": ["set_color"],
+        "colorTem": ["set_color_temp"],
+    }
+    result: list[str] = []
+    for cmd in govee_cmds:
+        result.extend(mapping.get(cmd, []))
+    return result
+
+
+def normalise_device(raw: dict[str, Any]) -> SpireDevice:
+    """
+    Convert a raw Govee device object (from GET /devices) into SpireDevice.
+    The device list response does not include live state — only metadata.
+    """
+    model: str = raw.get("model", "")
+    mac: str = raw.get("device", "")
+    # supportCmds is Govee's capability declaration — the source of truth for
+    # what this device can do. Map it to canonical commands, then to capabilities.
+    commands = _map_commands(raw.get("supportCmds", []))
+
+    return SpireDevice.from_vendor(
+        vendor="govee",
+        vendor_id=f"{mac}::{model}",
+        name=raw.get("deviceName", f"Govee {model}"),
+        device_type=_infer_type(model),
+        online=False,
+        supported_commands=commands,
+    )
+
+
+def normalise_state(raw: dict[str, Any]) -> SpireDevice:
+    """
+    Convert a raw Govee state object (from GET /devices/state) into SpireDevice.
+    The state response includes live values for online, power, brightness, colour.
+    """
+    model: str = raw.get("model", "")
+    mac: str = raw.get("device", "")
+    props = _flatten_properties(raw.get("properties", []))
+
+    online: bool = bool(props.get("online", False))
+    power_on: bool = props.get("powerState", "off") == "on"
+
+    state: dict[str, Any] = {"on": power_on}
+
+    brightness = props.get("brightness")
+    if brightness is not None:
+        state["brightness"] = int(brightness)
+
+    color = props.get("color")
+    if color:
+        state["color"] = {
+            "r": int(color.get("r", 255)),
+            "g": int(color.get("g", 255)),
+            "b": int(color.get("b", 255)),
+        }
+
+    color_temp = props.get("colorTemInKelvin")
+    if color_temp is not None:
+        state["color_temp_kelvin"] = int(color_temp)
+
+    return SpireDevice.from_vendor(
+        vendor="govee",
+        vendor_id=f"{mac}::{model}",
+        name=raw.get("deviceName", f"Govee {model}"),
+        device_type=_infer_type(model),
+        online=online,
+        state=state,
+    )

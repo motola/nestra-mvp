@@ -12,13 +12,13 @@ import logging
 from typing import Any
 
 from integrations import BaseVendorAdapter
-from integrations.shelly_local.controller import ShellyLocalController
-from integrations.shelly_local.normaliser import offline_device, to_spire_device
+from integrations.shelly_local.client import ShellyLocalController
 from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_NAME = "Shelly"
+_SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 
 
 class ShellyLocalAdapter(BaseVendorAdapter):
@@ -58,3 +58,36 @@ class ShellyLocalAdapter(BaseVendorAdapter):
             return await controller.turn_off()
         logger.warning("Shelly adapter received unsupported command: %r", action)
         return False
+
+
+def to_spire_device(
+    *,
+    device_id: str,
+    vendor_id: str,
+    name: str,
+    state: dict[str, Any],
+) -> SpireDevice:
+    """Build a SpireDevice from a ShellyLocalController.get_state() result."""
+    power = float(state["power"]) if state.get("power") is not None else None
+    return SpireDevice.from_vendor(
+        vendor="shelly",
+        vendor_id=vendor_id,
+        name=name,
+        device_type="plug",
+        online=True,
+        state={"on": bool(state.get("on", False)), "power": float(state.get("power", 0.0))},
+        power_draw=power,
+        supported_commands=list(_SUPPORTED_COMMANDS),
+    )
+
+
+def offline_device(*, device_id: str, vendor_id: str, name: str) -> SpireDevice:
+    """Represent an unreachable Shelly device as offline."""
+    return SpireDevice.from_vendor(
+        vendor="shelly",
+        vendor_id=vendor_id,
+        name=name,
+        device_type="plug",
+        online=False,
+        supported_commands=list(_SUPPORTED_COMMANDS),
+    )

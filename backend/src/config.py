@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     # Demo mode
     demo_mode: bool = False
 
+    # CORS — comma-separated allowed origins. Set this to point the API at any
+    # frontend; the backend is frontend-agnostic.
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
     # Vendor integrations
     govee_api_key: str = ""
     lifx_api_token: str = ""

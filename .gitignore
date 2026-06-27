@@ -36,3 +36,9 @@ backend/**/*.pyc
 .DS_Store
 *.log
 *.log.*
+
+# Internal working docs — kept local, not in the public repo (README stays)
+CLAUDE.md
+**/SKILL.md
+frontend/DESIGN_SYSTEM.md
+prompts/

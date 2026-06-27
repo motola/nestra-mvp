@@ -11,8 +11,7 @@ _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_BACKEND_ROOT / "src"))
 
 from integrations import BaseVendorAdapter  # noqa: E402
-from integrations.shelly_local.adapter import ShellyLocalAdapter  # noqa: E402
-from integrations.shelly_local.normaliser import to_spire_device  # noqa: E402
+from integrations.shelly_local.adapter import ShellyLocalAdapter, to_spire_device  # noqa: E402
 
 _STATE = {"on": True, "power": 42.0, "voltage": 238.0, "current": 0.18, "energy": 1.2}
 
