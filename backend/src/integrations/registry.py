@@ -11,9 +11,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from config import Settings
-from integrations import BaseVendorAdapter
 from integrations.govee.client import GoveeAdapter
 from integrations.lifx.client import LIFXAdapter
+from spire import VendorAdapter
 
 
 @dataclass(frozen=True)
@@ -26,7 +26,7 @@ class VendorSpec:
     # Settings attribute holding the credential; None for local/protocol vendors.
     settings_key: str | None = None
     # Builds the vendor's cloud-poll adapter from its credential, if it has one.
-    adapter: Callable[[str], BaseVendorAdapter] | None = None
+    adapter: Callable[[str], VendorAdapter] | None = None
 
     def is_connected(self, settings: Settings) -> bool:
         """Local/protocol vendors are always available; cloud vendors need a credential."""
@@ -34,7 +34,7 @@ class VendorSpec:
             return True
         return bool(getattr(settings, self.settings_key, ""))
 
-    def build_adapter(self, settings: Settings) -> BaseVendorAdapter | None:
+    def build_adapter(self, settings: Settings) -> VendorAdapter | None:
         """Construct this vendor's adapter, or None if it has no credential configured."""
         if self.adapter is None or self.settings_key is None:
             return None

@@ -20,8 +20,7 @@ from typing import Any
 
 import httpx
 
-from integrations import BaseVendorAdapter
-from spire import SpireDevice
+from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ _MODEL_TYPE_MAP: dict[str, str] = {
 }
 
 
-class GoveeAdapter(BaseVendorAdapter):
+class GoveeAdapter(VendorAdapter):
     """Govee Cloud API adapter. Requires a valid GOVEE_API_KEY."""
 
     def __init__(self, api_key: str) -> None:

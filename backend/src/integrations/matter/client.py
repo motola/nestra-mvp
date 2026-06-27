@@ -9,8 +9,7 @@ from typing import Any
 
 from websockets.asyncio.client import connect
 
-from integrations import BaseVendorAdapter
-from spire import SpireDevice
+from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ _MATTER_WS_URL = "ws://localhost:5580/ws"
 _TIMEOUT = 60.0
 
 
-class MatterAdapter(BaseVendorAdapter):
+class MatterAdapter(VendorAdapter):
     """Stub adapter for non-commission operations — full device control not yet implemented."""
 
     async def list_devices(self) -> list[SpireDevice]:

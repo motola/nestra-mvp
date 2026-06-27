@@ -1,4 +1,4 @@
-"""BaseVendorAdapter wrapper around the local Shelly controller.
+"""VendorAdapter wrapper around the local Shelly controller.
 
 Local Shelly devices are addressed by IP, so the adapter is constructed with a
 ``{device_id: ip}`` map (the caller builds it from the device registry). This
@@ -11,9 +11,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from integrations import BaseVendorAdapter
 from integrations.shelly_local.client import ShellyLocalController
-from spire import SpireDevice
+from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ _DEFAULT_NAME = "Shelly"
 _SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 
 
-class ShellyLocalAdapter(BaseVendorAdapter):
+class ShellyLocalAdapter(VendorAdapter):
     def __init__(self, devices: dict[str, str], names: dict[str, str] | None = None) -> None:
         self._ips = devices
         self._names = names or {}

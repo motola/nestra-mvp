@@ -10,6 +10,7 @@ Public API::
     from spire import SpireDevice, Trait, derive_traits
 """
 
+from spire.adapter import VendorAdapter
 from spire.device import (
     AuditMeta,
     Connectivity,
@@ -35,6 +36,7 @@ __all__ = [
     "SpireDevice",
     "SpireIdentifier",
     "Trait",
+    "VendorAdapter",
     "VendorRef",
     "derive_traits",
 ]

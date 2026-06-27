@@ -16,8 +16,7 @@ from typing import Any
 
 import httpx
 
-from integrations import BaseVendorAdapter
-from spire import SpireDevice
+from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ _TIMEOUT = 10.0
 _MAX_RETRIES = 3
 
 
-class LIFXAdapter(BaseVendorAdapter):
+class LIFXAdapter(VendorAdapter):
     """LIFX Cloud API adapter. Requires a valid LIFX_API_TOKEN."""
 
     def __init__(self, api_token: str) -> None:
