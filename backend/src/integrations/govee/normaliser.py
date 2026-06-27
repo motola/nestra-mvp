@@ -7,7 +7,6 @@ should appear anywhere else in the codebase. This is the translation boundary.
 
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime
 from typing import Any
 
@@ -67,7 +66,6 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
     support_cmds: list[str] = raw.get("supportCmds", [])
 
     return AlphaconDevice(
-        id=str(uuid.uuid4()),
         vendor_id=f"{mac}::{model}",
         vendor="govee",
         name=raw.get("deviceName", f"Govee {model}"),
@@ -111,13 +109,14 @@ def normalise_state(raw: dict[str, Any]) -> AlphaconDevice:
         state["color_temp_kelvin"] = int(color_temp)
 
     return AlphaconDevice(
-        id=str(uuid.uuid4()),
         vendor_id=f"{mac}::{model}",
         vendor="govee",
         name=raw.get("deviceName", f"Govee {model}"),
         type=_infer_type(model),
         online=online,
-        controllable=True,
+        # Controllability is a static capability — derive it from evidence in the
+        # live state (a reported power state) rather than asserting it per-endpoint.
+        controllable="powerState" in props,
         state=state,
         last_seen=datetime.now(UTC),
     )

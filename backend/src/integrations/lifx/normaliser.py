@@ -7,7 +7,6 @@ should appear anywhere else in the codebase.
 
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime
 from typing import Any
 
@@ -38,7 +37,6 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         commands.append("set_color")
 
     return AlphaconDevice(
-        id=str(uuid.uuid4()),
         vendor_id=raw.get("id", ""),
         vendor="lifx",
         name=raw.get("label", "LIFX Light"),

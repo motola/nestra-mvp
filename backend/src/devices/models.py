@@ -13,6 +13,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from devices.traits import Trait, derive_traits
+
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 
 # Fixed namespace so a device's id is deterministic from its vendor identity —
@@ -45,10 +47,27 @@ class AlphaconDevice(BaseModel):
     last_seen: datetime = Field(default_factory=lambda: datetime.now(UTC))
     supported_commands: list[str] = Field(default_factory=list)
 
+    # Capabilities, derived centrally from the canonical fields above (see below).
+    traits: list[Trait] = Field(default_factory=list)
+
     @model_validator(mode="after")
     def _ensure_stable_id(self) -> AlphaconDevice:
         """Derive a deterministic id from the vendor identity when one isn't given,
         so the same physical device keeps the same id across every poll/sync."""
         if not self.id:
             self.id = str(uuid.uuid5(_DEVICE_NAMESPACE, f"{self.vendor}:{self.vendor_id}"))
+        return self
+
+    @model_validator(mode="after")
+    def _ensure_traits(self) -> AlphaconDevice:
+        """Derive traits from the canonical capabilities when none are supplied,
+        so every vendor gets a consistent capability set with no per-vendor code."""
+        if not self.traits:
+            self.traits = derive_traits(
+                self.supported_commands,
+                reports_power=self.power_draw is not None,
+                reports_temperature=self.temperature is not None,
+                reports_humidity=self.humidity is not None,
+                reports_leak=self.leak_detected is not None,
+            )
         return self
