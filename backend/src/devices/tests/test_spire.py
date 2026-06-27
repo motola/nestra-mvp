@@ -6,8 +6,12 @@ import unittest
 
 from devices.spire import (
     AuditMeta,
+    Connectivity,
+    DeviceCategory,
     DeviceIdentity,
     DeviceNaming,
+    DevicePlacement,
+    DeviceStatus,
     SpireDevice,
     SpireIdentifier,
     VendorRef,
@@ -63,7 +67,26 @@ class OwnershipGroupsTest(unittest.TestCase):
         self.assertIsInstance(device.identity, DeviceIdentity)
         self.assertIsInstance(device.vendor, VendorRef)
         self.assertIsInstance(device.naming, DeviceNaming)
+        self.assertIsInstance(device.placement, DevicePlacement)
+        self.assertIsInstance(device.connectivity, Connectivity)
         self.assertIsInstance(device.meta, AuditMeta)
+
+
+class LifecycleAndPlacementTest(unittest.TestCase):
+    def test_defaults_to_active_and_uncategorised(self) -> None:
+        device = _device()
+        self.assertEqual(device.status, DeviceStatus.ACTIVE)
+        self.assertEqual(device.category, DeviceCategory.OTHER)
+
+    def test_placement_holds_property_and_room(self) -> None:
+        device = _device(placement=DevicePlacement(property_id="p1", room_id="r1"))
+        self.assertEqual(device.placement.property_id, "p1")
+        self.assertEqual(device.placement.room_id, "r1")
+
+    def test_online_accessor_reads_connectivity(self) -> None:
+        device = _device(connectivity=Connectivity(online=True, ip_address="10.0.0.5"))
+        self.assertTrue(device.online)
+        self.assertEqual(device.connectivity.ip_address, "10.0.0.5")
 
 
 if __name__ == "__main__":
