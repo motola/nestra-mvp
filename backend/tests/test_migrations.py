@@ -63,7 +63,7 @@ class TestBaselineMigration(unittest.TestCase):
     def test_metadata_matches_baseline_tables(self) -> None:
         from sqlmodel import SQLModel
 
-        import models.database  # noqa: F401  (registers tables on import)
+        import core.tables  # noqa: F401  (registers tables on import)
 
         table_names = set(SQLModel.metadata.tables.keys())
         self.assertTrue(
@@ -74,8 +74,8 @@ class TestBaselineMigration(unittest.TestCase):
     def test_metadata_includes_identity_tables(self) -> None:
         from sqlmodel import SQLModel
 
+        import core.tables  # noqa: F401  (FK targets: organisations)
         import identity.models  # noqa: F401  (registers identity tables on import)
-        import models.database  # noqa: F401  (FK targets: organisations)
 
         table_names = set(SQLModel.metadata.tables.keys())
         self.assertTrue(

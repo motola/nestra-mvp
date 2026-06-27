@@ -12,14 +12,14 @@ sys.path.insert(0, str(_BACKEND_ROOT / "src"))
 
 from integrations import BaseVendorAdapter  # noqa: E402
 from integrations.shelly_local.adapter import ShellyLocalAdapter  # noqa: E402
-from integrations.shelly_local.normaliser import to_alphacon_device  # noqa: E402
+from integrations.shelly_local.normaliser import to_spire_device  # noqa: E402
 
 _STATE = {"on": True, "power": 42.0, "voltage": 238.0, "current": 0.18, "energy": 1.2}
 
 
 class TestNormaliser(unittest.TestCase):
     def test_maps_state_to_device(self) -> None:
-        device = to_alphacon_device(
+        device = to_spire_device(
             device_id="d1", vendor_id="192.168.0.5", name="Boiler Plug", state=_STATE
         )
         self.assertEqual(device.vendor, "shelly")

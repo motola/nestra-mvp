@@ -10,10 +10,12 @@ from alembic import context
 # Add src/ to path so model imports work
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+# Imports below need src/ on the path (hence E402). Table models are imported so
+# their metadata registers on SQLModel.metadata.
 from sqlmodel import SQLModel  # noqa: E402
 
-# Import all table models so their metadata is registered
-from models.database import (  # noqa: E402, F401
+from config import get_settings as _get_settings  # noqa: E402
+from core.tables import (  # noqa: E402, F401
     Alert,
     Device,
     Organisation,
@@ -30,8 +32,6 @@ config = context.config
 target_metadata = SQLModel.metadata
 
 # Pull DATABASE_URL from pydantic settings (reads .env); os.environ alone won't have it.
-from config import get_settings as _get_settings  # noqa: E402
-
 _raw_url = _get_settings().database_url or ""
 _sync_url = _raw_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://").replace(
     "postgresql://", "postgresql+psycopg2://", 1
