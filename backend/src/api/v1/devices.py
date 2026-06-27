@@ -296,9 +296,9 @@ async def assign_device_room(
     device_id: str, payload: AssignRoomPayload, session: SessionDep
 ) -> dict[str, Any]:
     """Update a device's room assignment. Validates the room belongs to the same property."""
+    from properties.room_service import get_room_by_id
     from services.device_registry import assign_device_room as _assign
     from services.device_registry import get_device_by_id
-    from services.room_service import get_room_by_id
 
     device_row = await get_device_by_id(device_id, session)
     if not device_row:

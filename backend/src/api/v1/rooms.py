@@ -9,8 +9,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from api.dependencies import SessionDep
-from models.room import Room
-from services import room_service
+from properties import room_service
+from properties.rooms import Room
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,11 @@ from fastapi import APIRouter, HTTPException
 
 from api.dependencies import SessionDep, SettingsDep
 from models.device import AlphaconDevice
-from models.property import Property
-from models.room import Room, RoomCreate
-from services import device_service, property_service, room_service
+from properties import room_service
+from properties import service as property_service
+from properties.models import Property
+from properties.rooms import Room, RoomCreate
+from services import device_service
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
@@ -61,7 +63,7 @@ async def create_property_room(property_id: str, data: RoomCreate, session: Sess
             detail=f"A room named '{name}' already exists in this property",
         )
 
-    from models.room import RoomCreate as RC
+    from properties.rooms import RoomCreate as RC
 
     return await room_service.create_room(property_id, RC(name=name, floor=data.floor), session)
 

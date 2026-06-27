@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from models.database import Room as DBRoom
-from models.room import Room, RoomCreate
+from properties.rooms import Room, RoomCreate
 
 logger = logging.getLogger(__name__)
 

@@ -31,7 +31,7 @@ class ChatRequest(BaseModel):
 
 async def _build_portfolio_context(settings: Settings, session: AsyncSession) -> str:
     from alerts.service import list_active_alerts
-    from services.property_service import list_properties
+    from properties.service import list_properties
 
     try:
         props = await list_properties(session, settings)

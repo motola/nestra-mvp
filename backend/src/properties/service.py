@@ -25,7 +25,7 @@ from models.database import (
 from models.database import (
     StateHistory as DBStateHistory,
 )
-from models.property import Property, PropertyCreate, PropertyStatus
+from properties.models import Property, PropertyCreate, PropertyStatus
 
 logger = logging.getLogger(__name__)
 
