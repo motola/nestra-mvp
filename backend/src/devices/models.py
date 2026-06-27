@@ -8,7 +8,7 @@ field name. This is the single most important architectural rule in the codebase
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -39,5 +39,5 @@ class AlphaconDevice(BaseModel):
 
     property_id: str | None = None
     room_id: str | None = None
-    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    last_seen: datetime = Field(default_factory=lambda: datetime.now(UTC))
     supported_commands: list[str] = Field(default_factory=list)

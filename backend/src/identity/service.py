@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Final
 from uuid import UUID
 
@@ -70,7 +70,7 @@ async def login(session: AsyncSession, *, email: str, password: str) -> str:
     )
     if org_id is None:
         raise InvalidCredentials
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(UTC)
     token = await _issue_session(session, user, org_id)
     await session.commit()
     return token
@@ -85,7 +85,7 @@ async def _issue_session(session: AsyncSession, user: User, org_id: UUID) -> str
         user_id=user.id,
         active_organisation_id=org_id,
         auth_method=AuthMethod.PASSWORD.value,
-        expires_at=datetime.utcnow() + ACCESS_TOKEN_TTL,
+        expires_at=datetime.now(UTC) + ACCESS_TOKEN_TTL,
     )
     session.add(record)
     await session.flush()

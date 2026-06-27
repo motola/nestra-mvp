@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -816,7 +816,7 @@ def demo_device_as_alphacon(d: dict[str, Any]) -> dict[str, Any]:
         "leak_detected": d.get("leak_detected"),
         "property_id": d["property_id"],
         "room_id": d.get("room_id"),
-        "last_seen": datetime.utcnow().isoformat(),
+        "last_seen": datetime.now(UTC).isoformat(),
         "supported_commands": ["turn_on", "turn_off"] if d.get("type") == "plug" else [],
     }
 

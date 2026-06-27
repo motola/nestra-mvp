@@ -204,9 +204,9 @@ async def scan_network() -> list[dict[str, Any]]:
     from integrations.scanner import scan_shelly
 
     subnet = get_local_subnet()
-    print(f"DEBUG: scanning {subnet}", flush=True)
+    logger.debug("Scanning subnet %s", subnet)
     results = await scan_shelly(subnet)
-    print(f"DEBUG: found {len(results)}", flush=True)
+    logger.debug("Found %d devices", len(results))
     return results
 
 

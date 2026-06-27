@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
 import bcrypt
@@ -32,7 +32,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_access_token(claims: dict[str, Any], ttl: timedelta = ACCESS_TOKEN_TTL) -> str:
-    payload = {**claims, "exp": datetime.utcnow() + ttl}
+    payload = {**claims, "exp": datetime.now(UTC) + ttl}
     return jwt.encode(payload, get_settings().secret_key, algorithm=_ALGORITHM)
 
 

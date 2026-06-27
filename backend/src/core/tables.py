@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
@@ -13,7 +13,7 @@ class Organisation(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
     plan: str | None = None
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Property(SQLModel, table=True):
@@ -22,7 +22,7 @@ class Property(SQLModel, table=True):
     organisation_id: UUID | None = Field(foreign_key="organisations.id", default=None)
     name: str
     address: str | None = None
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Room(SQLModel, table=True):
@@ -31,7 +31,7 @@ class Room(SQLModel, table=True):
     property_id: UUID = Field(foreign_key="properties.id")
     name: str
     floor: int | None = None
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Device(SQLModel, table=True):
@@ -45,7 +45,7 @@ class Device(SQLModel, table=True):
     model: str | None = None
     ip_address: str | None = None
     mac: str | None = None
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Alert(SQLModel, table=True):
@@ -59,7 +59,7 @@ class Alert(SQLModel, table=True):
     severity: str | None = None
     message: str | None = None
     dismissed: bool = False
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class StateHistory(SQLModel, table=True):
@@ -69,4 +69,4 @@ class StateHistory(SQLModel, table=True):
     event_type: str | None = None
     value: str | None = None
     property_id: UUID | None = None
-    recorded_at: datetime | None = Field(default_factory=datetime.utcnow)
+    recorded_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))

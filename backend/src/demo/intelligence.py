@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 _PROP_VID_MAP = {
@@ -16,7 +16,7 @@ _PROP_VID_MAP = {
 
 
 def _ts(hours_ago: float = 0) -> str:
-    return (datetime.utcnow() - timedelta(hours=hours_ago)).isoformat() + "Z"
+    return (datetime.now(UTC) - timedelta(hours=hours_ago)).isoformat() + "Z"
 
 
 DEMO_INTELLIGENCE: list[dict[str, Any]] = [

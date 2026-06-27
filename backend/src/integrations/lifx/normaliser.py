@@ -8,7 +8,7 @@ should appear anywhere else in the codebase.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from devices.models import AlphaconDevice
@@ -46,6 +46,6 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         online=bool(raw.get("connected", False)),
         controllable=True,
         state=state,
-        last_seen=datetime.utcnow(),
+        last_seen=datetime.now(UTC),
         supported_commands=commands,
     )

@@ -8,7 +8,7 @@ methods are stored as strings — see ``identity.enums`` for the allowed values.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import UniqueConstraint
@@ -28,7 +28,7 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     is_tenant_only: bool = Field(default=False)
     last_login_at: datetime | None = None
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class Portfolio(SQLModel, table=True):
@@ -39,7 +39,7 @@ class Portfolio(SQLModel, table=True):
     name: str
     description: str | None = None
     is_default: bool = Field(default=False)
-    created_at: datetime | None = Field(default_factory=datetime.utcnow)
+    created_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
     archived_at: datetime | None = None
 
 
@@ -51,7 +51,7 @@ class OrgMembership(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     organisation_id: UUID = Field(foreign_key="organisations.id", index=True)
     org_role: str = Field(default=OrgRole.OWNER.value)
-    joined_at: datetime | None = Field(default_factory=datetime.utcnow)
+    joined_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
     invited_by: UUID | None = None
 
 
@@ -62,5 +62,5 @@ class Session(SQLModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     active_organisation_id: UUID = Field(foreign_key="organisations.id")
     auth_method: str = Field(default=AuthMethod.PASSWORD.value)
-    issued_at: datetime | None = Field(default_factory=datetime.utcnow)
+    issued_at: datetime | None = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime

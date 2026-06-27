@@ -8,7 +8,7 @@ It knows about vendor adapters; the API layer does not.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -159,9 +159,9 @@ def _row_to_alphacon(row: dict[str, Any]) -> AlphaconDevice:
     model = row.get("model") or ""
     created = row.get("created_at")
     try:
-        last_seen = datetime.fromisoformat(created) if created else datetime.utcnow()
+        last_seen = datetime.fromisoformat(created) if created else datetime.now(UTC)
     except ValueError:
-        last_seen = datetime.utcnow()
+        last_seen = datetime.now(UTC)
 
     return AlphaconDevice(
         id=row["id"],
