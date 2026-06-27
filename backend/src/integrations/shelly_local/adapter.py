@@ -11,10 +11,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.shelly_local.controller import ShellyLocalController
 from integrations.shelly_local.normaliser import offline_device, to_spire_device
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 

@@ -20,9 +20,9 @@ from typing import Any
 
 import httpx
 
-from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.govee.normaliser import normalise_device, normalise_state
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 

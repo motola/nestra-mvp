@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import SessionDep, SettingsDep
 from devices import service as device_service
-from devices.models import SpireDevice
 from devices.schemas import (
     AssignRoomPayload,
     ControlPayload,
@@ -28,16 +27,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/devices", tags=["devices"])
 
 
-@router.get("/saved", response_model=list[SpireDevice])
-async def list_saved_devices(settings: SettingsDep, session: SessionDep) -> list[SpireDevice]:
+@router.get("/saved", response_model=list[dict[str, Any]])
+async def list_saved_devices(settings: SettingsDep, session: SessionDep) -> list[dict[str, Any]]:
     """Return all devices from the registry (no live vendor API calls)."""
-    return await device_service.get_all_saved_devices(settings, session)
+    devices = await device_service.get_all_saved_devices(settings, session)
+    return [d.to_api() for d in devices]
 
 
-@router.get("/", response_model=list[SpireDevice])
-async def list_devices(settings: SettingsDep, session: SessionDep) -> list[SpireDevice]:
+@router.get("/", response_model=list[dict[str, Any]])
+async def list_devices(settings: SettingsDep, session: SessionDep) -> list[dict[str, Any]]:
     """Return all devices across all configured vendor integrations."""
-    return await device_service.list_all_devices(settings, session)
+    devices = await device_service.list_all_devices(settings, session)
+    return [d.to_api() for d in devices]
 
 
 # ── Matter device control (must be declared before /{device_id}) ──────────────
@@ -330,10 +331,10 @@ async def delete_device_endpoint(device_id: str, session: SessionDep) -> DeleteR
 # ── Generic device lookup ─────────────────────────────────────────────────────
 
 
-@router.get("/{device_id}", response_model=SpireDevice)
-async def get_device(device_id: str, settings: SettingsDep, session: SessionDep) -> SpireDevice:
+@router.get("/{device_id}", response_model=dict[str, Any])
+async def get_device(device_id: str, settings: SettingsDep, session: SessionDep) -> dict[str, Any]:
     """Return current state for a single device by its Alphacon ID."""
     device = await device_service.get_device(device_id, settings, session)
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
-    return device
+    return device.to_api()

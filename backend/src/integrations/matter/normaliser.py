@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from devices.models import SpireDevice
+from spire import SpireDevice
 
 
 def normalise_matter_device(raw: dict[str, Any]) -> SpireDevice:
     """Convert a zeroconf-discovered Matter service record to SpireDevice."""
-    return SpireDevice(
-        vendor_id=raw.get("name", "unknown"),
+    return SpireDevice.from_vendor(
         vendor="matter",
+        vendor_id=raw.get("name", "unknown"),
         name=raw.get("name", "Matter Device"),
-        type="light",
+        device_type="light",
         online=True,
-        controllable=False,
     )

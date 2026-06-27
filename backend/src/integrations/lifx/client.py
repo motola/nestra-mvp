@@ -16,9 +16,9 @@ from typing import Any
 
 import httpx
 
-from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.lifx.normaliser import normalise_device
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 

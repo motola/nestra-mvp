@@ -8,15 +8,34 @@ It knows about vendor adapters; the API layer does not.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
-from devices.models import SpireDevice
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
+
+
+def _spire_from_flat(d: dict[str, Any]) -> SpireDevice:
+    """Build a SpireDevice from a flat demo-device dict (demo.data.demo_device_as_spire)."""
+    device = SpireDevice.from_vendor(
+        vendor=d["vendor"],
+        vendor_id=d.get("vendor_id", d["id"]),
+        name=d["name"],
+        device_type=d.get("type", "plug"),
+        online=d.get("online", True),
+        state=d.get("state", {}),
+        power_draw=d.get("power_draw"),
+        temperature=d.get("temperature"),
+        humidity=d.get("humidity"),
+        leak_detected=d.get("leak_detected"),
+        supported_commands=d.get("supported_commands"),
+    )
+    device.placement.property_id = d.get("property_id")
+    device.placement.room_id = d.get("room_id")
+    return device
 
 
 async def list_all_devices(settings: Settings, session: AsyncSession) -> list[SpireDevice]:
@@ -29,7 +48,7 @@ async def list_all_devices(settings: Settings, session: AsyncSession) -> list[Sp
     if settings.demo_mode:
         from demo.data import DEMO_DEVICES, demo_device_as_spire
 
-        devices.extend([SpireDevice(**demo_device_as_spire(d)) for d in DEMO_DEVICES])
+        devices.extend([_spire_from_flat(demo_device_as_spire(d)) for d in DEMO_DEVICES])
 
     # Poll every cloud vendor that has a configured credential — driven entirely
     # by the vendor registry, so adding a vendor needs no change here.
@@ -67,11 +86,11 @@ async def get_device(
 
         if is_demo_device(device_id):
             d = get_demo_device(device_id)
-            return SpireDevice(**demo_device_as_spire(d)) if d else None
+            return _spire_from_flat(demo_device_as_spire(d)) if d else None
 
     all_devices = await list_all_devices(settings, session)
     for device in all_devices:
-        if device.id == device_id:
+        if device.identity.id == device_id:
             return device
     # Not found in live vendor APIs — check registry
     from devices.registry import get_device_by_id
@@ -86,13 +105,11 @@ async def get_device(
 
         try:
             live = await ShellyLocalController(row["ip_address"]).get_state()
-            device.online = True
-            device.controllable = True
-            device.power_draw = live.get("power")
+            device.connectivity.online = True
             device.state = {"on": live.get("on", False), "power": live.get("power", 0.0)}
         except Exception as exc:
             logger.debug("Shelly live state fetch failed for %s: %s", device_id, exc)
-            device.online = False
+            device.connectivity.online = False
     return device
 
 
@@ -110,7 +127,7 @@ async def get_saved_devices(
         if is_demo_property(property_id):
             demo_devs = get_demo_devices_for_property(property_id)
             if demo_devs:
-                return [SpireDevice(**demo_device_as_spire(d)) for d in demo_devs]
+                return [_spire_from_flat(demo_device_as_spire(d)) for d in demo_devs]
             # Property has real Supabase devices — fall through to DB query
     from devices.registry import list_devices
 
@@ -148,21 +165,18 @@ def _row_to_spire(row: dict[str, Any]) -> SpireDevice:
     """Convert a devices registry row to SpireDevice."""
     vendor = row.get("vendor", "unknown")
     model = row.get("model") or ""
-    created = row.get("created_at")
-    try:
-        last_seen = datetime.fromisoformat(created) if created else datetime.now(UTC)
-    except ValueError:
-        last_seen = datetime.now(UTC)
+    # Controllability derives from traits; give actuator vendors the on/off
+    # commands so saved rows render as controllable as they did before.
+    commands = ["turn_on", "turn_off"] if vendor in ("shelly", "shelly_local", "matter") else None
 
-    return SpireDevice(
-        id=row["id"],
-        vendor_id=row.get("vendor_id") or row["id"],
+    device = SpireDevice.from_vendor(
         vendor=vendor,
+        vendor_id=row.get("vendor_id") or row["id"],
         name=row.get("name") or "Unknown Device",
-        type=_infer_device_type(vendor, model),
+        device_type=_infer_device_type(vendor, model),
         online=False,
-        controllable=vendor in ("shelly", "shelly_local", "matter"),
-        property_id=row.get("property_id"),
-        room_id=row.get("room_id"),
-        last_seen=last_seen,
+        supported_commands=commands,
     )
+    device.placement.property_id = row.get("property_id")
+    device.placement.room_id = row.get("room_id")
+    return device

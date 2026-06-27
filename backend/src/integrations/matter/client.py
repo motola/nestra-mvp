@@ -9,8 +9,8 @@ from typing import Any
 
 from websockets.asyncio.client import connect
 
-from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 
@@ -111,17 +111,17 @@ def normalise_node(node: dict[str, Any], property_id: str = "", room_id: str = "
     name = _extract_name(node) or f"Matter Device {node_id}"
     device_type = _infer_type(node)
 
-    return SpireDevice(
-        vendor_id=node_id,
+    device = SpireDevice.from_vendor(
         vendor="matter",
+        vendor_id=node_id,
         name=name,
-        type=device_type,
+        device_type=device_type,
         online=node.get("available", True),
-        controllable=True,
-        property_id=property_id or None,
-        room_id=room_id or None,
         state={"node_id": node_id},
     )
+    device.placement.property_id = property_id or None
+    device.placement.room_id = room_id or None
+    return device
 
 
 def _extract_name(node: dict[str, Any]) -> str:

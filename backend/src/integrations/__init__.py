@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from devices.models import SpireDevice
+from spire import SpireDevice
 
 
 class BaseVendorAdapter(ABC):

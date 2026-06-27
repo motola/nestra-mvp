@@ -7,11 +7,9 @@ should appear anywhere else in the codebase.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 
-from devices.models import SpireDevice
-from spire.traits import derive_traits
+from spire import SpireDevice
 
 
 def normalise_device(raw: dict[str, Any]) -> SpireDevice:
@@ -37,15 +35,12 @@ def normalise_device(raw: dict[str, Any]) -> SpireDevice:
     if product.get("capabilities", {}).get("has_color", False):
         commands.append("set_color")
 
-    return SpireDevice(
-        vendor_id=raw.get("id", ""),
+    return SpireDevice.from_vendor(
         vendor="lifx",
+        vendor_id=raw.get("id", ""),
         name=raw.get("label", "LIFX Light"),
-        type="light",
+        device_type="light",
         online=bool(raw.get("connected", False)),
-        controllable=True,
         state=state,
-        last_seen=datetime.now(UTC),
         supported_commands=commands,
-        traits=derive_traits(commands),
     )

@@ -22,8 +22,8 @@ import anthropic
 import httpx
 
 from config import Settings
-from devices.models import SpireDevice
 from insights.models import Insight, InsightSeverity
+from spire import SpireDevice
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +45,12 @@ async def get_insight(
     """
     if not settings.anthropic_api_key:
         return Insight(
-            device_id=device.id,
+            device_id=device.identity.id,
             message="AI insights require an Anthropic API key — add ANTHROPIC_API_KEY to .env.",
             severity="info",
         )
 
-    cache_key = f"insight:{device.id}:{device.online}"
+    cache_key = f"insight:{device.identity.id}:{device.online}"
     cached_raw = await _cache_get(cache_key, settings)
     if cached_raw:
         try:
@@ -70,7 +70,7 @@ async def get_insight(
     )
 
     raw_text: str = message.content[0].text  # type: ignore[union-attr]
-    insight = _parse_response(device.id, raw_text, model)
+    insight = _parse_response(device.identity.id, raw_text, model)
 
     await _cache_set(cache_key, insight.model_dump_json(), _CACHE_TTL, settings)
     return insight
@@ -83,36 +83,42 @@ def _choose_model(device: SpireDevice, history: list[dict[str, Any]]) -> str:
     Complex cases: recent offline events, power draw anomalies,
     multi-hour state changes, or sensors with out-of-range readings.
     """
+    api = device.to_api()
+    power_draw = api["power_draw"]
+    temperature = api["temperature"]
     if not device.online:
         return _SONNET
-    if device.power_draw is not None and device.power_draw > 2000:
+    if power_draw is not None and power_draw > 2000:
         return _SONNET
-    if device.temperature is not None and (device.temperature < 10 or device.temperature > 30):
+    if temperature is not None and (temperature < 10 or temperature > 30):
         return _SONNET
-    if device.leak_detected:
+    if api["leak_detected"]:
         return _SONNET
     return _HAIKU
 
 
 def _build_prompt(device: SpireDevice, history: list[dict[str, Any]]) -> str:
     recent = history[:10] if history else []
+    api = device.to_api()
     on_state = device.state.get("on") if device.state else None
+    raw_last_seen = api["last_seen"]
     last_seen = (
-        device.last_seen.isoformat()
-        if isinstance(device.last_seen, datetime)
-        else str(device.last_seen)
+        raw_last_seen.isoformat() if isinstance(raw_last_seen, datetime) else str(raw_last_seen)
     )
+    power_draw = api["power_draw"]
+    temperature = api["temperature"]
+    humidity = api["humidity"]
     return f"""You are analysing smart device data for a UK property manager.
 
-Device    : {device.name}
-Type      : {device.type}
-Vendor    : {device.vendor}
+Device    : {api["name"]}
+Type      : {api["type"]}
+Vendor    : {device.vendor.vendor}
 Online    : {device.online}
 Switch    : {"on" if on_state else "off" if on_state is not None else "unknown"}
-Power draw: {f"{device.power_draw:.1f}W" if device.power_draw is not None else "unknown"}
-Temp      : {f"{device.temperature}°C" if device.temperature is not None else "N/A"}
-Humidity  : {f"{device.humidity}%" if device.humidity is not None else "N/A"}
-Leak      : {device.leak_detected}
+Power draw: {f"{power_draw:.1f}W" if power_draw is not None else "unknown"}
+Temp      : {f"{temperature}°C" if temperature is not None else "N/A"}
+Humidity  : {f"{humidity}%" if humidity is not None else "N/A"}
+Leak      : {api["leak_detected"]}
 Last seen : {last_seen}
 History   : {json.dumps(recent)}
 

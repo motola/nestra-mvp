@@ -7,11 +7,9 @@ should appear anywhere else in the codebase. This is the translation boundary.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 
-from devices.models import SpireDevice
-from spire.traits import derive_traits
+from spire import SpireDevice
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.
@@ -68,17 +66,13 @@ def normalise_device(raw: dict[str, Any]) -> SpireDevice:
     # what this device can do. Map it to canonical commands, then to capabilities.
     commands = _map_commands(raw.get("supportCmds", []))
 
-    return SpireDevice(
-        vendor_id=f"{mac}::{model}",
+    return SpireDevice.from_vendor(
         vendor="govee",
+        vendor_id=f"{mac}::{model}",
         name=raw.get("deviceName", f"Govee {model}"),
-        type=_infer_type(model),
+        device_type=_infer_type(model),
         online=False,
-        controllable=bool(raw.get("controllable", False)),
-        state={},
-        last_seen=datetime.now(UTC),
         supported_commands=commands,
-        traits=derive_traits(commands),
     )
 
 
@@ -112,17 +106,13 @@ def normalise_state(raw: dict[str, Any]) -> SpireDevice:
     if color_temp is not None:
         state["color_temp_kelvin"] = int(color_temp)
 
-    return SpireDevice(
-        vendor_id=f"{mac}::{model}",
+    return SpireDevice.from_vendor(
         vendor="govee",
+        vendor_id=f"{mac}::{model}",
         name=raw.get("deviceName", f"Govee {model}"),
-        type=_infer_type(model),
+        device_type=_infer_type(model),
         online=online,
-        # Controllability is a static capability — derive it from evidence in the
-        # live state (a reported power state) rather than asserting it per-endpoint.
-        controllable="powerState" in props,
         state=state,
-        last_seen=datetime.now(UTC),
     )
 
 

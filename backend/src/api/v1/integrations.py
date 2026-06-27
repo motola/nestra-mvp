@@ -259,14 +259,15 @@ async def commission_matter_device(
                 node = nodes[-1] if nodes else result.get("result", {})
 
             device = normalise_node(node, property_id=payload.property_id, room_id=payload.room_id)
+            api = device.to_api()
 
             yield sse("status", message="Saving to your property...")
             try:
                 saved = await _save_device(
                     {
                         "vendor": "matter",
-                        "vendor_id": device.vendor_id,
-                        "name": device.name,
+                        "vendor_id": api["vendor_id"],
+                        "name": api["name"],
                         "model": "Matter Device",
                         "ip": "",
                         "mac": "",
@@ -275,19 +276,19 @@ async def commission_matter_device(
                     },
                     session,
                 )
-                device_id = saved.get("id", device.vendor_id)
+                device_id = saved.get("id", api["vendor_id"])
             except Exception as exc:
                 logger.warning("Could not save Matter device: %s", exc)
-                device_id = device.vendor_id
+                device_id = api["vendor_id"]
 
             yield sse("status", message="Done!")
             yield sse(
                 "device",
                 device={
                     "id": device_id,
-                    "name": device.name,
+                    "name": api["name"],
                     "vendor": "matter",
-                    "vendor_id": device.vendor_id,
+                    "vendor_id": api["vendor_id"],
                     "property_id": payload.property_id or None,
                     "room_id": payload.room_id or None,
                 },

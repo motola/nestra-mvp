@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import unittest
 
-from devices.models import SpireDevice
 from devices.registry import spire_device_id
+from spire import SpireDevice
 
 
 class DeviceIdentityTest(unittest.TestCase):
@@ -21,14 +21,13 @@ class DeviceIdentityTest(unittest.TestCase):
         # A device saved to the registry and the same device polled live must
         # resolve to ONE logical id — there is no second identity scheme.
         saved = str(spire_device_id("govee", "AA::H6159"))
-        polled = SpireDevice(
+        polled = SpireDevice.from_vendor(
             vendor="govee",
             vendor_id="AA::H6159",
             name="x",
-            type="light",
+            device_type="light",
             online=True,
-            controllable=True,
-        ).id
+        ).identity.id
         self.assertEqual(saved, polled)
 
 

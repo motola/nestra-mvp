@@ -22,12 +22,13 @@ class TestNormaliser(unittest.TestCase):
         device = to_spire_device(
             device_id="d1", vendor_id="192.168.0.5", name="Boiler Plug", state=_STATE
         )
-        self.assertEqual(device.vendor, "shelly")
-        self.assertEqual(device.type, "plug")
+        api = device.to_api()
+        self.assertEqual(api["vendor"], "shelly")
+        self.assertEqual(api["type"], "plug")
         self.assertTrue(device.online)
-        self.assertTrue(device.state["on"])
-        self.assertEqual(device.power_draw, 42.0)
-        self.assertIn("turn_on", device.supported_commands)
+        self.assertTrue(api["state"]["on"])
+        self.assertEqual(api["power_draw"], 42.0)
+        self.assertIn("turn_on", api["supported_commands"])
 
 
 class TestShellyLocalAdapter(unittest.IsolatedAsyncioTestCase):
@@ -52,8 +53,9 @@ class TestShellyLocalAdapter(unittest.IsolatedAsyncioTestCase):
             adapter = ShellyLocalAdapter({"d1": "10.0.0.9"}, names={"d1": "Boiler Plug"})
 
             device = await adapter.get_device_state("d1")
-            self.assertEqual(device.name, "Boiler Plug")
-            self.assertEqual(device.power_draw, 42.0)
+            api = device.to_api()
+            self.assertEqual(api["name"], "Boiler Plug")
+            self.assertEqual(api["power_draw"], 42.0)
 
     async def test_list_devices_marks_unreachable_offline(self) -> None:
         with patch("integrations.shelly_local.adapter.ShellyLocalController") as mock_ctrl:

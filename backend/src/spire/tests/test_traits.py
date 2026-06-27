@@ -1,10 +1,9 @@
-"""Tests for capability-based device capabilities and deterministic device ids."""
+"""Tests for capability-based device capabilities derivation."""
 
 from __future__ import annotations
 
 import unittest
 
-from devices.models import SpireDevice
 from spire.traits import Trait, derive_traits
 
 
@@ -19,51 +18,6 @@ class DeriveCapabilitiesTest(unittest.TestCase):
 
     def test_no_capabilities_yields_no_traits(self) -> None:
         self.assertEqual(derive_traits([]), [])
-
-
-class SpireDeviceTest(unittest.TestCase):
-    def test_traits_are_auto_derived_from_canonical_fields(self) -> None:
-        device = SpireDevice(
-            vendor="govee",
-            vendor_id="AA::H6159",
-            name="Strip",
-            type="light",
-            online=True,
-            controllable=True,
-            supported_commands=["turn_on", "set_brightness"],
-        )
-        self.assertEqual(device.traits, [Trait.ON_OFF, Trait.DIMMABLE])
-
-    def test_same_vendor_identity_yields_same_id(self) -> None:
-        first = SpireDevice(
-            vendor="govee",
-            vendor_id="AA::H6159",
-            name="x",
-            type="light",
-            online=True,
-            controllable=True,
-        )
-        second = SpireDevice(
-            vendor="govee",
-            vendor_id="AA::H6159",
-            name="x",
-            type="light",
-            online=True,
-            controllable=True,
-        )
-        self.assertEqual(first.id, second.id)
-
-    def test_explicit_id_is_preserved(self) -> None:
-        device = SpireDevice(
-            id="fixed-1",
-            vendor="govee",
-            vendor_id="AA::H6159",
-            name="x",
-            type="light",
-            online=True,
-            controllable=True,
-        )
-        self.assertEqual(device.id, "fixed-1")
 
 
 if __name__ == "__main__":
