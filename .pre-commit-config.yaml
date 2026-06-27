@@ -1,7 +1,7 @@
 repos:
   # ── Python lint & format ───────────────────────────────────────────────────
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.0
+    rev: v0.15.20  # keep in sync with pyproject [dev] + CI so all three agree
     hooks:
       - id: ruff
         args: [--fix]

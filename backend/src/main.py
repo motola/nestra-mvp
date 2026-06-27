@@ -58,8 +58,9 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Run DB migrations
     try:
-        from alembic import command
         from alembic.config import Config
+
+        from alembic import command
 
         alembic_cfg = Config(str(_BACKEND_ROOT / "alembic.ini"))
         logger.info("Running Alembic migrations...")
