@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from models.device import AlphaconDevice
+from devices.models import AlphaconDevice
 
 _SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 

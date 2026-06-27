@@ -10,7 +10,7 @@ from sqlalchemy import delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from models.database import Room as DBRoom
+from core.tables import Room as DBRoom
 from properties.rooms import Room, RoomCreate
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ async def rename_room(room_id: str, name: str, session: AsyncSession) -> dict[st
 
 async def delete_room(room_id: str, session: AsyncSession) -> None:
     """Null out device room assignments then delete the room."""
-    from services.device_registry import move_devices_to_null_room
+    from devices.registry import move_devices_to_null_room
 
     await move_devices_to_null_room(room_id, session)
     await session.execute(sql_delete(DBRoom).where(DBRoom.id == uuid.UUID(room_id)))  # type: ignore[arg-type]

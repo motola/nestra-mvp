@@ -11,10 +11,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from devices.models import AlphaconDevice
 from integrations import BaseVendorAdapter
 from integrations.shelly_local.controller import ShellyLocalController
 from integrations.shelly_local.normaliser import offline_device, to_alphacon_device
-from models.device import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 

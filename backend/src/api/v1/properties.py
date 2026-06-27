@@ -7,12 +7,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from api.dependencies import SessionDep, SettingsDep
-from models.device import AlphaconDevice
+from devices import service as device_service
+from devices.models import AlphaconDevice
 from properties import room_service
 from properties import service as property_service
 from properties.models import Property
 from properties.rooms import Room, RoomCreate
-from services import device_service
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 

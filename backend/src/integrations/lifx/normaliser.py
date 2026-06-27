@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from models.device import AlphaconDevice
+from devices.models import AlphaconDevice
 
 
 def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:

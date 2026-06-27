@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from alerts.models import Alert
-from models.database import Alert as DBAlert
+from core.tables import Alert as DBAlert
 
 logger = logging.getLogger(__name__)
 

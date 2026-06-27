@@ -20,9 +20,9 @@ from typing import Any
 
 import httpx
 
+from devices.models import AlphaconDevice
 from integrations import BaseVendorAdapter
 from integrations.govee.normaliser import normalise_device, normalise_state
-from models.device import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 

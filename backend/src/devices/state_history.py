@@ -11,7 +11,7 @@ from sqlalchemy import delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from models.database import StateHistory as DBStateHistory
+from core.tables import StateHistory as DBStateHistory
 
 logger = logging.getLogger(__name__)
 

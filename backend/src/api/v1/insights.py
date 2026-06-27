@@ -5,9 +5,9 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from api.dependencies import SessionDep, SettingsDep
+from devices import service as device_service
 from insights import service as insight_service
 from insights.models import Insight
-from services import device_service
 
 router = APIRouter(prefix="/insights", tags=["insights"])
 

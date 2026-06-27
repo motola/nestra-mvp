@@ -10,7 +10,7 @@ from sqlalchemy import delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from models.database import Device as DBDevice
+from core.tables import Device as DBDevice
 
 logger = logging.getLogger(__name__)
 

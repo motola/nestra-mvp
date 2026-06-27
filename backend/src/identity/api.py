@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 
 from api.dependencies import SessionDep
+from core.tables import Organisation
 from identity import service
 from identity.models import User
 from identity.security import decode_access_token
-from models.database import Organisation
 
 router = APIRouter(tags=["identity"])
 

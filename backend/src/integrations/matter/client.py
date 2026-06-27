@@ -9,8 +9,8 @@ from typing import Any
 
 from websockets.asyncio.client import connect
 
+from devices.models import AlphaconDevice
 from integrations import BaseVendorAdapter
-from models.device import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 

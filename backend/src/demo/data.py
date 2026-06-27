@@ -670,9 +670,9 @@ def _seed_stubs() -> None:
 
 
 async def _seed_db(session: AsyncSession) -> None:
-    from models.database import Organisation as DBOrg
-    from models.database import Property as DBProperty
-    from models.database import Room as DBRoom
+    from core.tables import Organisation as DBOrg
+    from core.tables import Property as DBProperty
+    from core.tables import Room as DBRoom
 
     logger.info("Demo: connecting to PostgreSQL via asyncpg...")
     result = await session.execute(select(DBOrg).limit(1))
@@ -733,7 +733,7 @@ async def _seed_db(session: AsyncSession) -> None:
     await session.commit()
 
     # Find which properties already have real Supabase devices — skip demo devices for those.
-    from models.database import Device as DBDevice
+    from core.tables import Device as DBDevice
 
     result = await session.execute(select(DBDevice.property_id))  # type: ignore[call-overload]
     for (pid,) in result.all():

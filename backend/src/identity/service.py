@@ -10,10 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
+from core.tables import Organisation
 from identity.enums import AuthMethod, OrgRole
 from identity.models import OrgMembership, Portfolio, Session, User
 from identity.security import ACCESS_TOKEN_TTL, create_access_token, hash_password, verify_password
-from models.database import Organisation
 
 _DEFAULT_PORTFOLIO_NAME: Final[str] = "Default portfolio"
 

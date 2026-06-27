@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from models.device import AlphaconDevice
+from devices.models import AlphaconDevice
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.

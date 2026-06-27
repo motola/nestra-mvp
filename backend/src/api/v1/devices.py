@@ -10,8 +10,8 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import SessionDep, SettingsDep
-from models.device import AlphaconDevice
-from services import device_service
+from devices import service as device_service
+from devices.models import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class MatterCommandPayload(BaseModel):
 
 
 async def _resolve_matter_node_id(device_id: str, session: AsyncSession) -> str:
-    from services.device_registry import get_device_by_id
+    from devices.registry import get_device_by_id
 
     row = await get_device_by_id(device_id, session)
     if not row:
@@ -165,9 +165,9 @@ async def control_device(
         if is_demo_device(device_id):
             return {"success": True, "state": payload.command == "turn_on"}
 
+    from devices.registry import get_device_by_id
+    from devices.state_history import record_state_change
     from integrations.shelly_local.controller import ShellyLocalController
-    from services.device_registry import get_device_by_id
-    from services.state_history_service import record_state_change
 
     row = await get_device_by_id(device_id, session)
     if not row:
@@ -217,9 +217,9 @@ async def device_state(
                 raise HTTPException(status_code=404, detail="Device not found")
             return _demo_state(d)
 
+    from devices.registry import get_device_by_id
+    from devices.state_history import record_state_change
     from integrations.shelly_local.controller import ShellyLocalController
-    from services.device_registry import get_device_by_id
-    from services.state_history_service import record_state_change
 
     row = await get_device_by_id(device_id, session)
     if not row:
@@ -262,7 +262,7 @@ async def device_power_history(
             from demo.history import get_demo_power_history
 
             return get_demo_power_history(device_id)
-    from services.state_history_service import get_power_history
+    from devices.state_history import get_power_history
 
     return await get_power_history(device_id, session)
 
@@ -279,7 +279,7 @@ async def device_history(
             from demo.history import get_demo_history
 
             return get_demo_history(device_id, limit=50)
-    from services.state_history_service import get_device_history
+    from devices.state_history import get_device_history
 
     return await get_device_history(device_id, session, limit=50)
 
@@ -296,9 +296,9 @@ async def assign_device_room(
     device_id: str, payload: AssignRoomPayload, session: SessionDep
 ) -> dict[str, Any]:
     """Update a device's room assignment. Validates the room belongs to the same property."""
+    from devices.registry import assign_device_room as _assign
+    from devices.registry import get_device_by_id
     from properties.room_service import get_room_by_id
-    from services.device_registry import assign_device_room as _assign
-    from services.device_registry import get_device_by_id
 
     device_row = await get_device_by_id(device_id, session)
     if not device_row:
@@ -323,8 +323,8 @@ async def assign_device_room(
 @router.delete("/{device_id}")
 async def delete_device_endpoint(device_id: str, session: SessionDep) -> dict[str, Any]:
     """Delete a device and its state history from the registry."""
-    from services.device_registry import delete_device, get_device_by_id
-    from services.state_history_service import delete_device_history
+    from devices.registry import delete_device, get_device_by_id
+    from devices.state_history import delete_device_history
 
     row = await get_device_by_id(device_id, session)
     if not row:

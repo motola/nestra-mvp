@@ -10,19 +10,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from config import Settings
-from models.database import (
+from core.tables import (
     Alert as DBAlert,
 )
-from models.database import (
+from core.tables import (
     Device as DBDevice,
 )
-from models.database import (
+from core.tables import (
     Property as DBProperty,
 )
-from models.database import (
+from core.tables import (
     Room as DBRoom,
 )
-from models.database import (
+from core.tables import (
     StateHistory as DBStateHistory,
 )
 from properties.models import Property, PropertyCreate, PropertyStatus
@@ -94,7 +94,7 @@ def _demo_properties() -> list[Property]:
 
 async def list_properties(session: AsyncSession, settings: Settings) -> list[Property]:
     from alerts.service import get_alert_counts
-    from services.device_registry import list_devices
+    from devices.registry import list_devices
 
     real_props: list[Property] = []
     try:
@@ -176,7 +176,7 @@ async def get_property(
         return None
 
     from alerts.service import get_alert_counts
-    from services.device_registry import list_devices
+    from devices.registry import list_devices
 
     device_rows = await list_devices(session, property_id=property_id)
     alert_counts = await get_alert_counts(session)

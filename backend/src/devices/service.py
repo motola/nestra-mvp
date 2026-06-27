@@ -14,9 +14,9 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
+from devices.models import AlphaconDevice
 from integrations.govee.client import GoveeAdapter
 from integrations.lifx.client import LIFXAdapter
-from models.device import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ async def list_all_devices(settings: Settings, session: AsyncSession) -> list[Al
         logger.debug("LIFX: skipped (no API token)")
 
     try:
-        from services.device_registry import list_devices as _list_registry
+        from devices.registry import list_devices as _list_registry
 
         rows = await _list_registry(session)
         devices.extend([_row_to_alphacon(row) for row in rows])
@@ -83,7 +83,7 @@ async def get_device(
         if device.id == device_id:
             return device
     # Not found in live vendor APIs — check registry
-    from services.device_registry import get_device_by_id
+    from devices.registry import get_device_by_id
 
     row = await get_device_by_id(device_id, session)
     if not row:
@@ -121,7 +121,7 @@ async def get_saved_devices(
             if demo_devs:
                 return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in demo_devs]
             # Property has real Supabase devices — fall through to DB query
-    from services.device_registry import list_devices
+    from devices.registry import list_devices
 
     rows = await list_devices(session, property_id=property_id)
     return [_row_to_alphacon(row) for row in rows]
@@ -129,7 +129,7 @@ async def get_saved_devices(
 
 async def get_all_saved_devices(settings: Settings, session: AsyncSession) -> list[AlphaconDevice]:
     """Return all devices from the registry across all properties."""
-    from services.device_registry import list_devices
+    from devices.registry import list_devices
 
     rows = await list_devices(session)
     return [_row_to_alphacon(row) for row in rows]

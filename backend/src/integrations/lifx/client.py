@@ -16,9 +16,9 @@ from typing import Any
 
 import httpx
 
+from devices.models import AlphaconDevice
 from integrations import BaseVendorAdapter
 from integrations.lifx.normaliser import normalise_device
-from models.device import AlphaconDevice
 
 logger = logging.getLogger(__name__)
 

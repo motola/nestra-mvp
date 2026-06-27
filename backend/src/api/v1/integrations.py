@@ -250,9 +250,9 @@ async def commission_matter_device(
 
     SSE event format: data: {"type": "status"|"device"|"error"|"done", ...}
     """
+    from devices.registry import save_device as _save_device
     from integrations.matter.client import normalise_node
     from integrations.matter.server import MatterServerClient
-    from services.device_registry import save_device as _save_device
 
     def sse(type_: str, **kwargs: object) -> str:
         return f"data: {json.dumps({'type': type_, **kwargs})}\n\n"
@@ -332,7 +332,7 @@ async def list_saved_devices(
     property_id: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
     """List all provisioned devices stored in the registry, optionally filtered by property."""
-    from services.device_registry import list_devices
+    from devices.registry import list_devices
 
     rows = await list_devices(session, property_id=property_id)
     if settings.demo_mode:
@@ -350,7 +350,7 @@ async def list_saved_devices(
 @router.post("/devices")
 async def save_device(payload: SaveDevicePayload, session: SessionDep) -> dict[str, Any]:
     """Save a discovered device to the registry."""
-    from services.device_registry import save_device as _save
+    from devices.registry import save_device as _save
 
     try:
         return await _save(payload.model_dump(), session)
@@ -363,7 +363,7 @@ async def rename_device(
     device_id: str, payload: dict[str, Any], session: SessionDep
 ) -> dict[str, Any]:
     """Update device fields (e.g. name) in the registry."""
-    from services.device_registry import update_device
+    from devices.registry import update_device
 
     if not payload.get("name"):
         raise HTTPException(status_code=400, detail="name is required")
@@ -376,7 +376,7 @@ async def rename_device(
 @router.delete("/devices/{device_id}")
 async def remove_device(device_id: str, session: SessionDep) -> dict[str, Any]:
     """Remove a device from the registry by its ID."""
-    from services.device_registry import delete_device
+    from devices.registry import delete_device
 
     try:
         await delete_device(device_id, session)
