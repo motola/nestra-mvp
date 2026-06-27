@@ -1,4 +1,4 @@
-import type { AlphaconDevice } from "@/lib/types";
+import type { SpireDevice } from "@/lib/types";
 
 export interface DeviceSummary {
   /** Physical hardware connected (excludes seeded demo devices). */
@@ -17,7 +17,7 @@ export interface DeviceSummary {
  * and offline reflect real hardware only — demo devices carry synthetic state
  * that must never inflate the connectivity figures the operator relies on.
  */
-export function summarizeDevices(devices: AlphaconDevice[]): DeviceSummary {
+export function summarizeDevices(devices: SpireDevice[]): DeviceSummary {
   const real = devices.filter((d) => d.vendor !== "demo");
   const online = real.filter((d) => d.online).length;
   return {

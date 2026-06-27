@@ -16,11 +16,7 @@ import { format } from "date-fns";
 import { useProperties } from "@/hooks/useProperty";
 import { useAlerts } from "@/hooks/useAlerts";
 import { devicesApi } from "@/lib/api";
-import type {
-  AlphaconDevice,
-  PropertyStatus,
-  AlertSeverity,
-} from "@/lib/types";
+import type { SpireDevice, PropertyStatus, AlertSeverity } from "@/lib/types";
 import { PageWrapper, StatCard, TrendChart, SkeletonCard } from "@/themes";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +105,7 @@ function ChartCard({
 export default function DashboardPage() {
   const { data: properties = [], isLoading: propsLoading } = useProperties();
   const { data: alerts = [], isLoading: alertsLoading } = useAlerts();
-  const { data: devices = [] } = useQuery<AlphaconDevice[]>({
+  const { data: devices = [] } = useQuery<SpireDevice[]>({
     queryKey: ["devices"],
     queryFn: devicesApi.list,
   });

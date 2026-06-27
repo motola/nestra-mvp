@@ -1,10 +1,10 @@
 "use client";
 
 import { Power } from "lucide-react";
-import type { AlphaconDevice } from "@/lib/types";
+import type { SpireDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function DeviceControls({ device }: { device: AlphaconDevice }) {
+export function DeviceControls({ device }: { device: SpireDevice }) {
   if (!device.controllable) return null;
 
   const state = device.state as Record<string, unknown>;

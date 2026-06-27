@@ -22,7 +22,7 @@ import anthropic
 import httpx
 
 from config import Settings
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from insights.models import Insight, InsightSeverity
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ _SONNET = "claude-sonnet-4-6"
 
 
 async def get_insight(
-    device: AlphaconDevice,
+    device: SpireDevice,
     history: list[dict[str, Any]],
     settings: Settings,
 ) -> Insight:
@@ -76,7 +76,7 @@ async def get_insight(
     return insight
 
 
-def _choose_model(device: AlphaconDevice, history: list[dict[str, Any]]) -> str:
+def _choose_model(device: SpireDevice, history: list[dict[str, Any]]) -> str:
     """
     Route to Sonnet for complex cases; Haiku for routine summaries.
 
@@ -94,7 +94,7 @@ def _choose_model(device: AlphaconDevice, history: list[dict[str, Any]]) -> str:
     return _HAIKU
 
 
-def _build_prompt(device: AlphaconDevice, history: list[dict[str, Any]]) -> str:
+def _build_prompt(device: SpireDevice, history: list[dict[str, Any]]) -> str:
     recent = history[:10] if history else []
     on_state = device.state.get("on") if device.state else None
     last_seen = (

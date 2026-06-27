@@ -16,7 +16,7 @@ from typing import Any
 
 import httpx
 
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.lifx.normaliser import normalise_device
 
@@ -33,14 +33,14 @@ class LIFXAdapter(BaseVendorAdapter):
     def __init__(self, api_token: str) -> None:
         self._headers = {"Authorization": f"Bearer {api_token}"}
 
-    async def list_devices(self) -> list[AlphaconDevice]:
+    async def list_devices(self) -> list[SpireDevice]:
         """GET /lights/all — returns every light on the account."""
         data = await self._request("GET", "/lights/all")
         if not isinstance(data, list):
             return []
         return [normalise_device(d) for d in data]
 
-    async def get_device_state(self, device_id: str) -> AlphaconDevice:
+    async def get_device_state(self, device_id: str) -> SpireDevice:
         """GET /lights/id:{device_id} — returns state for a single light."""
         data = await self._request("GET", f"/lights/id:{device_id}")
         if isinstance(data, list) and data:

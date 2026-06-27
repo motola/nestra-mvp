@@ -10,7 +10,7 @@ export type PropertyStatus = "all_clear" | "needs_attention" | "critical";
 export type AlertSeverity = "info" | "warning" | "critical";
 export type InsightSeverity = "info" | "warning" | "critical";
 
-export interface AlphaconDevice {
+export interface SpireDevice {
   id: string;
   vendor_id: string;
   vendor: VendorName;

@@ -9,7 +9,7 @@ from typing import Any
 
 from websockets.asyncio.client import connect
 
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 
 logger = logging.getLogger(__name__)
@@ -21,10 +21,10 @@ _TIMEOUT = 60.0
 class MatterAdapter(BaseVendorAdapter):
     """Stub adapter for non-commission operations — full device control not yet implemented."""
 
-    async def list_devices(self) -> list[AlphaconDevice]:
+    async def list_devices(self) -> list[SpireDevice]:
         return []
 
-    async def get_device_state(self, device_id: str) -> AlphaconDevice:
+    async def get_device_state(self, device_id: str) -> SpireDevice:
         raise NotImplementedError
 
     async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
@@ -105,15 +105,13 @@ async def _wait_for_response(ws: Any, message_id: str, timeout: float = _TIMEOUT
             return msg
 
 
-def normalise_node(
-    node: dict[str, Any], property_id: str = "", room_id: str = ""
-) -> AlphaconDevice:
-    """Convert a python-matter-server node dict into an AlphaconDevice."""
+def normalise_node(node: dict[str, Any], property_id: str = "", room_id: str = "") -> SpireDevice:
+    """Convert a python-matter-server node dict into a SpireDevice."""
     node_id = str(node.get("node_id", uuid.uuid4()))
     name = _extract_name(node) or f"Matter Device {node_id}"
     device_type = _infer_type(node)
 
-    return AlphaconDevice(
+    return SpireDevice(
         vendor_id=node_id,
         vendor="matter",
         name=name,

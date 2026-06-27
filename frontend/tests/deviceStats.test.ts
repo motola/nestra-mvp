@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { summarizeDevices } from "@/lib/deviceStats";
-import type { AlphaconDevice, VendorName } from "@/lib/types";
+import type { SpireDevice, VendorName } from "@/lib/types";
 
 function device(
   vendor: VendorName,
   online: boolean,
   id = `${vendor}-${online}`,
-): AlphaconDevice {
+): SpireDevice {
   return {
     id,
     vendor_id: id,

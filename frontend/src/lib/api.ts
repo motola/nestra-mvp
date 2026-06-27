@@ -1,6 +1,6 @@
 import type {
   Alert,
-  AlphaconDevice,
+  SpireDevice,
   CommissionEvent,
   Insight,
   IntelligenceItem,
@@ -103,7 +103,7 @@ export const propertiesApi = {
   list: () => apiFetch<Property[]>("/api/v1/properties/"),
   get: (id: string) => apiFetch<Property>(`/api/v1/properties/${id}`),
   devices: (id: string) =>
-    apiFetch<AlphaconDevice[]>(`/api/v1/properties/${id}/devices`),
+    apiFetch<SpireDevice[]>(`/api/v1/properties/${id}/devices`),
   delete: (id: string) =>
     apiFetch<{ deleted: string }>(`/api/v1/properties/${id}`, {
       method: "DELETE",
@@ -134,8 +134,8 @@ export const roomsApi = {
 // ── Devices ───────────────────────────────────────────────────────────────────
 
 export const devicesApi = {
-  list: () => apiFetch<AlphaconDevice[]>("/api/v1/devices/"),
-  get: (id: string) => apiFetch<AlphaconDevice>(`/api/v1/devices/${id}`),
+  list: () => apiFetch<SpireDevice[]>("/api/v1/devices/"),
+  get: (id: string) => apiFetch<SpireDevice>(`/api/v1/devices/${id}`),
   assignRoom: (deviceId: string, roomId: string | null) =>
     apiFetch<SavedDevice>(`/api/v1/devices/${deviceId}`, {
       method: "PATCH",

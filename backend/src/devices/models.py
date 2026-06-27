@@ -1,5 +1,5 @@
 """
-AlphaconDevice — the single, vendor-agnostic device model used everywhere
+SpireDevice — the single, vendor-agnostic device model used everywhere
 in the platform. Every vendor normaliser must produce this model as output.
 Nothing in services/, api/, or frontend should ever reference a vendor-specific
 field name. This is the single most important architectural rule in the codebase.
@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from devices.traits import Trait, derive_traits
+from devices.capabilities import Capability, derive_capabilities
 
 DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 
@@ -22,7 +22,7 @@ DeviceType = Literal["plug", "light", "sensor", "lock", "thermostat"]
 _DEVICE_NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "alphacon:device")
 
 
-class AlphaconDevice(BaseModel):
+class SpireDevice(BaseModel):
     """Vendor-agnostic device representation. Output type for all normalisers."""
 
     id: str = ""  # derived deterministically from vendor identity if not supplied
@@ -50,10 +50,10 @@ class AlphaconDevice(BaseModel):
     # Capabilities. Each normaliser sets these from the vendor's declared
     # capabilities; the validator below is only a fallback for producers that
     # don't (e.g. the state-only poll path and seed data).
-    traits: list[Trait] = Field(default_factory=list)
+    capabilities: list[Capability] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _ensure_stable_id(self) -> AlphaconDevice:
+    def _ensure_stable_id(self) -> SpireDevice:
         """Derive a deterministic id from the vendor identity when one isn't given,
         so the same physical device keeps the same id across every poll/sync."""
         if not self.id:
@@ -61,11 +61,11 @@ class AlphaconDevice(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _ensure_traits(self) -> AlphaconDevice:
-        """Fallback: derive traits from the canonical fields if a producer didn't
+    def _ensure_capabilities(self) -> SpireDevice:
+        """Fallback: derive capabilities from the canonical fields if a producer didn't
         set them, so no device is ever left without a capability set."""
-        if not self.traits:
-            self.traits = derive_traits(
+        if not self.capabilities:
+            self.capabilities = derive_capabilities(
                 self.supported_commands,
                 reports_power=self.power_draw is not None,
                 reports_temperature=self.temperature is not None,

@@ -14,22 +14,22 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 
 logger = logging.getLogger(__name__)
 
 
-async def list_all_devices(settings: Settings, session: AsyncSession) -> list[AlphaconDevice]:
+async def list_all_devices(settings: Settings, session: AsyncSession) -> list[SpireDevice]:
     """
     Return all devices: demo data (if demo mode), cloud vendor APIs,
     and saved registry devices (Shelly, Matter from the database).
     """
-    devices: list[AlphaconDevice] = []
+    devices: list[SpireDevice] = []
 
     if settings.demo_mode:
-        from demo.data import DEMO_DEVICES, demo_device_as_alphacon
+        from demo.data import DEMO_DEVICES, demo_device_as_spire
 
-        devices.extend([AlphaconDevice(**demo_device_as_alphacon(d)) for d in DEMO_DEVICES])
+        devices.extend([SpireDevice(**demo_device_as_spire(d)) for d in DEMO_DEVICES])
 
     # Poll every cloud vendor that has a configured credential — driven entirely
     # by the vendor registry, so adding a vendor needs no change here.
@@ -50,7 +50,7 @@ async def list_all_devices(settings: Settings, session: AsyncSession) -> list[Al
         from devices.registry import list_devices as _list_registry
 
         rows = await _list_registry(session)
-        devices.extend([_row_to_alphacon(row) for row in rows])
+        devices.extend([_row_to_spire(row) for row in rows])
         logger.info("Registry: fetched %d saved devices", len(rows))
     except Exception as exc:
         logger.error("Registry device list failed: %s", exc)
@@ -60,14 +60,14 @@ async def list_all_devices(settings: Settings, session: AsyncSession) -> list[Al
 
 async def get_device(
     device_id: str, settings: Settings, session: AsyncSession
-) -> AlphaconDevice | None:
+) -> SpireDevice | None:
     """Return current state for a single device. Checks vendor APIs first, falls back to DB."""
     if settings.demo_mode:
-        from demo.data import demo_device_as_alphacon, get_demo_device, is_demo_device
+        from demo.data import demo_device_as_spire, get_demo_device, is_demo_device
 
         if is_demo_device(device_id):
             d = get_demo_device(device_id)
-            return AlphaconDevice(**demo_device_as_alphacon(d)) if d else None
+            return SpireDevice(**demo_device_as_spire(d)) if d else None
 
     all_devices = await list_all_devices(settings, session)
     for device in all_devices:
@@ -79,7 +79,7 @@ async def get_device(
     row = await get_device_by_id(device_id, session)
     if not row:
         return None
-    device = _row_to_alphacon(row)
+    device = _row_to_spire(row)
     # For Shelly devices with a stored IP, fetch live state so online/power fields are accurate
     if row.get("vendor") == "shelly" and row.get("ip_address"):
         from integrations.shelly_local.controller import ShellyLocalController
@@ -98,11 +98,11 @@ async def get_device(
 
 async def get_saved_devices(
     property_id: str, settings: Settings, session: AsyncSession
-) -> list[AlphaconDevice]:
+) -> list[SpireDevice]:
     """Return devices from the registry for a specific property."""
     if settings.demo_mode:
         from demo.data import (
-            demo_device_as_alphacon,
+            demo_device_as_spire,
             get_demo_devices_for_property,
             is_demo_property,
         )
@@ -110,24 +110,24 @@ async def get_saved_devices(
         if is_demo_property(property_id):
             demo_devs = get_demo_devices_for_property(property_id)
             if demo_devs:
-                return [AlphaconDevice(**demo_device_as_alphacon(d)) for d in demo_devs]
+                return [SpireDevice(**demo_device_as_spire(d)) for d in demo_devs]
             # Property has real Supabase devices — fall through to DB query
     from devices.registry import list_devices
 
     rows = await list_devices(session, property_id=property_id)
-    return [_row_to_alphacon(row) for row in rows]
+    return [_row_to_spire(row) for row in rows]
 
 
-async def get_all_saved_devices(settings: Settings, session: AsyncSession) -> list[AlphaconDevice]:
+async def get_all_saved_devices(settings: Settings, session: AsyncSession) -> list[SpireDevice]:
     """Return all devices from the registry across all properties."""
     from devices.registry import list_devices
 
     rows = await list_devices(session)
-    return [_row_to_alphacon(row) for row in rows]
+    return [_row_to_spire(row) for row in rows]
 
 
 def _infer_device_type(vendor: str, model: str) -> str:
-    """Infer AlphaconDevice type from vendor and model string."""
+    """Infer SpireDevice type from vendor and model string."""
     m = model.lower()
     if any(x in m for x in ["plug", "1pm", "2pm", "plusplug", "mini1pm", "em", "mini pm"]):
         return "plug"
@@ -144,8 +144,8 @@ def _infer_device_type(vendor: str, model: str) -> str:
     return "plug"
 
 
-def _row_to_alphacon(row: dict[str, Any]) -> AlphaconDevice:
-    """Convert a devices registry row to AlphaconDevice."""
+def _row_to_spire(row: dict[str, Any]) -> SpireDevice:
+    """Convert a devices registry row to SpireDevice."""
     vendor = row.get("vendor", "unknown")
     model = row.get("model") or ""
     created = row.get("created_at")
@@ -154,7 +154,7 @@ def _row_to_alphacon(row: dict[str, Any]) -> AlphaconDevice:
     except ValueError:
         last_seen = datetime.now(UTC)
 
-    return AlphaconDevice(
+    return SpireDevice(
         id=row["id"],
         vendor_id=row.get("vendor_id") or row["id"],
         vendor=vendor,

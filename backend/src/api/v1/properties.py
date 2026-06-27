@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.dependencies import SessionDep, SettingsDep
 from devices import service as device_service
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from properties import room_service
 from properties import service as property_service
 from properties.models import Property
@@ -68,8 +68,8 @@ async def create_property_room(property_id: str, data: RoomCreate, session: Sess
     return await room_service.create_room(property_id, RC(name=name, floor=data.floor), session)
 
 
-@router.get("/{property_id}/devices", response_model=list[AlphaconDevice])
+@router.get("/{property_id}/devices", response_model=list[SpireDevice])
 async def list_property_devices(
     property_id: str, settings: SettingsDep, session: SessionDep
-) -> list[AlphaconDevice]:
+) -> list[SpireDevice]:
     return await device_service.get_saved_devices(property_id, settings, session)

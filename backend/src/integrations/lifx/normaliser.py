@@ -1,5 +1,5 @@
 """
-LIFX Cloud → AlphaconDevice normaliser.
+LIFX Cloud → SpireDevice normaliser.
 
 After this module, no LIFX field names (connected, color, kelvin, etc.)
 should appear anywhere else in the codebase.
@@ -10,12 +10,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from devices.models import AlphaconDevice
-from devices.traits import derive_traits
+from devices.capabilities import derive_capabilities
+from devices.models import SpireDevice
 
 
-def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
-    """Convert a raw LIFX light object into AlphaconDevice."""
+def normalise_device(raw: dict[str, Any]) -> SpireDevice:
+    """Convert a raw LIFX light object into SpireDevice."""
     product: dict[str, Any] = raw.get("product", {})
     color: dict[str, Any] = raw.get("color", {})
     power: str = raw.get("power", "off")
@@ -37,7 +37,7 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
     if product.get("capabilities", {}).get("has_color", False):
         commands.append("set_color")
 
-    return AlphaconDevice(
+    return SpireDevice(
         vendor_id=raw.get("id", ""),
         vendor="lifx",
         name=raw.get("label", "LIFX Light"),
@@ -47,5 +47,5 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         state=state,
         last_seen=datetime.now(UTC),
         supported_commands=commands,
-        traits=derive_traits(commands),
+        capabilities=derive_capabilities(commands),
     )

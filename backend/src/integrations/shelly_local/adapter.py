@@ -11,10 +11,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.shelly_local.controller import ShellyLocalController
-from integrations.shelly_local.normaliser import offline_device, to_alphacon_device
+from integrations.shelly_local.normaliser import offline_device, to_spire_device
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ class ShellyLocalAdapter(BaseVendorAdapter):
     def _name(self, device_id: str) -> str:
         return self._names.get(device_id, _DEFAULT_NAME)
 
-    async def list_devices(self) -> list[AlphaconDevice]:
-        result: list[AlphaconDevice] = []
+    async def list_devices(self) -> list[SpireDevice]:
+        result: list[SpireDevice] = []
         for device_id, ip in self._ips.items():
             try:
                 result.append(await self.get_device_state(device_id))
@@ -41,10 +41,10 @@ class ShellyLocalAdapter(BaseVendorAdapter):
                 )
         return result
 
-    async def get_device_state(self, device_id: str) -> AlphaconDevice:
+    async def get_device_state(self, device_id: str) -> SpireDevice:
         ip = self._ips[device_id]
         state = await ShellyLocalController(ip).get_state()
-        return to_alphacon_device(
+        return to_spire_device(
             device_id=device_id, vendor_id=ip, name=self._name(device_id), state=state
         )
 

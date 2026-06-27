@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { devicesApi, provisioningApi } from "@/lib/api";
 import { summarizeDevices } from "@/lib/deviceStats";
-import type { AlphaconDevice, DeviceType, VendorName } from "@/lib/types";
+import type { SpireDevice, DeviceType, VendorName } from "@/lib/types";
 import { PageWrapper, DeviceCard, SkeletonCard, EmptyState } from "@/themes";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +48,7 @@ function StatPill({
 }
 
 export default function DevicesPage() {
-  const { data: devices = [], isLoading } = useQuery<AlphaconDevice[]>({
+  const { data: devices = [], isLoading } = useQuery<SpireDevice[]>({
     queryKey: ["devices"],
     queryFn: devicesApi.list,
   });
@@ -68,7 +68,7 @@ export default function DevicesPage() {
     onError: () => toast.error("Couldn't remove device"),
   });
 
-  function handleRemove(device: AlphaconDevice) {
+  function handleRemove(device: SpireDevice) {
     if (
       window.confirm(`Remove "${device.name}"? This unlinks it from Nestra.`)
     ) {

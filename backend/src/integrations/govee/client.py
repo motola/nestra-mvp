@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 from integrations import BaseVendorAdapter
 from integrations.govee.normaliser import normalise_device, normalise_state
 
@@ -40,13 +40,13 @@ class GoveeAdapter(BaseVendorAdapter):
             "Content-Type": "application/json",
         }
 
-    async def list_devices(self) -> list[AlphaconDevice]:
+    async def list_devices(self) -> list[SpireDevice]:
         """GET /devices — returns all devices registered to the account."""
         data = await self._request("GET", "/devices")
         raw_devices: list[dict[str, Any]] = data.get("data", {}).get("devices", [])
         return [normalise_device(d) for d in raw_devices]
 
-    async def get_device_state(self, device_id: str) -> AlphaconDevice:
+    async def get_device_state(self, device_id: str) -> SpireDevice:
         """
         GET /devices/state — returns current state for a single device.
 

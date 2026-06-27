@@ -2,7 +2,7 @@
 Vendor integration abstraction layer.
 
 Rule: every vendor client must extend BaseVendorAdapter.
-Every method must return AlphaconDevice — never a vendor-specific type.
+Every method must return SpireDevice — never a vendor-specific type.
 Nothing outside this package should ever reference a vendor field name.
 """
 
@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from devices.models import AlphaconDevice
+from devices.models import SpireDevice
 
 
 class BaseVendorAdapter(ABC):
@@ -24,12 +24,12 @@ class BaseVendorAdapter(ABC):
     """
 
     @abstractmethod
-    async def list_devices(self) -> list[AlphaconDevice]:
+    async def list_devices(self) -> list[SpireDevice]:
         """Return all devices for this vendor account, fully normalised."""
         ...
 
     @abstractmethod
-    async def get_device_state(self, device_id: str) -> AlphaconDevice:
+    async def get_device_state(self, device_id: str) -> SpireDevice:
         """Return the current state of a single device by its Alphacon device ID."""
         ...
 

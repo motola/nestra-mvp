@@ -1,24 +1,24 @@
-"""Normalise Shelly local-RPC state into the vendor-agnostic AlphaconDevice."""
+"""Normalise Shelly local-RPC state into the vendor-agnostic SpireDevice."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from devices.models import AlphaconDevice
-from devices.traits import derive_traits
+from devices.capabilities import derive_capabilities
+from devices.models import SpireDevice
 
 _SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 
 
-def to_alphacon_device(
+def to_spire_device(
     *,
     device_id: str,
     vendor_id: str,
     name: str,
     state: dict[str, Any],
-) -> AlphaconDevice:
-    """Build an AlphaconDevice from a ShellyLocalController.get_state() result."""
-    return AlphaconDevice(
+) -> SpireDevice:
+    """Build a SpireDevice from a ShellyLocalController.get_state() result."""
+    return SpireDevice(
         id=device_id,
         vendor_id=vendor_id,
         vendor="shelly",
@@ -29,13 +29,15 @@ def to_alphacon_device(
         state={"on": bool(state.get("on", False)), "power": float(state.get("power", 0.0))},
         power_draw=float(state["power"]) if state.get("power") is not None else None,
         supported_commands=list(_SUPPORTED_COMMANDS),
-        traits=derive_traits(_SUPPORTED_COMMANDS, reports_power=state.get("power") is not None),
+        capabilities=derive_capabilities(
+            _SUPPORTED_COMMANDS, reports_power=state.get("power") is not None
+        ),
     )
 
 
-def offline_device(*, device_id: str, vendor_id: str, name: str) -> AlphaconDevice:
+def offline_device(*, device_id: str, vendor_id: str, name: str) -> SpireDevice:
     """Represent an unreachable Shelly device as offline."""
-    return AlphaconDevice(
+    return SpireDevice(
         id=device_id,
         vendor_id=vendor_id,
         vendor="shelly",
@@ -44,5 +46,5 @@ def offline_device(*, device_id: str, vendor_id: str, name: str) -> AlphaconDevi
         online=False,
         controllable=False,
         supported_commands=list(_SUPPORTED_COMMANDS),
-        traits=derive_traits(_SUPPORTED_COMMANDS),
+        capabilities=derive_capabilities(_SUPPORTED_COMMANDS),
     )

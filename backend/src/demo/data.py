@@ -799,8 +799,8 @@ def demo_device_as_saved(d: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def demo_device_as_alphacon(d: dict[str, Any]) -> dict[str, Any]:
-    """Convert a demo device dict to the AlphaconDevice wire format."""
+def demo_device_as_spire(d: dict[str, Any]) -> dict[str, Any]:
+    """Convert a demo device dict to the SpireDevice wire format."""
     return {
         "id": d["id"],
         "vendor_id": d.get("vendor_id", d["id"]),

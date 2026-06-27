@@ -1,29 +1,29 @@
-"""Tests for capability-based device traits and deterministic device ids."""
+"""Tests for capability-based device capabilities and deterministic device ids."""
 
 from __future__ import annotations
 
 import unittest
 
-from devices.models import AlphaconDevice
-from devices.traits import Trait, derive_traits
+from devices.capabilities import Capability, derive_capabilities
+from devices.models import SpireDevice
 
 
-class DeriveTraitsTest(unittest.TestCase):
+class DeriveCapabilitiesTest(unittest.TestCase):
     def test_actuator_traits_come_from_commands(self) -> None:
-        traits = derive_traits(["turn_on", "turn_off", "set_brightness", "set_color"])
-        self.assertEqual(traits, [Trait.ON_OFF, Trait.DIMMABLE, Trait.COLOR])
+        capabilities = derive_capabilities(["turn_on", "turn_off", "set_brightness", "set_color"])
+        self.assertEqual(capabilities, [Capability.ON_OFF, Capability.DIMMABLE, Capability.COLOR])
 
     def test_reporting_traits_come_from_readings(self) -> None:
-        traits = derive_traits([], reports_temperature=True, reports_leak=True)
-        self.assertEqual(traits, [Trait.REPORTS_TEMPERATURE, Trait.REPORTS_LEAK])
+        capabilities = derive_capabilities([], reports_temperature=True, reports_leak=True)
+        self.assertEqual(capabilities, [Capability.REPORTS_TEMPERATURE, Capability.REPORTS_LEAK])
 
     def test_no_capabilities_yields_no_traits(self) -> None:
-        self.assertEqual(derive_traits([]), [])
+        self.assertEqual(derive_capabilities([]), [])
 
 
-class AlphaconDeviceTest(unittest.TestCase):
+class SpireDeviceTest(unittest.TestCase):
     def test_traits_are_auto_derived_from_canonical_fields(self) -> None:
-        device = AlphaconDevice(
+        device = SpireDevice(
             vendor="govee",
             vendor_id="AA::H6159",
             name="Strip",
@@ -32,10 +32,10 @@ class AlphaconDeviceTest(unittest.TestCase):
             controllable=True,
             supported_commands=["turn_on", "set_brightness"],
         )
-        self.assertEqual(device.traits, [Trait.ON_OFF, Trait.DIMMABLE])
+        self.assertEqual(device.capabilities, [Capability.ON_OFF, Capability.DIMMABLE])
 
     def test_same_vendor_identity_yields_same_id(self) -> None:
-        first = AlphaconDevice(
+        first = SpireDevice(
             vendor="govee",
             vendor_id="AA::H6159",
             name="x",
@@ -43,7 +43,7 @@ class AlphaconDeviceTest(unittest.TestCase):
             online=True,
             controllable=True,
         )
-        second = AlphaconDevice(
+        second = SpireDevice(
             vendor="govee",
             vendor_id="AA::H6159",
             name="x",
@@ -54,7 +54,7 @@ class AlphaconDeviceTest(unittest.TestCase):
         self.assertEqual(first.id, second.id)
 
     def test_explicit_id_is_preserved(self) -> None:
-        device = AlphaconDevice(
+        device = SpireDevice(
             id="fixed-1",
             vendor="govee",
             vendor_id="AA::H6159",

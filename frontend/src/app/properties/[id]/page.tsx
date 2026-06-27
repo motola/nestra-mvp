@@ -11,7 +11,7 @@ import { DeviceCard, PageWrapper, SkeletonCard, AlertCard } from "@/themes";
 import { propertiesApi, provisioningApi, roomsApi } from "@/lib/api";
 import { coverUrl } from "@/lib/cover";
 import { RoomManagement } from "@/components/property/RoomManagement";
-import type { AlphaconDevice, Room, SavedDevice } from "@/lib/types";
+import type { SpireDevice, Room, SavedDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ export default function PropertyPage({
   });
 
   const { data: alphaDevices = [], isLoading: alphaLoading } = useQuery<
-    AlphaconDevice[]
+    SpireDevice[]
   >({
     queryKey: ["property-devices", id],
     queryFn: () => propertiesApi.devices(id),
@@ -90,7 +90,7 @@ export default function PropertyPage({
 
   const onlineCount = alphaDevices.filter((d) => d.online).length;
 
-  const demoByRoom = alphaDevices.reduce<Record<string, AlphaconDevice[]>>(
+  const demoByRoom = alphaDevices.reduce<Record<string, SpireDevice[]>>(
     (acc, d) => {
       const room = getRoomForDevice(d.room_id);
       const key = room ? room.id : "__unassigned__";
@@ -270,9 +270,8 @@ export default function PropertyPage({
                         ? (demoByRoom[room.id] ?? [])
                         : (savedByRoom[room.id] ?? []);
                       const roomOnline = isDemo
-                        ? roomDevices.filter(
-                            (d) => (d as AlphaconDevice).online,
-                          ).length
+                        ? roomDevices.filter((d) => (d as SpireDevice).online)
+                            .length
                         : 0;
                       return (
                         <div

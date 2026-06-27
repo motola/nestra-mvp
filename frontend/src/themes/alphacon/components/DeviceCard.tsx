@@ -12,7 +12,7 @@ import {
   WifiOff,
   Zap,
 } from "lucide-react";
-import type { AlphaconDevice } from "@/lib/types";
+import type { SpireDevice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { kelvinToRgb, BrightnessBar } from "./ColourPreview";
 
@@ -62,9 +62,9 @@ export function DeviceCard({
   propertyId,
   onRemove,
 }: {
-  device: AlphaconDevice;
+  device: SpireDevice;
   propertyId?: string;
-  onRemove?: (device: AlphaconDevice) => void;
+  onRemove?: (device: SpireDevice) => void;
 }) {
   const href = propertyId
     ? `/properties/${propertyId}/devices/${device.id}`

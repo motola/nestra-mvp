@@ -1,5 +1,5 @@
 """
-Govee → AlphaconDevice normaliser.
+Govee → SpireDevice normaliser.
 
 After this module, no Govee field names (powerState, colorTem, supportCmds, etc.)
 should appear anywhere else in the codebase. This is the translation boundary.
@@ -10,8 +10,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from devices.models import AlphaconDevice
-from devices.traits import derive_traits
+from devices.capabilities import derive_capabilities
+from devices.models import SpireDevice
 
 # Maps Govee model prefixes to Alphacon device types.
 # Govee model naming: first 4 chars identify the product line.
@@ -57,18 +57,18 @@ def _flatten_properties(props: list[dict[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
+def normalise_device(raw: dict[str, Any]) -> SpireDevice:
     """
-    Convert a raw Govee device object (from GET /devices) into AlphaconDevice.
+    Convert a raw Govee device object (from GET /devices) into SpireDevice.
     The device list response does not include live state — only metadata.
     """
     model: str = raw.get("model", "")
     mac: str = raw.get("device", "")
     # supportCmds is Govee's capability declaration — the source of truth for
-    # what this device can do. Map it to canonical commands, then to traits.
+    # what this device can do. Map it to canonical commands, then to capabilities.
     commands = _map_commands(raw.get("supportCmds", []))
 
-    return AlphaconDevice(
+    return SpireDevice(
         vendor_id=f"{mac}::{model}",
         vendor="govee",
         name=raw.get("deviceName", f"Govee {model}"),
@@ -78,13 +78,13 @@ def normalise_device(raw: dict[str, Any]) -> AlphaconDevice:
         state={},
         last_seen=datetime.now(UTC),
         supported_commands=commands,
-        traits=derive_traits(commands),
+        capabilities=derive_capabilities(commands),
     )
 
 
-def normalise_state(raw: dict[str, Any]) -> AlphaconDevice:
+def normalise_state(raw: dict[str, Any]) -> SpireDevice:
     """
-    Convert a raw Govee state object (from GET /devices/state) into AlphaconDevice.
+    Convert a raw Govee state object (from GET /devices/state) into SpireDevice.
     The state response includes live values for online, power, brightness, colour.
     """
     model: str = raw.get("model", "")
@@ -112,7 +112,7 @@ def normalise_state(raw: dict[str, Any]) -> AlphaconDevice:
     if color_temp is not None:
         state["color_temp_kelvin"] = int(color_temp)
 
-    return AlphaconDevice(
+    return SpireDevice(
         vendor_id=f"{mac}::{model}",
         vendor="govee",
         name=raw.get("deviceName", f"Govee {model}"),
