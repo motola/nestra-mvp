@@ -130,8 +130,8 @@ class ClaudeService:
                 model="claude-haiku-4-5-20251001",
                 max_tokens=1024,
                 system=system_prompt,
-                messages=messages,
-                tools=tools,
+                messages=messages,  # type: ignore[arg-type]
+                tools=tools,  # type: ignore[arg-type]
             )
             async with stream_context as stream:
                 async for text in stream.text_stream:
