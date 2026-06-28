@@ -145,9 +145,9 @@ async def matter_device_state(device_id: str, session: SessionDep) -> MatterDevi
 
 async def _run_shelly_switch(ip: str, command: str) -> tuple[bool, str]:
     """Execute a Shelly on/off command, returning (succeeded, event_type)."""
-    from integrations.shelly_local.client import ShellyLocalController
+    from integrations.shelly.client import ShellyController
 
-    ctrl = ShellyLocalController(ip)
+    ctrl = ShellyController(ip)
     try:
         if command == "turn_on":
             return await ctrl.turn_on(), "turned_on"
@@ -178,10 +178,10 @@ async def _shelly_live_state(
 ) -> dict[str, Any]:
     """Fetch a Shelly device's live state, recording a power reading or an offline event."""
     from devices.state_history import record_state_change
-    from integrations.shelly_local.client import ShellyLocalController
+    from integrations.shelly.client import ShellyController
 
     try:
-        state = await ShellyLocalController(ip).get_state()
+        state = await ShellyController(ip).get_state()
     except Exception as exc:
         await record_state_change(
             device_id=device_id,

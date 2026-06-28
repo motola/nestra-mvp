@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from integrations.shelly_local.client import ShellyLocalController
+from integrations.shelly.client import ShellyController
 from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ _DEFAULT_NAME = "Shelly"
 _SUPPORTED_COMMANDS = ["turn_on", "turn_off"]
 
 
-class ShellyLocalAdapter(VendorAdapter):
+class ShellyAdapter(VendorAdapter):
     def __init__(self, devices: dict[str, str], names: dict[str, str] | None = None) -> None:
         self._ips = devices
         self._names = names or {}
@@ -42,14 +42,14 @@ class ShellyLocalAdapter(VendorAdapter):
 
     async def get_device_state(self, device_id: str) -> SpireDevice:
         ip = self._ips[device_id]
-        state = await ShellyLocalController(ip).get_state()
+        state = await ShellyController(ip).get_state()
         return to_spire_device(
             device_id=device_id, vendor_id=ip, name=self._name(device_id), state=state
         )
 
     async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
         ip = self._ips[device_id]
-        controller = ShellyLocalController(ip)
+        controller = ShellyController(ip)
         action = command.get("action")
         if action == "turn_on":
             return await controller.turn_on()
@@ -66,7 +66,7 @@ def to_spire_device(
     name: str,
     state: dict[str, Any],
 ) -> SpireDevice:
-    """Build a SpireDevice from a ShellyLocalController.get_state() result."""
+    """Build a SpireDevice from a ShellyController.get_state() result."""
     power = float(state["power"]) if state.get("power") is not None else None
     return SpireDevice.from_vendor(
         vendor="shelly",

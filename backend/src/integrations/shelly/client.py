@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 _TIMEOUT = 5.0
 
 
-class ShellyLocalController:
+class ShellyController:
     def __init__(self, ip: str) -> None:
         self.ip = ip
 
@@ -53,5 +53,5 @@ class ShellyLocalController:
                 r.raise_for_status()
                 return True
         except Exception as exc:
-            logger.warning("ShellyLocalController relay command failed for %s: %s", self.ip, exc)
+            logger.warning("ShellyController relay command failed for %s: %s", self.ip, exc)
             return False

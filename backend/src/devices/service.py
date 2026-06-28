@@ -101,10 +101,10 @@ async def get_device(
     device = _row_to_spire(row)
     # For Shelly devices with a stored IP, fetch live state so online/power fields are accurate
     if row.get("vendor") == "shelly" and row.get("ip_address"):
-        from integrations.shelly_local.client import ShellyLocalController
+        from integrations.shelly.client import ShellyController
 
         try:
-            live = await ShellyLocalController(row["ip_address"]).get_state()
+            live = await ShellyController(row["ip_address"]).get_state()
             device.connectivity.online = True
             device.state = {"on": live.get("on", False), "power": live.get("power", 0.0)}
         except Exception as exc:
@@ -154,7 +154,7 @@ def _infer_device_type(vendor: str, model: str) -> str:
         return "sensor"
     if any(x in m for x in ["lock"]):
         return "lock"
-    if vendor in ("shelly", "shelly_local"):
+    if vendor == "shelly":
         return "plug"
     if vendor in ("govee", "lifx"):
         return "light"
@@ -167,7 +167,7 @@ def _row_to_spire(row: dict[str, Any]) -> SpireDevice:
     model = row.get("model") or ""
     # Controllability derives from traits; give actuator vendors the on/off
     # commands so saved rows render as controllable as they did before.
-    commands = ["turn_on", "turn_off"] if vendor in ("shelly", "shelly_local", "matter") else None
+    commands = ["turn_on", "turn_off"] if vendor in ("shelly", "matter") else None
 
     device = SpireDevice.from_vendor(
         vendor=vendor,
