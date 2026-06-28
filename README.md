@@ -4,7 +4,8 @@ A B2B platform that connects property-management organisations to their
 smart-home infrastructure through a single, vendor-agnostic control layer.
 
 Instead of juggling one app per device brand, an operator manages every
-device — Govee, LIFX, Shelly, Matter — through one consistent API and UI.
+device — Govee, Hue, SmartThings, Matter, and a dozen more — through one
+consistent API and UI.
 
 ---
 
@@ -63,7 +64,7 @@ backend/src/
 ├── spire/          The SPIRE standard — resources, traits, the adapter contract.
 │                   No app or vendor dependencies; extractable as its own package.
 ├── integrations/   Plugins — one self-contained adapter per vendor, each
-│                   implementing spire.VendorAdapter (govee · lifx · shelly · matter).
+│                   implementing spire.VendorAdapter — 14 vendors and counting.
 └── (app)           The product — API, persistence, auth, properties, alerts, insights.
 ```
 

@@ -31,6 +31,19 @@ class Settings(BaseSettings):
     govee_api_key: str = ""
     lifx_api_token: str = ""
     shelly_auth_key: str = ""
+    hue_api_key: str = ""
+    smartthings_token: str = ""
+    tuya_access_id: str = ""
+    tuya_access_secret: str = ""
+    switchbot_token: str = ""
+    switchbot_secret: str = ""
+    ecobee_access_token: str = ""
+    tado_access_token: str = ""
+    kasa_token: str = ""
+    august_access_token: str = ""
+    august_api_key: str = ""  # August's public app key (see py-august / Home Assistant)
+    aqara_access_token: str = ""
+    ewelink_access_token: str = ""
 
     # AI
     anthropic_api_key: str = ""

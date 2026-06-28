@@ -11,8 +11,18 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from config import Settings
+from integrations.aqara.client import AqaraAdapter
+from integrations.august.client import AugustAdapter
+from integrations.ecobee.client import EcobeeAdapter
+from integrations.ewelink.client import EWeLinkAdapter
 from integrations.govee.client import GoveeAdapter
+from integrations.hue.client import HueAdapter
+from integrations.kasa.client import KasaAdapter
 from integrations.lifx.client import LIFXAdapter
+from integrations.smartthings.client import SmartThingsAdapter
+from integrations.switchbot.client import SwitchBotAdapter
+from integrations.tado.client import TadoAdapter
+from integrations.tuya.client import TuyaAdapter
 from spire import VendorAdapter
 
 
@@ -47,6 +57,34 @@ VENDOR_REGISTRY: tuple[VendorSpec, ...] = (
     VendorSpec("shelly", "Shelly", "Smart plugs and switches", "shelly_auth_key"),
     VendorSpec("lifx", "LIFX", "Wi-Fi smart bulbs", "lifx_api_token", LIFXAdapter),
     VendorSpec("matter", "Matter", "Universal smart home standard"),
+    VendorSpec("hue", "Philips Hue", "Smart lighting", "hue_api_key", HueAdapter),
+    VendorSpec(
+        "smartthings",
+        "SmartThings",
+        "Samsung smart home hub",
+        "smartthings_token",
+        SmartThingsAdapter,
+    ),
+    VendorSpec("tuya", "Tuya", "Smart plugs, lights and sensors", "tuya_access_id", TuyaAdapter),
+    VendorSpec(
+        "switchbot",
+        "SwitchBot",
+        "Sensors, locks and switches",
+        "switchbot_token",
+        SwitchBotAdapter,
+    ),
+    VendorSpec("ecobee", "ecobee", "Smart thermostats", "ecobee_access_token", EcobeeAdapter),
+    VendorSpec("tado", "tado°", "Smart thermostats", "tado_access_token", TadoAdapter),
+    VendorSpec("kasa", "TP-Link Kasa", "Smart plugs and switches", "kasa_token", KasaAdapter),
+    VendorSpec("august", "August", "Smart locks", "august_access_token", AugustAdapter),
+    VendorSpec("aqara", "Aqara", "Smart sensors", "aqara_access_token", AqaraAdapter),
+    VendorSpec(
+        "ewelink",
+        "eWeLink",
+        "Sonoff switches and plugs",
+        "ewelink_access_token",
+        EWeLinkAdapter,
+    ),
 )
 
 VENDOR_NAMES: tuple[str, ...] = tuple(v.name for v in VENDOR_REGISTRY)
