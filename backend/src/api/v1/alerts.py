@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from alerts import service as alert_service
 from alerts.models import Alert
 from api.dependencies import SessionDep, SettingsDep
-from shared.pagination import PageDep, paginate
+from common.pagination import PageDep, paginate
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 

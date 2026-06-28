@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import SessionDep, SettingsDep
+from common.pagination import PageDep, paginate
 from devices import service as device_service
 from devices.schemas import (
     AssignRoomPayload,
@@ -19,7 +20,6 @@ from devices.schemas import (
     MatterCommandPayload,
     MatterDeviceState,
 )
-from shared.pagination import PageDep, paginate
 
 if TYPE_CHECKING:
     from integrations.matter.server import MatterServerClient

@@ -50,6 +50,10 @@ commands_for(device.traits)             # ["turn_on", "turn_off", "set_brightnes
 Command(action="set_brightness", value=80)
 ```
 
+SPIRE models the whole property, not just devices. Its resources are **`Device`**,
+**`Property`**, **`Room`**, **`Occupant`**, and **`Event`** (the time-series of
+what devices report — leaks, motion, low battery…).
+
 ---
 
 ## Architecture
@@ -108,8 +112,17 @@ const devices = await res.json(); // [{ id, vendor, name, type, online, traits, 
 ```
 
 Every endpoint and the exact response shapes are documented live at **`/docs`**
-(and machine-readable at `/openapi.json`) — enough to build a client, or
-auto-generate a typed one, without reading the source.
+(and machine-readable at `/openapi.json`) — enough to build a client without
+reading the source.
+
+For TypeScript frontends, **`shared/api.ts`** holds types generated from the
+backend's OpenAPI (run `make types` from `backend/` to regenerate). Importing
+those means your frontend types **cannot drift** from the backend:
+
+```ts
+import type { components } from "@/../shared/api";
+type Device = components["schemas"]["DeviceResponse"];
+```
 
 ---
 

@@ -1,44 +1,26 @@
-# Database Scripts
+# scripts/
 
-## Fresh install (new Supabase project)
+Developer scripts.
 
-1. Create a new project on supabase.com
-2. Go to SQL Editor
-3. Paste and run `fresh_install.sql`
-4. Copy your project URL and service role key
-5. Add to `backend/.env`:
-   ```
-   SUPABASE_URL=https://xxx.supabase.co
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   ```
-6. Run the backend:
-   ```
-   uvicorn src.main:app --reload --port 8000
-   ```
-7. Database is ready. No manual setup needed.
+## Database
 
-## Migration (existing project with old schema)
-
-Only needed if you were using the app before May 2026.
-
-1. Open Supabase SQL Editor
-2. Read `migrate.sql` carefully before running
-3. Run Step 1 (backup) and verify counts
-4. Run Steps 2–6 in order
-5. Re-add your real devices manually
-   using the commented INSERT statements
-6. Restart the backend
-
-## Schema overview
+The schema is managed by **Alembic** (`backend/alembic/`) — it runs automatically
+on backend startup, so there is **no manual SQL step**. Supabase is just the
+Postgres host: create a project, then set your connection details in
+`backend/.env`:
 
 ```
-organisations → properties → rooms → devices
-                           → alerts
-                           → state_history
+DATABASE_URL=postgresql+asyncpg://...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-All IDs are UUID.
-All foreign keys have `ON DELETE CASCADE`
-except `devices.room_id` which is
-`ON DELETE SET NULL` so devices are never
-lost when a room is deleted.
+`fresh_install.sql` and `migrate.sql` are **legacy** manual-SQL scripts from before
+Alembic became the source of truth. They're kept for reference only — do not run
+them against an Alembic-managed database (they'd duplicate what Alembic owns).
+
+## Type contract
+
+`export_openapi.py` dumps the backend's OpenAPI spec to `shared/openapi.json`, the
+input for generating the cross-language TypeScript types in `shared/api.ts`.
+Usually run via **`make types`** from `backend/`.

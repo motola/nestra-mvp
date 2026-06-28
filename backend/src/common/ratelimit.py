@@ -1,7 +1,7 @@
 """Per-client rate limiting (slowapi, in-memory per-process storage).
 
 A generous default that protects the API from abuse without getting in a normal
-UI's way. The 429 reuses the consistent error envelope from ``shared.errors``.
+UI's way. The 429 reuses the consistent error envelope from ``common.errors``.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from shared.errors import ErrorResponse
+from common.errors import ErrorResponse
 
 # Per client IP. Generous for a UI, blocks hammering/abuse.
 limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])

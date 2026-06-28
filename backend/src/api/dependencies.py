@@ -8,10 +8,10 @@ from typing import Annotated
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from common.tenant import set_org_context
 from config import Settings, get_settings
 from db import AsyncSessionLocal, get_session
 from identity.security import decode_access_token
-from shared.tenant import set_org_context
 
 
 def get_effective_settings(

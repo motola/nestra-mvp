@@ -7,12 +7,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from api.dependencies import SessionDep, SettingsDep
+from common.pagination import PageDep, paginate
 from devices import service as device_service
 from properties import room_service
 from properties import service as property_service
 from properties.models import Property
 from properties.rooms import Room, RoomCreate
-from shared.pagination import PageDep, paginate
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 

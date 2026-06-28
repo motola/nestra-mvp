@@ -12,11 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from api.v1.router import router as v1_router
+from common.errors import register_error_handlers
+from common.middleware import SecurityHeadersMiddleware
+from common.ratelimit import register_rate_limiting
 from config import get_settings
 from identity.api import router as identity_router
-from shared.errors import register_error_handlers
-from shared.middleware import SecurityHeadersMiddleware
-from shared.ratelimit import register_rate_limiting
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 

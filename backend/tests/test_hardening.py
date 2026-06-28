@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import unittest
 
-from shared.errors import ErrorResponse
-from shared.pagination import PageParams, paginate
+from common.errors import ErrorResponse
+from common.pagination import PageParams, paginate
 
 
 class PaginateTest(unittest.TestCase):
