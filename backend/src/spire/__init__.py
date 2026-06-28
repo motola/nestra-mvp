@@ -23,10 +23,19 @@ from spire.device import (
     SpireIdentifier,
     VendorRef,
 )
-from spire.traits import Trait, derive_traits
+from spire.traits import (
+    TRAIT_CATALOG,
+    Command,
+    Trait,
+    TraitSpec,
+    commands_for,
+    derive_traits,
+)
 
 __all__ = [
+    "TRAIT_CATALOG",
     "AuditMeta",
+    "Command",
     "Connectivity",
     "DeviceCategory",
     "DeviceIdentity",
@@ -36,7 +45,9 @@ __all__ = [
     "SpireDevice",
     "SpireIdentifier",
     "Trait",
+    "TraitSpec",
     "VendorAdapter",
     "VendorRef",
+    "commands_for",
     "derive_traits",
 ]

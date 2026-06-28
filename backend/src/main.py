@@ -14,6 +14,8 @@ from sqlalchemy import text
 from api.v1.router import router as v1_router
 from config import get_settings
 from identity.api import router as identity_router
+from shared.errors import register_error_handlers
+from shared.middleware import SecurityHeadersMiddleware
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -124,6 +126,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Consistent error envelope for every failure (no stack traces leak to clients).
+register_error_handlers(app)
 
 app.include_router(v1_router)
 app.include_router(identity_router)
