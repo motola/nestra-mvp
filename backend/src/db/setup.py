@@ -61,7 +61,7 @@ async def verify_schema(settings: Settings) -> bool:
                 else:
                     logger.error(
                         "✗ %s missing or inaccessible (HTTP %s) — "
-                        "run backend/scripts/fresh_install.sql",
+                        "run migrations: alembic upgrade head",
                         table,
                         r.status_code,
                     )
@@ -129,8 +129,8 @@ async def setup_database(settings: Settings) -> bool:
             "    ════════════════════════════════\n"
             "    DATABASE NOT READY\n"
             "\n"
-            "    Run this in Supabase SQL Editor:\n"
-            "    backend/scripts/fresh_install.sql\n"
+            "    Run the database migrations:\n"
+            "    alembic upgrade head (runs automatically on startup)\n"
             "\n"
             "    Then restart the backend.\n"
             "    ════════════════════════════════"
