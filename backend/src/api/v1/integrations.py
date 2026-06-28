@@ -236,7 +236,7 @@ async def commission_matter_device(
     SSE event format: data: {"type": "status"|"device"|"error"|"done", ...}
     """
     from devices.registry import save_device as _save_device
-    from integrations.matter.client import normalise_node
+    from integrations.matter.adapter import normalise_node
     from integrations.matter.server import MatterServerClient
 
     def sse(type_: str, **kwargs: object) -> str:

@@ -11,18 +11,18 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from config import Settings
-from integrations.aqara.client import AqaraAdapter
-from integrations.august.client import AugustAdapter
-from integrations.ecobee.client import EcobeeAdapter
-from integrations.ewelink.client import EWeLinkAdapter
-from integrations.govee.client import GoveeAdapter
-from integrations.hue.client import HueAdapter
-from integrations.kasa.client import KasaAdapter
-from integrations.lifx.client import LIFXAdapter
-from integrations.smartthings.client import SmartThingsAdapter
-from integrations.switchbot.client import SwitchBotAdapter
-from integrations.tado.client import TadoAdapter
-from integrations.tuya.client import TuyaAdapter
+from integrations.aqara.adapter import AqaraAdapter
+from integrations.august.adapter import AugustAdapter
+from integrations.ecobee.adapter import EcobeeAdapter
+from integrations.ewelink.adapter import EWeLinkAdapter
+from integrations.govee.adapter import GoveeAdapter
+from integrations.hue.adapter import HueAdapter
+from integrations.kasa.adapter import KasaAdapter
+from integrations.lifx.adapter import LIFXAdapter
+from integrations.smartthings.adapter import SmartThingsAdapter
+from integrations.switchbot.adapter import SwitchBotAdapter
+from integrations.tado.adapter import TadoAdapter
+from integrations.tuya.adapter import TuyaAdapter
 from spire import VendorAdapter
 
 
