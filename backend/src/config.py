@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     lifx_api_token: str = ""
     govee_api_key: str = ""
     govee_ble_address: str = ""
+    anthropic_api_key: str = ""
 
     @model_validator(mode="after")
     def _reject_insecure_secret_in_production(self) -> Settings:
