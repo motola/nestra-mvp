@@ -9,6 +9,7 @@ from typing import Any
 
 from websockets.asyncio.client import connect
 
+from integrations.matter.server import MatterServerClient
 from spire import SpireDevice, VendorAdapter
 
 logger = logging.getLogger(__name__)
@@ -16,18 +17,55 @@ logger = logging.getLogger(__name__)
 _MATTER_WS_URL = "ws://localhost:5580/ws"
 _TIMEOUT = 60.0
 
+# Level-control transition options shared by dimming/colour commands.
+_LEVEL_OPTS = {"TransitionTime": 0, "OptionsMask": 0, "OptionsOverride": 0}
+
 
 class MatterAdapter(VendorAdapter):
-    """Stub adapter for non-commission operations — full device control not yet implemented."""
+    """Lists, reads, and controls commissioned Matter nodes via python-matter-server."""
 
     async def list_devices(self) -> list[SpireDevice]:
-        return []
+        try:
+            async with MatterServerClient() as client:
+                nodes = await client.get_nodes()
+            return [normalise_node(node) for node in nodes]
+        except Exception as exc:
+            logger.error("Matter list_devices failed: %s", exc)
+            return []
 
     async def get_device_state(self, device_id: str) -> SpireDevice:
-        raise NotImplementedError
+        async with MatterServerClient() as client:
+            node = await client.get_node(device_id)
+        if not node:
+            raise RuntimeError(f"Matter node {device_id} not found")
+        return normalise_node(node)
 
     async def send_command(self, device_id: str, command: dict[str, Any]) -> bool:
-        raise NotImplementedError
+        spec = _matter_cluster_command(command.get("action", ""), command.get("value"))
+        if spec is None:
+            return False
+        cluster_id, command_name, payload = spec
+        async with MatterServerClient() as client:
+            await client.send_command(device_id, 1, cluster_id, command_name, payload)
+        return True
+
+
+def _matter_cluster_command(action: str, value: Any) -> tuple[int, str, dict[str, Any]] | None:
+    """Map a canonical SPIRE command to a Matter (cluster_id, command_name, payload)."""
+    if action == "turn_on":
+        return (6, "on", {})
+    if action == "turn_off":
+        return (6, "off", {})
+    if action == "set_brightness":  # SPIRE brightness is 0-100; Matter Level is 0-254.
+        return (8, "move_to_level", {"Level": round(int(value) * 2.54), **_LEVEL_OPTS})
+    if action == "set_color_temp":
+        payload = {"ColorTemperatureMireds": int(value), **_LEVEL_OPTS}
+        return (768, "move_to_color_temperature", payload)
+    if action == "lock":
+        return (257, "lock_door", {})
+    if action == "unlock":
+        return (257, "unlock_door", {})
+    return None
 
 
 async def commission_device(setup_code: str) -> dict[str, Any]:
@@ -105,10 +143,25 @@ async def _wait_for_response(ws: Any, message_id: str, timeout: float = _TIMEOUT
 
 
 def normalise_node(node: dict[str, Any], property_id: str = "", room_id: str = "") -> SpireDevice:
-    """Convert a python-matter-server node dict into a SpireDevice."""
+    """Convert a python-matter-server node dict into a SpireDevice with live state."""
     node_id = str(node.get("node_id", uuid.uuid4()))
     name = _extract_name(node) or f"Matter Device {node_id}"
     device_type = _infer_type(node)
+    attrs = node.get("attributes", {})
+
+    state: dict[str, Any] = {"node_id": node_id}
+    commands: list[str] = []
+
+    on_off = _read_attr(attrs, "6", "OnOff")
+    if on_off is not None:
+        state["on"] = bool(on_off)
+        commands += ["turn_on", "turn_off"]
+    level = _read_attr(attrs, "8", "CurrentLevel")
+    if level is not None:
+        state["brightness"] = round(int(level) / 2.54)  # Matter 0-254 -> SPIRE percent
+        commands.append("set_brightness")
+    if device_type == "lock":
+        commands += ["lock", "unlock"]
 
     device = SpireDevice.from_vendor(
         vendor="matter",
@@ -116,11 +169,23 @@ def normalise_node(node: dict[str, Any], property_id: str = "", room_id: str = "
         name=name,
         device_type=device_type,
         online=node.get("available", True),
-        state={"node_id": node_id},
+        state=state,
+        supported_commands=commands,
     )
     device.placement.property_id = property_id or None
     device.placement.room_id = room_id or None
     return device
+
+
+def _read_attr(attrs: Any, cluster: str, name: str) -> Any:
+    """Read a Matter cluster attribute, trying endpoint 1 then 0, name then index 0."""
+    if not isinstance(attrs, dict):
+        return None
+    for endpoint in ("1", "0"):
+        cluster_attrs = attrs.get(endpoint, {}).get(cluster, {})
+        if cluster_attrs:
+            return cluster_attrs.get(name, cluster_attrs.get("0"))
+    return None
 
 
 def _extract_name(node: dict[str, Any]) -> str:
