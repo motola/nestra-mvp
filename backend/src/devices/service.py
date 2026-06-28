@@ -101,7 +101,7 @@ async def get_device(
     device = _row_to_spire(row)
     # For Shelly devices with a stored IP, fetch live state so online/power fields are accurate
     if row.get("vendor") == "shelly" and row.get("ip_address"):
-        from integrations.shelly.client import ShellyController
+        from integrations.shelly.adapter import ShellyController
 
         try:
             live = await ShellyController(row["ip_address"]).get_state()

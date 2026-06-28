@@ -25,7 +25,7 @@ from typing import Any
 
 import httpx
 
-from integrations.shelly.provisioning import get_local_subnet
+from integrations.shelly.adapter import get_local_subnet
 
 logger = logging.getLogger(__name__)
 

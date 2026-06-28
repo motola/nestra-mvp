@@ -22,7 +22,7 @@ from devices.schemas import (
 )
 
 if TYPE_CHECKING:
-    from integrations.matter.server import MatterServerClient
+    from integrations.matter.adapter import MatterServerClient
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ async def matter_command(
 
     The result is the Matter server's raw response, so it stays untyped.
     """
-    from integrations.matter.server import MatterServerClient
+    from integrations.matter.adapter import MatterServerClient
 
     node_id = await _resolve_matter_node_id(device_id, session)
     try:
@@ -116,7 +116,7 @@ def _read_cluster_attr(attrs: dict[str, Any], cluster: str, name: str) -> Any:
 @router.get("/matter/{device_id}/state", response_model=MatterDeviceState)
 async def matter_device_state(device_id: str, session: SessionDep) -> MatterDeviceState:
     """Return the current attribute state for a Matter device from the server's cache."""
-    from integrations.matter.server import MatterServerClient
+    from integrations.matter.adapter import MatterServerClient
 
     node_id = await _resolve_matter_node_id(device_id, session)
     try:
@@ -145,7 +145,7 @@ async def matter_device_state(device_id: str, session: SessionDep) -> MatterDevi
 
 async def _run_shelly_switch(ip: str, command: str) -> tuple[bool, str]:
     """Execute a Shelly on/off command, returning (succeeded, event_type)."""
-    from integrations.shelly.client import ShellyController
+    from integrations.shelly.adapter import ShellyController
 
     ctrl = ShellyController(ip)
     try:
@@ -178,7 +178,7 @@ async def _shelly_live_state(
 ) -> dict[str, Any]:
     """Fetch a Shelly device's live state, recording a power reading or an offline event."""
     from devices.state_history import record_state_change
-    from integrations.shelly.client import ShellyController
+    from integrations.shelly.adapter import ShellyController
 
     try:
         state = await ShellyController(ip).get_state()

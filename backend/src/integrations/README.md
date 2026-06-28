@@ -16,17 +16,10 @@ integrations/
     └── adapter.py     # implements spire.VendorAdapter (list / read / control)
 ```
 
-The convention is uniform: **the adapter always lives in `adapter.py`.** A vendor
-that speaks a raw *local* protocol — rather than a simple cloud HTTP API — keeps
-that transport in its own module alongside the adapter. That is the same rule
-everywhere, not a per-vendor exception:
-
-| Vendor | Extra modules | Why |
-|---|---|---|
-| `shelly` | `client.py`, `provisioning.py` | local RPC + Wi-Fi provisioning |
-| `matter` | `server.py` | python-matter-server WebSocket client |
-
-Cloud vendors make plain HTTP calls inline, so they need only `adapter.py`.
+The convention is uniform with no exceptions: **every vendor is exactly
+`<vendor>/adapter.py`** — one module implementing `VendorAdapter`. Whatever a
+vendor needs (plain HTTP calls, a raw RPC client, a WebSocket connection, Wi-Fi
+provisioning, network scanning) lives in that one file.
 
 ## Adding a vendor
 
