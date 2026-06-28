@@ -18,6 +18,11 @@ sys.path.insert(0, str(_ROOT / "backend" / "src"))
 
 from main import app  # noqa: E402
 
+# Schemas-only: the data models are what the frontend imports. The full spec
+# (with paths/operations) is always available at runtime via GET /openapi.json.
+spec = app.openapi()
+spec.pop("paths", None)
+
 _OUT = _ROOT / "shared" / "openapi.json"
-_OUT.write_text(json.dumps(app.openapi(), indent=2) + "\n")
-print(f"Wrote {_OUT.relative_to(_ROOT)}")
+_OUT.write_text(json.dumps(spec, indent=2) + "\n")
+print(f"Wrote {_OUT.relative_to(_ROOT)} (schemas-only)")
