@@ -108,6 +108,31 @@ def commands_for(traits: list[Trait]) -> list[str]:
     return result
 
 
+class TraitState(BaseModel):
+    """The current value of one trait, pulled from a device's state and typed via the catalog.
+
+    Turns a loose ``state`` dict into a self-describing, per-trait view: which trait,
+    its value, and the unit/type that value is in. This is what lets a consumer read
+    "brightness is 80 percent" without guessing where it lives.
+    """
+
+    trait: Trait
+    value: Any
+    unit: str  # the catalog value_type, e.g. "percent", "celsius", "bool"
+
+
+def read_trait_states(traits: list[Trait], state: dict[str, Any]) -> list[TraitState]:
+    """Typed current state for each trait that has a value present in ``state``."""
+    result: list[TraitState] = []
+    for trait in traits:
+        spec = TRAIT_CATALOG[trait]
+        if spec.state_key in state:
+            result.append(
+                TraitState(trait=trait, value=state[spec.state_key], unit=spec.value_type)
+            )
+    return result
+
+
 def derive_traits(
     supported_commands: list[str],
     *,

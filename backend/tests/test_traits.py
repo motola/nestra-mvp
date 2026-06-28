@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import unittest
 
-from spire.traits import TRAIT_CATALOG, Command, Trait, commands_for, derive_traits
+from spire.traits import (
+    TRAIT_CATALOG,
+    Command,
+    Trait,
+    commands_for,
+    derive_traits,
+    read_trait_states,
+)
 
 
 class DeriveTraitsTest(unittest.TestCase):
@@ -39,6 +46,22 @@ class TraitCatalogTest(unittest.TestCase):
 
     def test_command_model(self) -> None:
         self.assertEqual(Command(action="set_brightness", value=80).value, 80)
+
+
+class TypedTraitStateTest(unittest.TestCase):
+    def test_reads_typed_state_with_units(self) -> None:
+        states = read_trait_states(
+            [Trait.ON_OFF, Trait.DIMMABLE, Trait.REPORTS_POWER],
+            {"on": True, "brightness": 80, "power": 12.3},
+        )
+        by_trait = {s.trait: (s.value, s.unit) for s in states}
+        self.assertEqual(by_trait[Trait.ON_OFF], (True, "bool"))
+        self.assertEqual(by_trait[Trait.DIMMABLE], (80, "percent"))
+        self.assertEqual(by_trait[Trait.REPORTS_POWER], (12.3, "watts"))
+
+    def test_skips_traits_with_no_value_present(self) -> None:
+        states = read_trait_states([Trait.DIMMABLE], {})  # brightness not in state
+        self.assertEqual(states, [])
 
 
 if __name__ == "__main__":

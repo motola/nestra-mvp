@@ -28,8 +28,10 @@ from spire.traits import (
     Command,
     Trait,
     TraitSpec,
+    TraitState,
     commands_for,
     derive_traits,
+    read_trait_states,
 )
 
 __all__ = [
@@ -46,8 +48,10 @@ __all__ = [
     "SpireIdentifier",
     "Trait",
     "TraitSpec",
+    "TraitState",
     "VendorAdapter",
     "VendorRef",
     "commands_for",
     "derive_traits",
+    "read_trait_states",
 ]

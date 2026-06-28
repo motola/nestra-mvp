@@ -29,9 +29,26 @@ class MyVendorAdapter(VendorAdapter):
     async def send_command(self, device_id: str, command: dict) -> bool: ...
 ```
 
-A device describes itself by **what it can do** (`on_off`, `dimmable`, `color`,
-`reports_power`, …), not by a fixed "type" — so the platform reasons about any
-device uniformly, regardless of who made it.
+A device describes itself by **what it can do** (its _traits_: `on_off`,
+`dimmable`, `color`, `reports_motion`, `reports_leak`, …), not by a fixed
+"type" — so the platform reasons about any device uniformly, regardless of who
+made it.
+
+### What makes it interoperable, not just consistent
+
+Every trait has a **formal spec** in `TRAIT_CATALOG`: which key it occupies in a
+device's `state`, the value's unit/type, and (for actuators) the canonical
+commands it accepts. So all implementations agree — brightness always lives at
+`state["brightness"]` as a `percent`, set via the `set_brightness` command.
+
+```python
+from spire import SpireDevice, TRAIT_CATALOG, Command, commands_for
+
+device.traits          # [on_off, dimmable] — what it can do
+device.trait_states()  # [{trait: dimmable, value: 80, unit: "percent"}, …] — typed current state
+commands_for(device.traits)             # ["turn_on", "turn_off", "set_brightness"]
+Command(action="set_brightness", value=80)
+```
 
 ---
 

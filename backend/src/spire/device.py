@@ -28,7 +28,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from spire.traits import Trait, derive_traits
+from spire.traits import Trait, TraitState, derive_traits, read_trait_states
 
 # Fixed namespace so a device's logical id is deterministic from its business
 # identifier — the same physical device gets the same id on every sync.
@@ -207,6 +207,10 @@ class SpireDevice(BaseModel):
     def supports(self, trait: Trait) -> bool:
         """Whether this device exposes a given trait."""
         return trait in self.traits
+
+    def trait_states(self) -> list[TraitState]:
+        """Current state as a typed, per-trait list (value + unit, via the catalog)."""
+        return read_trait_states(self.traits, self.state)
 
     @property
     def controllable(self) -> bool:
