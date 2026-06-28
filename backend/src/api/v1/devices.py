@@ -18,6 +18,7 @@ from devices.schemas import (
     MatterCommandPayload,
     MatterDeviceState,
 )
+from shared.pagination import PageDep, paginate
 
 if TYPE_CHECKING:
     from integrations.matter.server import MatterServerClient
@@ -28,17 +29,21 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 
 
 @router.get("/saved", response_model=list[dict[str, Any]])
-async def list_saved_devices(settings: SettingsDep, session: SessionDep) -> list[dict[str, Any]]:
-    """Return all devices from the registry (no live vendor API calls)."""
+async def list_saved_devices(
+    settings: SettingsDep, session: SessionDep, page: PageDep
+) -> list[dict[str, Any]]:
+    """Return devices from the registry (no live vendor API calls). Supports ?limit/?offset."""
     devices = await device_service.get_all_saved_devices(settings, session)
-    return [d.to_api() for d in devices]
+    return [d.to_api() for d in paginate(devices, page)]
 
 
 @router.get("/", response_model=list[dict[str, Any]])
-async def list_devices(settings: SettingsDep, session: SessionDep) -> list[dict[str, Any]]:
-    """Return all devices across all configured vendor integrations."""
+async def list_devices(
+    settings: SettingsDep, session: SessionDep, page: PageDep
+) -> list[dict[str, Any]]:
+    """Return devices across all configured vendor integrations. Supports ?limit/?offset."""
     devices = await device_service.list_all_devices(settings, session)
-    return [d.to_api() for d in devices]
+    return [d.to_api() for d in paginate(devices, page)]
 
 
 # ── Matter device control (must be declared before /{device_id}) ──────────────

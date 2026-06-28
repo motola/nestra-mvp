@@ -16,6 +16,7 @@ from config import get_settings
 from identity.api import router as identity_router
 from shared.errors import register_error_handlers
 from shared.middleware import SecurityHeadersMiddleware
+from shared.ratelimit import register_rate_limiting
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -130,6 +131,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Consistent error envelope for every failure (no stack traces leak to clients).
 register_error_handlers(app)
+# Per-client rate limiting.
+register_rate_limiting(app)
 
 app.include_router(v1_router)
 app.include_router(identity_router)

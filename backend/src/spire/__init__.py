@@ -23,6 +23,8 @@ from spire.device import (
     SpireIdentifier,
     VendorRef,
 )
+from spire.event import EventType, SpireEvent
+from spire.property import SpireOccupant, SpireProperty, SpireRoom
 from spire.traits import (
     TRAIT_CATALOG,
     Command,
@@ -44,8 +46,13 @@ __all__ = [
     "DeviceNaming",
     "DevicePlacement",
     "DeviceStatus",
+    "EventType",
     "SpireDevice",
+    "SpireEvent",
     "SpireIdentifier",
+    "SpireOccupant",
+    "SpireProperty",
+    "SpireRoom",
     "Trait",
     "TraitSpec",
     "TraitState",

@@ -12,13 +12,17 @@ from properties import room_service
 from properties import service as property_service
 from properties.models import Property
 from properties.rooms import Room, RoomCreate
+from shared.pagination import PageDep, paginate
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
 
 @router.get("/", response_model=list[Property])
-async def list_properties(settings: SettingsDep, session: SessionDep) -> list[Property]:
-    return await property_service.list_properties(session, settings)
+async def list_properties(
+    settings: SettingsDep, session: SessionDep, page: PageDep
+) -> list[Property]:
+    """Return the org's properties. Supports ?limit/?offset."""
+    return paginate(await property_service.list_properties(session, settings), page)
 
 
 @router.get("/{property_id}", response_model=Property)
