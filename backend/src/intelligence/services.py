@@ -126,16 +126,14 @@ class ClaudeService:
 
             client = anthropic.AsyncAnthropic(api_key=self.settings.anthropic_api_key)
 
-            stream_kwargs: dict[str, object] = {
-                "model": "claude-haiku-4-5-20251001",
-                "max_tokens": 1024,
-                "system": system_prompt,
-                "messages": messages,
-            }
-            if tools:
-                stream_kwargs["tools"] = tools
-
-            async with client.messages.stream(**stream_kwargs) as stream:
+            stream_context = client.messages.stream(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=messages,
+                tools=tools,
+            )
+            async with stream_context as stream:
                 async for text in stream.text_stream:
                     yield f"data: {json.dumps({'type': 'text', 'text': text})}\n\n"
 
