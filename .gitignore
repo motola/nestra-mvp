@@ -42,3 +42,6 @@ CLAUDE.md
 **/SKILL.md
 frontend/DESIGN_SYSTEM.md
 prompts/
+
+# Generated OpenAPI intermediate (the TS types in shared/api.ts are committed)
+shared/openapi.json

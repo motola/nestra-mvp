@@ -15,6 +15,7 @@ from devices.schemas import (
     ControlPayload,
     DeleteResult,
     DeviceCommandResult,
+    DeviceResponse,
     MatterCommandPayload,
     MatterDeviceState,
 )
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/devices", tags=["devices"])
 
 
-@router.get("/saved", response_model=list[dict[str, Any]])
+@router.get("/saved", response_model=list[DeviceResponse])
 async def list_saved_devices(
     settings: SettingsDep, session: SessionDep, page: PageDep
 ) -> list[dict[str, Any]]:
@@ -37,7 +38,7 @@ async def list_saved_devices(
     return [d.to_api() for d in paginate(devices, page)]
 
 
-@router.get("/", response_model=list[dict[str, Any]])
+@router.get("/", response_model=list[DeviceResponse])
 async def list_devices(
     settings: SettingsDep, session: SessionDep, page: PageDep
 ) -> list[dict[str, Any]]:
@@ -336,7 +337,7 @@ async def delete_device_endpoint(device_id: str, session: SessionDep) -> DeleteR
 # ── Generic device lookup ─────────────────────────────────────────────────────
 
 
-@router.get("/{device_id}", response_model=dict[str, Any])
+@router.get("/{device_id}", response_model=DeviceResponse)
 async def get_device(device_id: str, settings: SettingsDep, session: SessionDep) -> dict[str, Any]:
     """Return current state for a single device by its Alphacon ID."""
     device = await device_service.get_device(device_id, settings, session)

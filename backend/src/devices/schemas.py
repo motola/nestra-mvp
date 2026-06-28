@@ -7,6 +7,7 @@ response, and a change to the contract is a visible change here.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
@@ -52,3 +53,29 @@ class DeleteResult(BaseModel):
     """Confirmation that a device was removed from the registry."""
 
     deleted: str
+
+
+class DeviceResponse(BaseModel):
+    """The flat device shape the list/get endpoints return (``SpireDevice.to_api()``).
+
+    This is the typed contract the frontend consumes — and what the generated
+    cross-language types in ``shared/`` are produced from.
+    """
+
+    id: str
+    vendor_id: str
+    vendor: str
+    name: str
+    type: str
+    online: bool
+    controllable: bool
+    state: dict[str, Any]
+    power_draw: float | None = None
+    temperature: float | None = None
+    humidity: float | None = None
+    leak_detected: bool | None = None
+    property_id: str | None = None
+    room_id: str | None = None
+    last_seen: datetime
+    supported_commands: list[str]
+    traits: list[str]
