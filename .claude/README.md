@@ -8,27 +8,63 @@ Claude hooks ensure that when you use Claude Code to commit code or create pull 
 
 ## Our Standards
 
-### Commit & PR Naming
+### Branch Names
 
-All commits and PRs must follow the format:
+All branches must follow the format:
+
+```
+<type>/NEM-<number>-<description>
+```
+
+Allowed types: `feat`, `fix`, `chore`, `docs`, `refactor`
+
+✅ Good examples:
+
+- `feat/NEM-28-intelligence-backend`
+- `fix/NEM-21-property-detail`
+- `chore/NEM-14-update-dependencies`
+
+❌ Not allowed:
+
+- `feature/new-feature` (missing NEM number)
+- `NEM-28-something` (missing type prefix)
+
+### Commit Messages
+
+All commits must start with:
 
 ```
 NEM-<number>: <lowercase description>
 ```
 
-✅ Good examples:
+✅ Good:
 
 - `NEM-28: implement device sync pipeline foundation`
 - `NEM-21: fix type checking errors in intelligence module`
-- `NEM-14: add property detail screen`
 
 ❌ Not allowed:
 
 - `feat: add new feature` (Conventional Commits)
 - `fix(scope): bug fix` (scoped commits)
-- Random descriptions without issue numbers
 
-**Why?** Nestra uses NEM issue tracking. Every commit must reference its issue number for traceability and project management.
+### Pull Requests
+
+**Title:** Must follow NEM format
+
+```
+NEM-<number>: <description>
+```
+
+**Description:** Required (minimum 20 characters)
+
+- Explain what changed and why
+- Reference related issues if applicable
+
+**Labels:** Suggested categories
+
+- `backend`, `frontend`, `bug`, `enhancement`, `documentation`, `type-checking`
+
+**Why?** Nestra uses NEM issue tracking. Every branch, commit, and PR must reference its issue number for traceability and project management.
 
 ### Code Formatting
 

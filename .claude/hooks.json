@@ -1,10 +1,15 @@
 {
-  "validate_pr_title": {
-    "description": "Validate PR title follows NEM-XX naming convention",
-    "trigger": "pr_title_check",
-    "pattern": "^NEM-\\d+:",
-    "message": "PR title must follow format: NEM-<number>: <description>",
-    "example": "NEM-28: implement device sync pipeline"
+  "validate_branch_name": {
+    "description": "Validate branch names follow project convention",
+    "trigger": "branch_creation",
+    "pattern": "^(feat|fix|chore|docs|refactor)/NEM-\\d+[-\\w]*$",
+    "message": "Branch must follow format: <type>/NEM-<number>-<description>",
+    "allowed_types": ["feat", "fix", "chore", "docs", "refactor"],
+    "examples": [
+      "feat/NEM-28-intelligence-backend",
+      "fix/NEM-21-property-detail",
+      "chore/NEM-14-update-dependencies"
+    ]
   },
   "validate_commit_message": {
     "description": "Validate commit messages follow NEM-XX format",
@@ -12,6 +17,31 @@
     "pattern": "^NEM-\\d+:",
     "message": "Commit must start with NEM-<number>: (no Conventional Commits)",
     "example": "NEM-28: fix type checking errors in intelligence module"
+  },
+  "validate_pr_title": {
+    "description": "Validate PR title follows NEM-XX naming convention",
+    "trigger": "pr_title_check",
+    "pattern": "^NEM-\\d+:",
+    "message": "PR title must follow format: NEM-<number>: <description>",
+    "example": "NEM-28: implement device sync pipeline foundation"
+  },
+  "validate_pr_description": {
+    "description": "Ensure PR descriptions are not empty",
+    "trigger": "pr_description_check",
+    "min_length": 20,
+    "message": "PR description required (minimum 20 characters) — explain what changed and why"
+  },
+  "validate_pr_labels": {
+    "description": "Suggest relevant labels for PR categorization",
+    "trigger": "pr_labels_check",
+    "suggested_labels": [
+      "backend",
+      "frontend",
+      "bug",
+      "enhancement",
+      "documentation",
+      "type-checking"
+    ]
   },
   "prettier_check": {
     "description": "Ensure code formatting is consistent with prettier",
