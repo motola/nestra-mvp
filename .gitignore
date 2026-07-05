@@ -15,7 +15,10 @@ node_modules/
 /.env
 /backend/SKILL.md
 /frontend/SKILL.md
-.claude/
+# Claude config — only commit hooks and docs, ignore local settings/worktrees
+.claude/*
+!.claude/hooks.json
+!.claude/README.md
 
 # Environment files]
 .env

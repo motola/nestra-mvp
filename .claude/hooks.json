@@ -1,0 +1,21 @@
+{
+  "validate_pr_title": {
+    "description": "Validate PR title follows NEM-XX naming convention",
+    "trigger": "pr_title_check",
+    "pattern": "^NEM-\\d+:",
+    "message": "PR title must follow format: NEM-<number>: <description>",
+    "example": "NEM-28: implement device sync pipeline"
+  },
+  "validate_commit_message": {
+    "description": "Validate commit messages follow NEM-XX format",
+    "trigger": "commit_message_check",
+    "pattern": "^NEM-\\d+:",
+    "message": "Commit must start with NEM-<number>: (no Conventional Commits)",
+    "example": "NEM-28: fix type checking errors in intelligence module"
+  },
+  "prettier_check": {
+    "description": "Ensure code formatting is consistent with prettier",
+    "trigger": "pre_commit",
+    "command": "prettier --check ."
+  }
+}
