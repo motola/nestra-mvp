@@ -9,9 +9,9 @@ export function useDemoMode() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Load demo mode from localStorage
+    // Load demo mode from localStorage (default to false for real data)
     const stored = localStorage.getItem(DEMO_MODE_KEY);
-    setDemoMode(stored === "true");
+    setDemoMode(stored === "true" ? true : false);
     setIsHydrated(true);
   }, []);
 

@@ -109,7 +109,7 @@ const LIVE_SNAPSHOT: LiveDevice[] = [
 ];
 
 function OverviewTab({ property }: { property: Property }) {
-  const { devices } = useDevices("p_maple");
+  const { devices } = useDevices("b4e3df93-f5e0-4e8f-beaa-33e2aead82ba");
   const online = devices.filter((d) => d.reachable).length;
   const unreachable = devices.filter((d) => !d.reachable).length;
   const vacant = property.units - property.occupied;
@@ -332,7 +332,9 @@ const DEVICE_COLS: TableColumn<Device>[] = [
 
 function DevicesTab() {
   const [filter, setFilter] = useState<DeviceFilter>("all");
-  const { devices, loading, error } = useDevices("p_maple");
+  const { devices, loading, error } = useDevices(
+    "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
+  );
 
   const filtered =
     filter === "offline"
