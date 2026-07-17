@@ -12,7 +12,6 @@ backend/src/
 ├── property/            # Property & device domain
 ├── identity/            # Authentication & users
 ├── integrations/        # Third-party vendor adapters (August, Bluetooth, etc)
-├── demo/                # Demo & test data endpoints
 ├── utility/             # Internal utilities (DB, common models)
 └── db/                  # Database configuration
 ```
@@ -68,13 +67,7 @@ Cross-cutting concerns: database connections, base models, common utilities.
 
 - `db.py` — SQLAlchemy Base & session config
 
-**Related:** `backend/src/shared/README.md`
-
-### **demo/** — Demo & Test Endpoints
-
-Development endpoints for demoing device interactions. Not for production.
-
-**Related:** `backend/src/demo/README.md`
+**Related:** `backend/src/utility/README.md`
 
 ## Architecture Patterns
 
@@ -113,7 +106,6 @@ Core domain in `property/domain/`:
 
 Routes are included in main.py from:
 
-- `demo.routes` — Development endpoints
 - `identity.api.routes` — Auth endpoints
 - `property.api.routes` — Property/device endpoints (includes all integration routers)
 

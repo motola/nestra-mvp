@@ -4,7 +4,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from demo.routes import router as demo_router
 from identity.api.routes import router as identity_router
 from property.api.routes import router as property_router
 
@@ -32,6 +31,5 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-app.include_router(demo_router)
 app.include_router(identity_router)
 app.include_router(property_router)
