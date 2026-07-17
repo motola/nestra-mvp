@@ -9,7 +9,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from shared.db import Base
+from utility.db import Base
 
 
 class IntegrationModel(Base):

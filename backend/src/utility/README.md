@@ -1,11 +1,11 @@
-# Shared Module
+# Utility Module
 
-Cross-cutting utilities and common infrastructure shared across modules.
+Backend-internal utilities and common infrastructure shared across backend modules.
 
 ## Structure
 
 ```
-shared/
+utility/
 ├── README.md (this file)
 └── db.py       # Database configuration & Base
 ```

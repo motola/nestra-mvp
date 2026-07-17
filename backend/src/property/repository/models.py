@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from property.domain import DeviceType
-from shared.db import Base
+from utility.db import Base
 
 
 class DeviceModel(Base):

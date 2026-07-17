@@ -11,10 +11,9 @@ backend/src/
 ├── api/                 # API layer (routers, schemas)
 ├── property/            # Property & device domain
 ├── identity/            # Authentication & users
-├── intelligence/        # AI-driven device control
 ├── integrations/        # Third-party vendor adapters (August, Bluetooth, etc)
 ├── demo/                # Demo & test data endpoints
-├── shared/              # Shared utilities (DB, common models)
+├── utility/             # Internal utilities (DB, common models)
 └── db/                  # Database configuration
 ```
 
@@ -45,12 +44,6 @@ Each vendor implements `IntegrationAdapter` protocol:
 Adapters normalize vendor payloads → unified Device schema.
 
 **Related:** `backend/src/integrations/README.md`
-
-### **intelligence/** — MOVED
-
-AI-driven device control service has been moved to a separate microservice.
-
-**Related:** `intelligence/README.md` (separate from backend)
 
 ### **identity/** — Authentication & Users
 
@@ -122,8 +115,9 @@ Routes are included in main.py from:
 
 - `demo.routes` — Development endpoints
 - `identity.api.routes` — Auth endpoints
-- `intelligence.api.routes` — AI device control
 - `property.api.routes` — Property/device endpoints (includes all integration routers)
+
+Note: Intelligence service runs separately (port 8001)
 
 ## Database
 
@@ -165,12 +159,12 @@ All resources belong to an `organization_id`. Queries automatically filter by or
 
 ### Tool Use for Device Control
 
-Natural language commands like "turn on the living room light" are parsed via Claude tool use, then executed through `intelligence.executor`.
+Natural language commands are handled by the Intelligence service (separate microservice on port 8001), which uses Claude tool use to execute device control through adapters.
 
 ## Related Documentation
 
 - [Property Module](property/README.md) — Device management
 - [Integrations](integrations/README.md) — Vendor adapters
-- [Intelligence](intelligence/README.md) — AI device control
 - [Identity](identity/README.md) — Auth & users
-- [Shared](shared/README.md) — DB & utilities
+- [Utility](utility/README.md) — DB & utilities
+- [Intelligence Service](../intelligence/README.md) — AI device control (separate service)
