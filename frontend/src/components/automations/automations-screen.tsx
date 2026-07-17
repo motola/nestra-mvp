@@ -10,6 +10,8 @@ import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { EmptyDataState } from "@/components/ui/empty-state";
+import { useDemoMode } from "@/lib/use-demo-mode";
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
 
@@ -241,10 +243,32 @@ function FilterChips({
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function AutomationsScreen() {
+  const { demoMode } = useDemoMode();
   const [filter, setFilter] = useState<AutoFilter>("all");
   const [paused, setPaused] = useState<Set<string>>(
     new Set(AUTOMATIONS.filter((a) => !a.enabled).map((a) => a.id)),
   );
+
+  if (!demoMode) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Automations"
+          sub="0 automations active"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Create automation
+            </Button>
+          }
+        />
+        <EmptyDataState
+          title="No automations created"
+          description="Set up your first automation to streamline property management."
+        />
+      </>
+    );
+  }
 
   function toggle(id: string) {
     setPaused((prev) => {
