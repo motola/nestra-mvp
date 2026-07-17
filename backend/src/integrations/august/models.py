@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from integrations.models import IntegrationModel
-from shared.db import Base
+from utility.db import Base
 
 
 class AugustLockModel(Base):

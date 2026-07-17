@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
-from shared.db import Base
+from utility.db import Base
 
 
 class OrganizationModel(Base):

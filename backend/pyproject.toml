@@ -20,6 +20,7 @@ dependencies = [
     "redis>=5.0",
     "arq>=0.26",
     "bleak>=0.22",
+    "anthropic>=0.45",
 ]
 
 [project.optional-dependencies]
