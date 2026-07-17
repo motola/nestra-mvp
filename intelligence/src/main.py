@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+
 from config import get_settings
-from intelligence.api.routes import router as intelligence_router
+from api.routes import router as intelligence_router
 
 _settings = get_settings()
 
