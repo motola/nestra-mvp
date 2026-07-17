@@ -24,9 +24,10 @@ export function useDevices(propertyId?: string) {
           setDevices(DEVICES_MAPLE);
         } else {
           // Fetch from backend
-          const url = propertyId
-            ? `http://localhost:8000/properties/${propertyId}/devices`
-            : "http://localhost:8000/devices";
+          if (!propertyId) {
+            throw new Error("propertyId is required to fetch devices");
+          }
+          const url = `http://localhost:8000/properties/${propertyId}/devices`;
 
           const res = await fetch(url);
           if (!res.ok)
