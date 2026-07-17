@@ -1,17 +1,17 @@
+"""Intelligence Service — AI-driven device control via Claude API."""
+
 from __future__ import annotations
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
-from demo.routes import router as demo_router
-from identity.api.routes import router as identity_router
-from property.api.routes import router as property_router
+from intelligence.api.routes import router as intelligence_router
 
 _settings = get_settings()
 
 app = FastAPI(
-    title="AlphaCon API",
+    title="Intelligence Service",
     version="0.1.0",
     docs_url="/docs" if _settings.debug else None,
     redoc_url="/redoc" if _settings.debug else None,
@@ -29,9 +29,7 @@ app.add_middleware(
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "service": "intelligence"}
 
 
-app.include_router(demo_router)
-app.include_router(identity_router)
-app.include_router(property_router)
+app.include_router(intelligence_router)
