@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 from uuid import UUID
 
 from property.domain import Device
@@ -34,7 +35,7 @@ class LifxAdapter:
         # TODO: Implement state refresh
         return device
 
-    async def execute(self, device: Device, command: str, params: dict) -> bool:
+    async def execute(self, device: Device, command: str, params: dict[str, Any]) -> bool:
         """Execute command on LIFX device."""
         # TODO: Implement device control (brightness, color, on/off)
         return False

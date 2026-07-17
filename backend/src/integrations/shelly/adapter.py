@@ -106,7 +106,7 @@ class ShellyAdapter:
 
         return device
 
-    async def execute(self, device: Device, command: str, params: dict) -> bool:
+    async def execute(self, device: Device, command: str, params: dict[str, Any]) -> bool:
         """Execute command on Shelly device."""
         ip = device.raw_state.get("ip")
         if not ip:
