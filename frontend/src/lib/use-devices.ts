@@ -5,6 +5,30 @@ import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device } from "@/lib/fixtures";
 import { useDemoMode } from "./use-demo-mode";
 
+interface BackendDevice {
+  id: string;
+  name: string;
+  vendor: string;
+  online: boolean;
+}
+
+// Convert backend device to frontend Device type
+function convertBackendDevice(bd: BackendDevice): Device {
+  return {
+    id: bd.id,
+    name: bd.name,
+    room: "Unknown",
+    category: "PLUG",
+    vendor: bd.vendor,
+    owner: "property",
+    state: bd.online ? "On" : "Off",
+    reachable: bd.online,
+    alert: false,
+    lastSeen: "now",
+    capabilities: [],
+  };
+}
+
 export function useDevices(propertyId?: string) {
   const { demoMode, isHydrated } = useDemoMode();
   const [devices, setDevices] = useState<Device[]>([]);
@@ -32,8 +56,8 @@ export function useDevices(propertyId?: string) {
           const res = await fetch(url);
           if (!res.ok)
             throw new Error(`Failed to fetch devices: ${res.status}`);
-          const data = await res.json();
-          setDevices(Array.isArray(data) ? data : data.devices || []);
+          const backendDevices: BackendDevice[] = await res.json();
+          setDevices(backendDevices.map(convertBackendDevice));
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error");
