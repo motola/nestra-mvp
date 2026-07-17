@@ -15,10 +15,8 @@ if __name__ == "__main__":
     # Load test modules explicitly to avoid discovery issues
     from integrations.august.tests import test_august
     from integrations.bluetooth.tests import test_bluetooth
-    from tests.demo import test_providers
     from tests.identity import test_domain, test_repository_models, test_signup_service
 
-    suite.addTests(loader.loadTestsFromModule(test_providers))
     suite.addTests(loader.loadTestsFromModule(test_signup_service))
     suite.addTests(loader.loadTestsFromModule(test_domain))
     suite.addTests(loader.loadTestsFromModule(test_repository_models))

@@ -7,7 +7,7 @@ from identity.repository.models import (
     SessionModel,
     UserModel,
 )
-from shared.db import Base
+from utility.db import Base
 
 
 class TestOrmModelMetadata(unittest.TestCase):
