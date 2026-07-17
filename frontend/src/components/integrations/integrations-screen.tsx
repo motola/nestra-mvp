@@ -461,14 +461,17 @@ export function IntegrationsScreen() {
         <PageHeader
           eyebrow="WORKSPACE"
           title="Integrations"
-          sub="No data"
+          sub="0 connections"
           primary={
             <Button variant="primary" icon={Plus}>
               Connect vendor
             </Button>
           }
         />
-        <EmptyDataState />
+        <EmptyDataState
+          title="No integrations connected"
+          description="Connect your first smart home vendor to start syncing devices."
+        />
       </>
     );
   }

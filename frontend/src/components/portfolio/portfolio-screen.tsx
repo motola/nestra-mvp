@@ -314,14 +314,17 @@ export function PortfolioScreen() {
         <PageHeader
           eyebrow="WORKSPACE"
           title="Portfolios"
-          sub="No data"
+          sub="0 portfolios · 0 properties"
           primary={
             <Button variant="primary" icon={Plus}>
               Add property
             </Button>
           }
         />
-        <EmptyDataState />
+        <EmptyDataState
+          title="No portfolios yet"
+          description="Create your first portfolio to get started managing your properties."
+        />
       </>
     );
   }

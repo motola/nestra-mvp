@@ -598,14 +598,17 @@ export function DevicesScreen() {
         <PageHeader
           eyebrow="WORKSPACE"
           title="Devices"
-          sub="No data"
+          sub="0 devices · 0 online"
           primary={
             <Button variant="primary" icon={Plus}>
               Pair device
             </Button>
           }
         />
-        <EmptyDataState />
+        <EmptyDataState
+          title="No devices connected"
+          description="Connect your first smart home integration to start monitoring devices."
+        />
       </>
     );
   }

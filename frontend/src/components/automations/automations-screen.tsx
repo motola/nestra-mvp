@@ -255,14 +255,17 @@ export function AutomationsScreen() {
         <PageHeader
           eyebrow="WORKSPACE"
           title="Automations"
-          sub="No data"
+          sub="0 automations active"
           primary={
             <Button variant="primary" icon={Plus}>
               Create automation
             </Button>
           }
         />
-        <EmptyDataState />
+        <EmptyDataState
+          title="No automations created"
+          description="Set up your first automation to streamline property management."
+        />
       </>
     );
   }
