@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/cn";
 import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
@@ -584,6 +585,7 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
+  const { demoMode, toggleDemoMode } = useDemoMode();
   const total = DEVICES_MAPLE.length;
   const online = DEVICES_MAPLE.filter((d) => d.reachable).length;
   const unreachable = DEVICES_MAPLE.filter((d) => !d.reachable).length;
@@ -600,9 +602,18 @@ export function DevicesScreen() {
           </Button>
         }
         secondary={
-          <Button variant="secondary" icon={RefreshCw}>
-            Re-sync
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={demoMode ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => toggleDemoMode()}
+            >
+              {demoMode ? "Demo Mode ON" : "Demo Mode OFF"}
+            </Button>
+            <Button variant="secondary" icon={RefreshCw}>
+              Re-sync
+            </Button>
+          </div>
         }
       />
 
