@@ -29,9 +29,65 @@ class DeviceResponse(BaseModel):
 @router.get("/properties/{property_id}/devices")
 async def get_property_devices(property_id: UUID) -> list[DeviceResponse]:
     """Get all devices for a property across all integrations."""
-    # TODO: Aggregate devices from all integration routers
-    # For now, return empty list - will be populated by device sync service
-    return []
+    devices: list[DeviceResponse] = []
+
+    # Aggregate from Shelly
+    from integrations.shelly import routes as shelly_routes
+
+    for device in shelly_routes._devices.values():
+        if device.property_id == property_id:
+            devices.append(
+                DeviceResponse(
+                    id=str(device.id),
+                    name=device.name,
+                    vendor="Shelly",
+                    online=device.online,
+                )
+            )
+
+    # Aggregate from Govee
+    from integrations.govee import routes as govee_routes
+
+    for device in govee_routes._devices.values():
+        if device.property_id == property_id:
+            devices.append(
+                DeviceResponse(
+                    id=str(device.id),
+                    name=device.name,
+                    vendor="Govee",
+                    online=device.online,
+                )
+            )
+
+    # Aggregate from LIFX
+    from integrations.lifx import routes as lifx_routes
+
+    for device in lifx_routes._devices.values():
+        if device.property_id == property_id:
+            devices.append(
+                DeviceResponse(
+                    id=str(device.id),
+                    name=device.name,
+                    vendor="LIFX",
+                    online=device.online,
+                )
+            )
+
+    # Aggregate from Matter
+    from integrations.matter import routes as matter_routes
+
+    for device in matter_routes._devices.values():
+        if device.property_id == property_id:
+            devices.append(
+                DeviceResponse(
+                    id=str(device.id),
+                    name=device.name,
+                    vendor="Matter",
+                    online=device.online,
+                )
+            )
+
+    return devices
 
 
 # Include all integration routers

@@ -13,7 +13,30 @@ from integrations.govee.schemas import GoveeDeviceIn, GoveeDeviceOut
 router = APIRouter(prefix="/integrations/govee", tags=["govee"])
 
 # Mock storage for devices - replace with DB later
-_devices: dict[UUID, GoveeDeviceOut] = {}
+_devices: dict[UUID, GoveeDeviceOut] = {
+    UUID("22222222-2222-2222-2222-222222222221"): GoveeDeviceOut(
+        id=UUID("22222222-2222-2222-2222-222222222221"),
+        property_id=UUID("b4e3df93-f5e0-4e8f-beaa-33e2aead82ba"),  # p_maple
+        govee_id="govee-1",
+        name="Living room light",
+        device_type="light",
+        online=True,
+        raw_state={"brightness": 100, "color": "#ffffff"},
+        last_sync=datetime.now(),
+        created_at=datetime.now(),
+    ),
+    UUID("22222222-2222-2222-2222-222222222222"): GoveeDeviceOut(
+        id=UUID("22222222-2222-2222-2222-222222222222"),
+        property_id=UUID("b4e3df93-f5e0-4e8f-beaa-33e2aead82ba"),  # p_maple
+        govee_id="govee-2",
+        name="Bedroom light",
+        device_type="light",
+        online=False,
+        raw_state={"brightness": 0, "color": "#ffffff"},
+        last_sync=datetime.now(),
+        created_at=datetime.now(),
+    ),
+}
 _adapter = GoveeAdapter()
 
 
