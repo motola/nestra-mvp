@@ -9,6 +9,14 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("@/lib/use-demo-mode", () => ({
+  useDemoMode: () => ({
+    demoMode: true,
+    isHydrated: true,
+    toggleDemoMode: vi.fn(),
+  }),
+}));
+
 describe("PortfolioScreen", () => {
   it("renders the page header", () => {
     render(<PortfolioScreen />);
