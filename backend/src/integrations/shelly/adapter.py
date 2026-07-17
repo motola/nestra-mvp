@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 from uuid import UUID
 
 import httpx
@@ -20,7 +21,7 @@ class ShellyLocalController:
     def __init__(self, ip: str) -> None:
         self.ip = ip
 
-    async def get_state(self) -> dict[str, float | bool]:
+    async def get_state(self) -> dict[str, Any]:
         """Get device state via RPC."""
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             r = await client.post(

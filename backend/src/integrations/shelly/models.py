@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import JSON, DateTime, ForeignKey, String
@@ -31,7 +32,7 @@ class ShellyDeviceModel(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     ip_address: Mapped[str] = mapped_column(String(15), nullable=False)
     online: Mapped[bool] = mapped_column(default=False)
-    raw_state: Mapped[dict] = mapped_column(JSON, default=dict)
+    raw_state: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     last_sync: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

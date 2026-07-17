@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -26,6 +27,6 @@ class GoveeDeviceOut(BaseModel):
     name: str
     device_type: str
     online: bool
-    raw_state: dict
+    raw_state: dict[str, Any]
     last_sync: datetime
     created_at: datetime
