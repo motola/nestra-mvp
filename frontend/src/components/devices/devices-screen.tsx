@@ -21,7 +21,9 @@ import { cn } from "@/lib/cn";
 import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
 import { useDevices } from "@/lib/use-devices";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
+import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -585,9 +587,28 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
+  const { demoMode } = useDemoMode();
   const { devices, loading, error } = useDevices(
     "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
   );
+
+  if (!demoMode) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Devices"
+          sub="No data"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Pair device
+            </Button>
+          }
+        />
+        <EmptyDataState />
+      </>
+    );
+  }
 
   // Fallback to fixtures if loading or error
   const displayDevices = loading || error ? DEVICES_MAPLE : devices;

@@ -13,6 +13,8 @@ import { PropertyCard } from "@/components/ui/property-card";
 import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { EmptyDataState } from "@/components/ui/empty-state";
+import { useDemoMode } from "@/lib/use-demo-mode";
 
 // ─── Table columns for list view ─────────────────────────────────────────────
 
@@ -304,6 +306,26 @@ function AllPropertiesTab({
 export function PortfolioScreen() {
   const [tab, setTab] = useState("portfolios");
   const router = useRouter();
+  const { demoMode } = useDemoMode();
+
+  if (!demoMode) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Portfolios"
+          sub="No data"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Add property
+            </Button>
+          }
+        />
+        <EmptyDataState />
+      </>
+    );
+  }
+
   const totalUnits = PROPERTIES.reduce((s, p) => s + p.units, 0);
   const totalDevices = PROPERTIES.reduce((s, p) => s + p.devices, 0);
 
