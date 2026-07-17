@@ -16,7 +16,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { PORTFOLIOS, ROOMS_MAPLE, DEVICES_MAPLE, AUDIT } from "@/lib/fixtures";
+import { PORTFOLIOS, ROOMS_MAPLE, AUDIT } from "@/lib/fixtures";
+import { useDevices } from "@/lib/use-devices";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import type {
   Property,
   DeviceCategory,
@@ -107,8 +109,9 @@ const LIVE_SNAPSHOT: LiveDevice[] = [
 ];
 
 function OverviewTab({ property }: { property: Property }) {
-  const online = DEVICES_MAPLE.filter((d) => d.reachable).length;
-  const unreachable = DEVICES_MAPLE.filter((d) => !d.reachable).length;
+  const { devices } = useDevices("p_maple");
+  const online = devices.filter((d) => d.reachable).length;
+  const unreachable = devices.filter((d) => !d.reachable).length;
   const vacant = property.units - property.occupied;
 
   return (
@@ -122,7 +125,7 @@ function OverviewTab({ property }: { property: Property }) {
         <StatCard
           label="Devices online"
           value={online}
-          unit={`/${DEVICES_MAPLE.length}`}
+          unit={`/${devices.length}`}
           sub={
             unreachable > 0 ? (
               <span className="text-amber">
@@ -329,27 +332,44 @@ const DEVICE_COLS: TableColumn<Device>[] = [
 
 function DevicesTab() {
   const [filter, setFilter] = useState<DeviceFilter>("all");
+  const { devices, loading, error } = useDevices("p_maple");
 
   const filtered =
     filter === "offline"
-      ? DEVICES_MAPLE.filter((d) => !d.reachable)
+      ? devices.filter((d) => !d.reachable)
       : filter === "alert"
-        ? DEVICES_MAPLE.filter((d) => d.alert)
-        : DEVICES_MAPLE;
+        ? devices.filter((d) => d.alert)
+        : devices;
 
   const chips: { id: DeviceFilter; label: string; count: number }[] = [
-    { id: "all", label: "All", count: DEVICES_MAPLE.length },
+    { id: "all", label: "All", count: devices.length },
     {
       id: "alert",
       label: "Needs attention",
-      count: DEVICES_MAPLE.filter((d) => d.alert).length,
+      count: devices.filter((d) => d.alert).length,
     },
     {
       id: "offline",
       label: "Unreachable",
-      count: DEVICES_MAPLE.filter((d) => !d.reachable).length,
+      count: devices.filter((d) => !d.reachable).length,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="bg-surface border border-border rounded-[13px] p-10 text-center">
+        <p className="text-[13px] text-text-2">Loading devices...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-surface border border-border rounded-[13px] p-10 text-center">
+        <p className="text-[13px] text-amber">Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -371,7 +391,15 @@ function DevicesTab() {
           </button>
         ))}
       </div>
-      <DataTable columns={DEVICE_COLS} rows={filtered} />
+      {devices.length === 0 ? (
+        <div className="bg-surface border border-border rounded-[13px] p-10 text-center">
+          <p className="text-[13px] text-text-2">
+            No devices found. Check demo mode or configure integrations.
+          </p>
+        </div>
+      ) : (
+        <DataTable columns={DEVICE_COLS} rows={filtered} />
+      )}
     </div>
   );
 }
@@ -520,6 +548,7 @@ const TABS = [
 export function PropertyScreen({ property }: { property: Property }) {
   const [tab, setTab] = useState("overview");
   const portfolio = PORTFOLIOS.find((pf) => pf.id === property.portfolio);
+  const { demoMode, toggleDemoMode } = useDemoMode();
 
   return (
     <>
@@ -535,9 +564,18 @@ export function PropertyScreen({ property }: { property: Property }) {
           </Button>
         }
         secondary={
-          <Button variant="secondary" icon={Settings}>
-            Property settings
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={demoMode ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => toggleDemoMode()}
+            >
+              {demoMode ? "Demo Mode ON" : "Demo Mode OFF"}
+            </Button>
+            <Button variant="secondary" icon={Settings}>
+              Property settings
+            </Button>
+          </div>
         }
       />
 
