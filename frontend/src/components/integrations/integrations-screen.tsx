@@ -13,6 +13,8 @@ import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
+import { EmptyDataState } from "@/components/ui/empty-state";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import { BluetoothPairingModal } from "@/components/integrations/bluetooth-pairing-modal";
 import { useBluetoothDevices } from "@/integrations/bluetooth";
 
@@ -448,9 +450,32 @@ function ErrorsTab() {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function IntegrationsScreen() {
+  const { demoMode } = useDemoMode();
   const [tab, setTab] = useState("connected");
   const [showBluetoothModal, setShowBluetoothModal] = useState(false);
   const { data: bluetoothDevices = [] } = useBluetoothDevices();
+
+  if (!demoMode) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Integrations"
+          sub="0 connections"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Connect vendor
+            </Button>
+          }
+        />
+        <EmptyDataState
+          title="No integrations connected"
+          description="Connect your first smart home vendor to start syncing devices."
+        />
+      </>
+    );
+  }
+
   const active = INTEGRATIONS.filter((i) => i.status === "ACTIVE").length;
 
   return (
