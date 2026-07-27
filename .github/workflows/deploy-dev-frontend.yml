@@ -28,6 +28,6 @@ jobs:
 
       - name: Deploy
         working-directory: frontend
-        run: flyctl deploy --remote-only --app nestra-frontend-dev
+        run: flyctl deploy --remote-only --app nestra-mvp
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_DEV }}
