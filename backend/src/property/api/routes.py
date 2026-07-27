@@ -34,56 +34,56 @@ async def get_property_devices(property_id: UUID) -> list[DeviceResponse]:
     # Aggregate from Shelly
     from integrations.shelly import routes as shelly_routes
 
-    for device in shelly_routes._devices.values():
-        if device.property_id == property_id:
+    for shelly_device in shelly_routes._devices.values():
+        if shelly_device.property_id == property_id:
             devices.append(
                 DeviceResponse(
-                    id=str(device.id),
-                    name=device.name,
+                    id=str(shelly_device.id),
+                    name=shelly_device.name,
                     vendor="Shelly",
-                    online=device.online,
+                    online=shelly_device.online,
                 )
             )
 
     # Aggregate from Govee
     from integrations.govee import routes as govee_routes
 
-    for device in govee_routes._devices.values():
-        if device.property_id == property_id:
+    for govee_device in govee_routes._devices.values():
+        if govee_device.property_id == property_id:
             devices.append(
                 DeviceResponse(
-                    id=str(device.id),
-                    name=device.name,
+                    id=str(govee_device.id),
+                    name=govee_device.name,
                     vendor="Govee",
-                    online=device.online,
+                    online=govee_device.online,
                 )
             )
 
     # Aggregate from LIFX
     from integrations.lifx import routes as lifx_routes
 
-    for device in lifx_routes._devices.values():
-        if device.property_id == property_id:
+    for lifx_device in lifx_routes._devices.values():
+        if lifx_device.property_id == property_id:
             devices.append(
                 DeviceResponse(
-                    id=str(device.id),
-                    name=device.name,
+                    id=str(lifx_device.id),
+                    name=lifx_device.name,
                     vendor="LIFX",
-                    online=device.online,
+                    online=lifx_device.online,
                 )
             )
 
     # Aggregate from Matter
     from integrations.matter import routes as matter_routes
 
-    for device in matter_routes._devices.values():
-        if device.property_id == property_id:
+    for matter_device in matter_routes._devices.values():
+        if matter_device.property_id == property_id:
             devices.append(
                 DeviceResponse(
-                    id=str(device.id),
-                    name=device.name,
+                    id=str(matter_device.id),
+                    name=matter_device.name,
                     vendor="Matter",
-                    online=device.online,
+                    online=matter_device.online,
                 )
             )
 
