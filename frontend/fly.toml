@@ -1,4 +1,4 @@
-app = "nestra-frontend-dev"
+app = "nestra-mvp"
 primary_region = "lhr"
 
 [build]
