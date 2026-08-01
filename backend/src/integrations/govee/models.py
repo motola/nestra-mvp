@@ -10,7 +10,7 @@ from sqlalchemy import JSON, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from utility.db import Base
+from db import Base
 
 
 class GoveeDeviceModel(Base):

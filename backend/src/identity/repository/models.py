@@ -7,8 +7,8 @@ from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstr
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from db import Base
 from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
-from utility.db import Base
 
 
 class OrganizationModel(Base):
