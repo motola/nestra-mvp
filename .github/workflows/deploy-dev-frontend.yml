@@ -38,7 +38,7 @@ jobs:
           echo ""
           echo "Deployment URL: https://nestra-mvp.fly.dev"
           echo ""
-          echo "API URL: https://nestra-backend-dev.fly.dev"
+          echo "API URL: https://nestra-mvp-api.fly.dev"
 
       - name: Post deployment summary
         if: always()
@@ -47,4 +47,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Frontend:** [https://nestra-mvp.fly.dev](https://nestra-mvp.fly.dev)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Backend API:** https://nestra-backend-dev.fly.dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend API:** https://nestra-mvp-api.fly.dev" >> $GITHUB_STEP_SUMMARY
