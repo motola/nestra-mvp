@@ -5,7 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLogin } from "@/lib/api/hooks/use-auth";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
+import { Tag } from "@/components/ui/tag";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -14,25 +16,50 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const DEMO_CREDENTIALS = {
+  email: "marcus@northernportfolio.co.uk",
+  password: "demo-password-123",
+};
+
 export default function LoginPage() {
   const login = useLogin();
+  const { demoMode } = useDemoMode();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: demoMode ? DEMO_CREDENTIALS : undefined,
+  });
 
   const onSubmit = (values: FormValues) => login.mutate(values);
 
   return (
     <>
-      <h1 className="font-serif text-[26px] leading-[1.2] text-text m-0 mb-1">
-        Sign in
-      </h1>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="font-serif text-[26px] leading-[1.2] text-text m-0">
+          Sign in
+        </h1>
+        {demoMode && (
+          <Tag variant="ok" withDot>
+            Demo Mode
+          </Tag>
+        )}
+      </div>
       <p className="text-[13px] text-text-3 mb-6 m-0">
         Welcome back to your portfolio console.
       </p>
+
+      {demoMode && (
+        <div className="bg-green-bg border border-green rounded-[9px] px-3 py-2 mb-4">
+          <p className="text-[12px] text-green m-0">
+            <strong>Demo credentials:</strong> Use the pre-filled email &
+            password below
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
