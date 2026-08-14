@@ -1,0 +1,49 @@
+name: Deploy — Dev Backend
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-dev-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-dev-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Fly.io (Dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        working-directory: backend
+        run: flyctl deploy --remote-only --app nestra-mvp-api
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_DEV }}
+
+      - name: Output deployment URL
+        run: |
+          echo "Backend deployed successfully!"
+          echo ""
+          echo "API URL: https://nestra-mvp-api.fly.dev"
+          echo ""
+          echo "Health check: https://nestra-mvp-api.fly.dev/health"
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend API:** [https://nestra-mvp-api.fly.dev](https://nestra-mvp-api.fly.dev)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend:** https://nestra-mvp.fly.dev" >> $GITHUB_STEP_SUMMARY

@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import jwt
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from config import get_settings
+from db import SessionLocal
 from dependencies import SettingsDep
 from identity.api.schemas import (
     LoginRequest,
@@ -17,33 +20,16 @@ from identity.api.schemas import (
     TokenResponse,
     UserOut,
 )
+from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
+from identity.repository.models import (
+    OrganizationModel,
+    OrgMembershipModel,
+    PortfolioModel,
+    UserModel,
+)
 from identity.services.signup import _hash_password, _verify_password
 
 router = APIRouter(prefix="/auth", tags=["identity"])
-
-# ─── Mock data (remove when database is wired) ────────────────────────────────
-
-# In-memory store for demo — replaced with real DB queries later
-_MOCK_USERS: dict[str, dict[str, Any]] = {}
-_MOCK_ORGS: dict[UUID, dict[str, Any]] = {}
-
-# Test user for immediate login demo
-_TEST_ORG_ID = UUID("12345678-1234-5678-1234-567812345678")
-_TEST_USER_ID = UUID("87654321-4321-8765-4321-876543218765")
-
-_MOCK_ORGS[_TEST_ORG_ID] = {
-    "id": _TEST_ORG_ID,
-    "name": "Test Organization",
-    "slug": "test-org",
-}
-
-_MOCK_USERS["test@example.com"] = {
-    "id": _TEST_USER_ID,
-    "email": "test@example.com",
-    "full_name": "Test User",
-    "password_hash": _hash_password("password123"),
-    "org_id": _TEST_ORG_ID,
-}
 
 
 def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> str:
@@ -76,37 +62,75 @@ async def signup_endpoint(
     settings: SettingsDep,
 ) -> TokenResponse:
     """Create a new user, organization, default portfolio, and membership."""
-    # Check if email already registered (mock)
-    if body.email in _MOCK_USERS:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already in use",
-        )
+    now = datetime.now(tz=UTC)
+    slug = body.org_name.lower().replace(" ", "-")
 
-    # Create mock user and org
-    user_id = uuid4()
-    org_id = uuid4()
+    async with SessionLocal() as session:
+        # Check if email already exists
+        result = await session.execute(select(UserModel).where(UserModel.email == body.email))
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already in use",
+            )
 
-    _MOCK_ORGS[org_id] = {
-        "id": org_id,
-        "name": body.org_name,
-        "slug": body.org_name.lower().replace(" ", "-"),
-    }
+        try:
+            # Create organization
+            org = OrganizationModel(
+                name=body.org_name,
+                slug=slug,
+                legal_name=body.legal_name,
+                status=OrgStatus.ACTIVE,
+                subscription_tier=SubscriptionTier.STARTER,
+                created_at=now,
+            )
+            session.add(org)
+            await session.flush()
 
-    _MOCK_USERS[body.email] = {
-        "id": user_id,
-        "email": body.email,
-        "full_name": body.full_name,
-        "password_hash": _hash_password(body.password),
-        "org_id": org_id,
-    }
+            # Create user
+            user = UserModel(
+                email=body.email,
+                full_name=body.full_name,
+                password_hash=_hash_password(body.password),
+                auth_method=AuthMethod.PASSWORD,
+                is_active=True,
+            )
+            session.add(user)
+            await session.flush()
 
-    token = _create_token(user_id, org_id, settings.secret_key)
-    return TokenResponse(
-        access_token=token,
-        token_type="bearer",
-        organization_id=org_id,
-    )
+            # Create default portfolio
+            portfolio = PortfolioModel(
+                organization_id=org.id,
+                name="Default Portfolio",
+                description="",
+                is_default=True,
+                created_at=now,
+            )
+            session.add(portfolio)
+
+            # Create org membership
+            membership = OrgMembershipModel(
+                user_id=user.id,
+                organization_id=org.id,
+                org_role=OrgRole.OWNER,
+                joined_at=now,
+            )
+            session.add(membership)
+
+            await session.commit()
+
+            token = _create_token(user.id, org.id, settings.secret_key)
+            return TokenResponse(
+                access_token=token,
+                token_type="bearer",
+                organization_id=org.id,
+            )
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email or organization slug already in use",
+            ) from e
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -115,20 +139,35 @@ async def login_endpoint(
     settings: SettingsDep,
 ) -> TokenResponse:
     """Authenticate with email + password and return a JWT."""
-    # Check mock user
-    user = _MOCK_USERS.get(body.email)
-    if not user or not _verify_password(body.password, user["password_hash"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
+    async with SessionLocal() as session:
+        # Query user by email
+        result = await session.execute(select(UserModel).where(UserModel.email == body.email))
+        user = result.scalar_one_or_none()
 
-    token = _create_token(user["id"], user["org_id"], settings.secret_key)
-    return TokenResponse(
-        access_token=token,
-        token_type="bearer",
-        organization_id=user["org_id"],
-    )
+        if not user or not _verify_password(body.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+
+        # Get user's first organization (default to first membership)
+        membership_result = await session.execute(
+            select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
+        )
+        membership = membership_result.scalars().first()
+
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User has no organization membership",
+            )
+
+        token = _create_token(user.id, membership.organization_id, settings.secret_key)
+        return TokenResponse(
+            access_token=token,
+            token_type="bearer",
+            organization_id=membership.organization_id,
+        )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -156,25 +195,32 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
     user_id = UUID(payload["sub"])
     org_id = UUID(payload["org"])
 
-    # Find user in mock store
-    user = next((u for u in _MOCK_USERS.values() if u["id"] == user_id), None)
-    org = _MOCK_ORGS.get(org_id)
+    async with SessionLocal() as session:
+        # Query user from database
+        user_result = await session.execute(select(UserModel).where(UserModel.id == user_id))
+        user = user_result.scalar_one_or_none()
 
-    if not user or not org:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User or organization not found",
+        # Query organization from database
+        org_result = await session.execute(
+            select(OrganizationModel).where(OrganizationModel.id == org_id)
         )
+        org = org_result.scalar_one_or_none()
 
-    return MeResponse(
-        user=UserOut(
-            id=user["id"],
-            email=user["email"],
-            full_name=user["full_name"],
-        ),
-        organization=OrganizationOut(
-            id=org["id"],
-            name=org["name"],
-            slug=org["slug"],
-        ),
-    )
+        if not user or not org:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User or organization not found",
+            )
+
+        return MeResponse(
+            user=UserOut(
+                id=user.id,
+                email=user.email,
+                full_name=user.full_name,
+            ),
+            organization=OrganizationOut(
+                id=org.id,
+                name=org.name,
+                slug=org.slug,
+            ),
+        )

@@ -9,8 +9,8 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueCon
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from db import Base
 from integrations.models import IntegrationModel
-from utility.db import Base
 
 
 class BluetoothDeviceModel(Base):
