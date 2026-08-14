@@ -5,7 +5,7 @@ primary_region = "lhr"
 dockerfile = "Dockerfile"
 
 [env]
-NEXT_PUBLIC_API_URL = "https://nestra-backend-dev.fly.dev"
+NEXT_PUBLIC_API_URL = "https://nestra-mvp-api.fly.dev"
 
 [[services]]
 internal_port = 3000
