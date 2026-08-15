@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Deploy — Dev Backend"]
     types: [completed]
+  workflow_dispatch:
 
 jobs:
   migrate:
@@ -33,4 +34,4 @@ jobs:
 
       - name: Migration complete
         run: |
-          echo "✅ Database migrations completed successfully"
+          echo "Database migrations completed successfully"
