@@ -10,6 +10,8 @@ COPY pyproject.toml ./
 RUN pip install --no-cache-dir -e .
 
 COPY src ./src
+COPY alembic.ini ./
+COPY migrations ./migrations
 
 EXPOSE 8000
 
