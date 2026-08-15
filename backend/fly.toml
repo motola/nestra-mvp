@@ -1,0 +1,35 @@
+app = "nestra-mvp-api"
+primary_region = "lhr"
+
+[build]
+dockerfile = "Dockerfile"
+
+[deploy]
+release_command = "alembic upgrade head"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[[services]]
+internal_port = 8000
+protocol = "tcp"
+hard_limit = 25
+soft_limit = 20
+
+  [[services.ports]]
+  port = 80
+  handlers = ["http"]
+  force_https = true
+
+  [[services.ports]]
+  port = 443
+  handlers = ["tls", "http"]
+
+  [services.concurrency]
+  type = "connections"
+  hard_limit = 25
+  soft_limit = 20
+
+  [[services.tcp_checks]]
+  interval = "15s"
+  timeout = "10s"

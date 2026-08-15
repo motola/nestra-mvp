@@ -1,6 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AutomationsScreen } from "../src/components/automations/automations-screen";
+
+vi.mock("@/lib/use-demo-mode", () => ({
+  useDemoMode: () => ({
+    demoMode: true,
+    isHydrated: true,
+    toggleDemoMode: vi.fn(),
+  }),
+}));
 
 describe("AutomationsScreen", () => {
   it("renders the page header", () => {

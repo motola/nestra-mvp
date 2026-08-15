@@ -20,7 +20,10 @@ import {
 import { cn } from "@/lib/cn";
 import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
+import { useDevices } from "@/lib/use-devices";
+import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
+import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -584,9 +587,37 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
-  const total = DEVICES_MAPLE.length;
-  const online = DEVICES_MAPLE.filter((d) => d.reachable).length;
-  const unreachable = DEVICES_MAPLE.filter((d) => !d.reachable).length;
+  const { demoMode } = useDemoMode();
+  const { devices, loading, error } = useDevices(
+    "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
+  );
+
+  if (!demoMode) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Devices"
+          sub="0 devices · 0 online"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Pair device
+            </Button>
+          }
+        />
+        <EmptyDataState
+          title="No devices connected"
+          description="Connect your first smart home integration to start monitoring devices."
+        />
+      </>
+    );
+  }
+
+  // Fallback to fixtures if loading or error
+  const displayDevices = loading || error ? DEVICES_MAPLE : devices;
+  const total = displayDevices.length;
+  const online = displayDevices.filter((d) => d.reachable).length;
+  const unreachable = displayDevices.filter((d) => !d.reachable).length;
 
   return (
     <>
@@ -639,7 +670,7 @@ export function DevicesScreen() {
               </Button>
             }
           />
-          <DeviceList devices={DEVICES_MAPLE} onSelect={setSelected} />
+          <DeviceList devices={displayDevices} onSelect={setSelected} />
         </div>
 
         <Card className="p-[18px] flex items-start gap-3.5">

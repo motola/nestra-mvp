@@ -12,8 +12,8 @@ from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from db import Base
 from property.domain import DeviceType
-from utility.db import Base
 
 
 class DeviceModel(Base):

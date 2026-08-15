@@ -7,8 +7,8 @@ from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstr
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from db import Base
 from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
-from utility.db import Base
 
 
 class OrganizationModel(Base):
@@ -60,7 +60,9 @@ class UserModel(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_tenant_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    memberships: Mapped[list[OrgMembershipModel]] = relationship(back_populates="user")
+    memberships: Mapped[list[OrgMembershipModel]] = relationship(
+        back_populates="user", foreign_keys="[OrgMembershipModel.user_id]"
+    )
     sessions: Mapped[list[SessionModel]] = relationship(back_populates="user")
 
 

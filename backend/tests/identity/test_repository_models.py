@@ -1,5 +1,6 @@
 import unittest
 
+from db import Base
 from identity.repository.models import (
     OrganizationModel,
     OrgMembershipModel,
@@ -7,7 +8,6 @@ from identity.repository.models import (
     SessionModel,
     UserModel,
 )
-from utility.db import Base
 
 
 class TestOrmModelMetadata(unittest.TestCase):
