@@ -227,7 +227,7 @@ function AgentTab() {
 
 const TABS = [
   { id: "organization", label: "Organization" },
-  { id: "portfolios", label: "Portfolios", count: 2 },
+  { id: "portfolios", label: "Portfolios" },
   { id: "billing", label: "Billing" },
   { id: "security", label: "Security" },
   { id: "audit", label: "Audit log" },
