@@ -10,7 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects import postgresql as pg
 
 revision: str = "4702fb9fbefc"
 down_revision: str | Sequence[str] | None = None
@@ -20,30 +20,21 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create enums
-    org_status = postgresql.ENUM("ACTIVE", "SUSPENDED", "CANCELLED", name="org_status")
-    subscription_tier = postgresql.ENUM(
-        "STARTER", "PROFESSIONAL", "ENTERPRISE", name="subscription_tier"
-    )
-    auth_method = postgresql.ENUM(
-        "PASSWORD", "MAGIC_LINK", "GOOGLE_SSO", "APPLE_SSO", name="auth_method"
-    )
-    org_role = postgresql.ENUM("OWNER", "ORG_ADMIN", "BILLING", name="org_role")
-
-    org_status.create(op.get_bind(), checkfirst=True)
-    subscription_tier.create(op.get_bind(), checkfirst=True)
-    auth_method.create(op.get_bind(), checkfirst=True)
-    org_role.create(op.get_bind(), checkfirst=True)
-
     # Create organizations table
     op.create_table(
         "organizations",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("id", pg.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("slug", sa.String(100), nullable=False),
         sa.Column("legal_name", sa.String(255), nullable=False),
-        sa.Column("status", org_status, nullable=False),
-        sa.Column("subscription_tier", subscription_tier, nullable=False),
+        sa.Column(
+            "status", sa.Enum("ACTIVE", "SUSPENDED", "CANCELLED", name="org_status"), nullable=False
+        ),
+        sa.Column(
+            "subscription_tier",
+            sa.Enum("STARTER", "PROFESSIONAL", "ENTERPRISE", name="subscription_tier"),
+            nullable=False,
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("slug", name="uq_org_slug"),
@@ -52,11 +43,15 @@ def upgrade() -> None:
     # Create users table
     op.create_table(
         "users",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("id", pg.UUID(as_uuid=True), nullable=False),
         sa.Column("email", sa.String(254), nullable=False),
         sa.Column("full_name", sa.String(255), nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=False),
-        sa.Column("auth_method", auth_method, nullable=False),
+        sa.Column(
+            "auth_method",
+            sa.Enum("PASSWORD", "MAGIC_LINK", "GOOGLE_SSO", "APPLE_SSO", name="auth_method"),
+            nullable=False,
+        ),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("is_tenant_only", sa.Boolean(), nullable=False),
@@ -67,8 +62,8 @@ def upgrade() -> None:
     # Create portfolios table
     op.create_table(
         "portfolios",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column("organization_id", pg.UUID(as_uuid=True), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.String(1000), nullable=False),
         sa.Column("is_default", sa.Boolean(), nullable=False),
@@ -85,12 +80,14 @@ def upgrade() -> None:
     # Create org_memberships table
     op.create_table(
         "org_memberships",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("organization_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("org_role", org_role, nullable=False),
+        sa.Column("id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column("user_id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column("organization_id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "org_role", sa.Enum("OWNER", "ORG_ADMIN", "BILLING", name="org_role"), nullable=False
+        ),
         sa.Column("joined_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("invited_by", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("invited_by", pg.UUID(as_uuid=True), nullable=True),
         sa.ForeignKeyConstraint(
             ["invited_by"],
             ["users.id"],
@@ -110,10 +107,14 @@ def upgrade() -> None:
     # Create sessions table
     op.create_table(
         "sessions",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("active_organization_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("auth_method", auth_method, nullable=False),
+        sa.Column("id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column("user_id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column("active_organization_id", pg.UUID(as_uuid=True), nullable=False),
+        sa.Column(
+            "auth_method",
+            sa.Enum("PASSWORD", "MAGIC_LINK", "GOOGLE_SSO", "APPLE_SSO", name="auth_method"),
+            nullable=False,
+        ),
         sa.Column("issued_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
