@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tag } from "@/components/ui/tag";
 import { Tabs } from "@/components/ui/tabs";
-import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
+import { Card, SectionHead } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { cn } from "@/lib/cn";
 
 // ─── Shared form primitives ───────────────────────────────────────────────────
 
@@ -211,142 +211,14 @@ function ApiTab() {
 
 // ─── Agent tab ────────────────────────────────────────────────────────────────
 
-const MODEL_TIERS = [
-  {
-    tier: "HAIKU",
-    label: "Haiku 4.5",
-    use: "Status lookups · single tool",
-    cost: "£0.001 / msg",
-    on: true,
-    recommended: false,
-  },
-  {
-    tier: "SONNET",
-    label: "Sonnet 4.6",
-    use: "Reasoning · multi-step plans",
-    cost: "£0.012 / msg",
-    on: true,
-    recommended: true,
-  },
-  {
-    tier: "OPUS",
-    label: "Opus 4.5",
-    use: "Complex analytics · escalated",
-    cost: "£0.090 / msg",
-    on: false,
-    recommended: false,
-  },
-];
-
-const CONFIRMATIONS = [
-  {
-    l: "Unlock a door",
-    always: true,
-    desc: "Always require approval — physical security.",
-  },
-  {
-    l: "Change thermostat",
-    always: false,
-    desc: "Approve when delta > 4°C or unit is occupied.",
-  },
-  { l: "Send a guest message", always: true, desc: "Always preview drafts." },
-  {
-    l: "Cancel or refund a stay",
-    always: true,
-    desc: "Always require approval.",
-  },
-  {
-    l: "Acknowledge an automation run",
-    always: false,
-    desc: "Approve only when an action failed.",
-  },
-];
-
 function AgentTab() {
   return (
     <>
-      <SettingsCard
-        title="Routing"
-        sub="The agent picks a model tier based on the question's complexity. You can lock the floor."
-      >
-        <div className="grid grid-cols-3 gap-3">
-          {MODEL_TIERS.map((m) => (
-            <div
-              key={m.tier}
-              className={cn(
-                "p-4 rounded-card border",
-                m.recommended
-                  ? "bg-bg border-graphite"
-                  : "bg-surface border-border",
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <MonoLabel>{m.tier}</MonoLabel>
-                <Tag variant={m.on ? "ok" : "neutral"} withDot>
-                  {m.on ? "on" : "off"}
-                </Tag>
-              </div>
-              <p className="font-serif text-[18px] text-text mt-2 m-0">
-                {m.label}
-              </p>
-              <p className="text-[12px] text-text-2 mt-1.5 leading-[1.5] m-0">
-                {m.use}
-              </p>
-              <MonoLabel className="mt-2.5 block">{m.cost}</MonoLabel>
-            </div>
-          ))}
-        </div>
-      </SettingsCard>
-
-      <SettingsCard
-        title="Personas"
-        sub="The operator persona powers the console. Guest-facing personas arrive with the tenant app."
-      >
-        <div className="flex justify-between items-center py-3 border-b border-border">
-          <div>
-            <p className="text-[13px] font-medium text-text m-0">Operator</p>
-            <p className="text-[12px] text-text-3 mt-1 m-0">
-              Professional · expects precision and minimal hedging. Sees all
-              property-owned devices and data.
-            </p>
-          </div>
-          <Button variant="ghost" size="sm">
-            Edit prompt
-          </Button>
-        </div>
-        <div className="flex justify-between items-center py-3 opacity-55">
-          <div>
-            <p className="text-[13px] font-medium text-text m-0">
-              Concierge · Home Assistant
-            </p>
-            <p className="text-[12px] text-text-3 mt-1 m-0">
-              Guest and resident personas — ship with the tenant app in a later
-              release.
-            </p>
-          </div>
-          <Tag variant="neutral">coming soon</Tag>
-        </div>
-      </SettingsCard>
-
-      <SettingsCard
-        title="Confirmations"
-        sub="Which actions require a human OK before the agent runs them."
-      >
-        {CONFIRMATIONS.map((c) => (
-          <div
-            key={c.l}
-            className="flex justify-between items-center py-3 border-b border-border last:border-0"
-          >
-            <div className="max-w-[480px]">
-              <p className="text-[13px] font-medium text-text m-0">{c.l}</p>
-              <p className="text-[12px] text-text-3 mt-1 m-0">{c.desc}</p>
-            </div>
-            <Tag variant={c.always ? "graphite" : "neutral"}>
-              {c.always ? "always confirm" : "rule-based"}
-            </Tag>
-          </div>
-        ))}
-      </SettingsCard>
+      <div className="text-center py-12 text-text-3">
+        <p className="text-[13px]">
+          Agent settings and model routing will be available soon.
+        </p>
+      </div>
     </>
   );
 }
