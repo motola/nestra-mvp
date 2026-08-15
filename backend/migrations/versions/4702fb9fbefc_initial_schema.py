@@ -30,10 +30,10 @@ def upgrade() -> None:
     )
     org_role = postgresql.ENUM("OWNER", "ORG_ADMIN", "BILLING", name="org_role")
 
-    org_status.create(op.get_bind())
-    subscription_tier.create(op.get_bind())
-    auth_method.create(op.get_bind())
-    org_role.create(op.get_bind())
+    org_status.create(op.get_bind(), checkfirst=True)
+    subscription_tier.create(op.get_bind(), checkfirst=True)
+    auth_method.create(op.get_bind(), checkfirst=True)
+    org_role.create(op.get_bind(), checkfirst=True)
 
     # Create organizations table
     op.create_table(
