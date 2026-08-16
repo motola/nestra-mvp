@@ -16,11 +16,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const DEMO_CREDENTIALS = {
-  email: "marcus@northernportfolio.co.uk",
-  password: "demo-password-123",
-};
-
 export default function LoginPage() {
   const login = useLogin();
   const { demoMode } = useDemoMode();
@@ -31,7 +26,6 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: demoMode ? DEMO_CREDENTIALS : undefined,
   });
 
   const onSubmit = (values: FormValues) => login.mutate(values);
@@ -55,8 +49,8 @@ export default function LoginPage() {
       {demoMode && (
         <div className="bg-green-bg border border-green rounded-[9px] px-3 py-2 mb-4">
           <p className="text-[12px] text-green m-0">
-            <strong>Demo credentials:</strong> Use the pre-filled email &
-            password below
+            <strong>Demo Mode:</strong> Use demo credentials from your
+            environment
           </p>
         </div>
       )}
