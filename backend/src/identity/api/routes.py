@@ -140,9 +140,10 @@ async def signup_endpoint(
 
             await session.commit()
 
-            # Send verification email
+            # Send welcome and verification emails
             email_service = get_email_service()
-            await email_service.send_verification_email(user.email, verify_token)
+            await email_service.send_welcome_email(user.email, user.full_name)
+            await email_service.send_verification_email(user.email, user.full_name, verify_token)
 
             token = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
@@ -282,7 +283,11 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                 await session.commit()
 
                 email_service = get_email_service()
-                await email_service.send_password_reset_email(user.email, token)
+                await email_service.send_password_reset_email(
+                    user.email,
+                    user.full_name,
+                    token,
+                )
 
             except IntegrityError as e:
                 await session.rollback()
