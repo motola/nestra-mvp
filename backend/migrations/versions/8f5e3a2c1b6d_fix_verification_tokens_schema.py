@@ -22,6 +22,14 @@ def upgrade() -> None:
     op.execute("DROP TABLE IF EXISTS email_verification_tokens CASCADE")
     op.execute("DROP TABLE IF EXISTS password_reset_tokens CASCADE")
 
+    # Create or verify token_type enum exists
+    op.execute(
+        "DO $$ BEGIN IF NOT EXISTS "
+        "(SELECT 1 FROM pg_type WHERE typname = 'token_type') "
+        "THEN CREATE TYPE token_type AS ENUM "
+        "('EMAIL_VERIFICATION', 'PASSWORD_RESET'); END IF; END $$"
+    )
+
     # Check if verification_tokens already exists
     op.execute(
         """
