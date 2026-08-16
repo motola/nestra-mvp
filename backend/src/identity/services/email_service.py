@@ -104,7 +104,7 @@ class EmailService:
     ) -> None:
         """Send email verification with token link and code."""
         html_content = _load_template("verify_email")
-        verify_url = f"{self.frontend_url}/auth/verify?token={verify_token}"
+        verify_url = f"{self.frontend_url}/verify-email?token={verify_token}"
 
         html_content = _replace_template_vars(
             html_content,
