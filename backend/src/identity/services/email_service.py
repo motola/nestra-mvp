@@ -62,7 +62,7 @@ class EmailService:
         settings = get_settings()
         self.sendgrid_client = SendGridAPIClient(settings.sendgrid_api_key)
         self.frontend_url = settings.frontend_url
-        self.from_email = Email("noreply@alphacon.io", "AlphaCon")
+        self.from_email = Email("noreply@alphacon.io", "Alphacon AI")
 
     async def send_welcome_email(
         self,
@@ -86,7 +86,7 @@ class EmailService:
         message = Mail(
             from_email=self.from_email,
             to_emails=To(user_email),
-            subject=f"Welcome to AlphaCon, {first_name}",
+            subject=f"Welcome to Alphacon AI, {first_name}",
             html_content=html_content,
         )
 
@@ -117,7 +117,7 @@ class EmailService:
         message = Mail(
             from_email=self.from_email,
             to_emails=To(user_email),
-            subject="Verify Your AlphaCon Email",
+            subject="Verify Your Alphacon AI Email",
             html_content=html_content,
         )
 
@@ -153,7 +153,7 @@ class EmailService:
         message = Mail(
             from_email=self.from_email,
             to_emails=To(user_email),
-            subject="Reset Your AlphaCon Password",
+            subject="Reset Your Alphacon AI Password",
             html_content=html_content,
         )
 
