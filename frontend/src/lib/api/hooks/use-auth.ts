@@ -61,3 +61,71 @@ export function useLogin() {
     },
   });
 }
+
+// ─── Forgot Password ──────────────────────────────────────────────────────────
+
+interface ForgotPasswordPayload {
+  email: string;
+}
+
+interface MessageResponse {
+  message: string;
+}
+
+export function useForgotPassword() {
+  return useMutation<MessageResponse, ApiError, ForgotPasswordPayload>({
+    mutationFn: (payload) =>
+      apiFetch<MessageResponse>("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  });
+}
+
+// ─── Reset Password ───────────────────────────────────────────────────────────
+
+interface ResetPasswordPayload {
+  token: string;
+  password: string;
+  password_confirm: string;
+}
+
+export function useResetPassword() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, ResetPasswordPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/overview");
+    },
+  });
+}
+
+// ─── Verify Email ─────────────────────────────────────────────────────────────
+
+interface VerifyEmailPayload {
+  token: string;
+}
+
+export function useVerifyEmail() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, VerifyEmailPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/verify-email", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/overview");
+    },
+  });
+}

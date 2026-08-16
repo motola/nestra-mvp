@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     govee_api_key: str = ""
     govee_ble_address: str = ""
     anthropic_api_key: str = ""
+    sendgrid_api_key: str = ""
+    frontend_url: str = "https://nestra-mvp.fly.dev"
 
     @model_validator(mode="after")
     def _reject_insecure_secret_in_production(self) -> Settings:

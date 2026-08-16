@@ -21,6 +21,7 @@ dependencies = [
     "arq>=0.26",
     "bleak>=0.22",
     "anthropic>=0.45",
+    "sendgrid>=6.10",
 ]
 
 [project.optional-dependencies]

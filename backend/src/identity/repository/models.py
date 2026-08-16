@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum as PyEnum
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstraint
@@ -9,6 +10,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import Base
 from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
+
+
+class TokenType(PyEnum):
+    """Types of verification tokens."""
+
+    PASSWORD_RESET = "password_reset"
+    EMAIL_VERIFICATION = "email_verification"
 
 
 class OrganizationModel(Base):
@@ -59,11 +67,15 @@ class UserModel(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_tenant_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     memberships: Mapped[list[OrgMembershipModel]] = relationship(
         back_populates="user", foreign_keys="[OrgMembershipModel.user_id]"
     )
     sessions: Mapped[list[SessionModel]] = relationship(back_populates="user")
+    verification_tokens: Mapped[list[VerificationTokenModel]] = relationship(
+        back_populates="user", foreign_keys="[VerificationTokenModel.user_id]"
+    )
 
 
 class OrgMembershipModel(Base):
@@ -105,3 +117,25 @@ class SessionModel(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     user: Mapped[UserModel] = relationship(back_populates="sessions")
+
+
+class VerificationTokenModel(Base):
+    """Tokens for password reset and email verification."""
+
+    __tablename__ = "verification_tokens"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    token: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    token_type: Mapped[TokenType] = mapped_column(
+        Enum(TokenType, name="token_type"), nullable=False
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    user: Mapped[UserModel] = relationship(
+        back_populates="verification_tokens", foreign_keys=[user_id]
+    )
