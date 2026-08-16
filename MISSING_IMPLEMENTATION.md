@@ -139,18 +139,18 @@ curl http://localhost:8001/health
 ### Backend (.env)
 
 ```
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/alphacon_dev
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/nestra_dev
 REDIS_URL=redis://localhost:6379
-SECRET_KEY=test-secret-key-for-local-development
+SECRET_KEY=your-secret-key-here
 DEBUG=True
-ANTHROPIC_API_KEY=sk-...
+ANTHROPIC_API_KEY=your-anthropic-key-here
 ```
 
 ### Intelligence (.env)
 
 ```
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/alphacon_dev
-ANTHROPIC_API_KEY=sk-...
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/nestra_dev
+ANTHROPIC_API_KEY=your-anthropic-key-here
 DEBUG=True
 ```
 

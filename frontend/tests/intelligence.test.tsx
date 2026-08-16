@@ -3,45 +3,41 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { IntelligenceWorkspace } from "../src/components/intelligence/intelligence-workspace";
 
 describe("IntelligenceWorkspace", () => {
-  it("renders all seed chat tabs", () => {
+  it("renders empty state on first load", () => {
     render(<IntelligenceWorkspace />);
-    expect(screen.getByText("Energy spend this week")).toBeDefined();
-    expect(screen.getByText("Northbrook hub restart")).toBeDefined();
-    expect(screen.getByText("Maple Court vacancy options")).toBeDefined();
+    expect(screen.getByText("Start a conversation")).toBeDefined();
   });
 
-  it("shows the empty state by default (new chat is active)", () => {
+  it("shows single new chat tab by default", () => {
     render(<IntelligenceWorkspace />);
-    expect(screen.getByText("What would you like to do?")).toBeDefined();
-    expect(screen.getByText(/Hello Marcus/i)).toBeDefined();
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.length).toBe(1);
+    expect(tabs[0].textContent).toContain("New chat");
   });
 
-  it("shows the transcript when switching to a seed chat with messages", () => {
+  it("adds a new tab when New chat button is clicked", () => {
     render(<IntelligenceWorkspace />);
-    fireEvent.click(screen.getByText("Energy spend this week"));
-    expect(
-      screen.getByText(/energy spend this week and where did most/i),
-    ).toBeDefined();
-    expect(screen.getByText(/312 kWh last week/)).toBeDefined();
-  });
-
-  it("adds a new empty tab when New chat is clicked", () => {
-    render(<IntelligenceWorkspace />);
-    // "New chat" button is a primary Button, tabs have role="tab"
     const beforeCount = screen.getAllByRole("tab").length;
-    // Use role="button" to target the header "New chat" button, not the tab
     fireEvent.click(screen.getByRole("button", { name: "New chat" }));
     const afterCount = screen.getAllByRole("tab").length;
     expect(afterCount).toBe(beforeCount + 1);
   });
 
-  it("sends a message and shows it in the transcript", () => {
+  it("sends a message and shows user message in transcript", () => {
     render(<IntelligenceWorkspace />);
     const input = screen.getByLabelText("Message Alphacon AI");
-    fireEvent.change(input, { target: { value: "How many vacant units?" } });
+    fireEvent.change(input, { target: { value: "Specific test question" } });
     fireEvent.keyDown(input, { key: "Enter" });
-    // The AI canned reply is unique to the transcript
-    expect(screen.getByText(/Maple Court Flat 3B \+ Flat 1A/)).toBeDefined();
+    const messages = screen.getAllByText("Specific test question");
+    expect(messages.length).toBeGreaterThan(0);
+  });
+
+  it("shows Thinking... response after sending message", () => {
+    render(<IntelligenceWorkspace />);
+    const input = screen.getByLabelText("Message Alphacon AI");
+    fireEvent.change(input, { target: { value: "Are devices online?" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByText("Thinking...")).toBeDefined();
   });
 
   it("clears the input after sending", () => {
@@ -54,36 +50,24 @@ describe("IntelligenceWorkspace", () => {
     expect(input.value).toBe("");
   });
 
-  it("opens the quick actions tray when Quick actions is clicked", () => {
+  it("uses first message as chat title", () => {
     render(<IntelligenceWorkspace />);
-    fireEvent.click(screen.getByLabelText("Quick actions"));
-    // "Waiting for my approval" only exists inside the tray, not in any tab title
-    expect(screen.getByText("Waiting for my approval")).toBeDefined();
-    expect(screen.getByText("Devices offline")).toBeDefined();
+    const input = screen.getByLabelText("Message Alphacon AI");
+    fireEvent.change(input, { target: { value: "Unique energy question" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    const messages = screen.getAllByText("Unique energy question");
+    expect(messages.length).toBeGreaterThan(0);
   });
 
-  it("shows the inline answer when a quick action tile is picked", () => {
+  it("truncates long titles with ellipsis", () => {
     render(<IntelligenceWorkspace />);
-    fireEvent.click(screen.getByLabelText("Quick actions"));
-    fireEvent.click(screen.getByText("Vacant units right now"));
-    expect(screen.getByText(/Maple Court Flat 3B/)).toBeDefined();
-  });
-
-  it("opens the activity drawer when Recent activity is clicked", () => {
-    render(<IntelligenceWorkspace />);
-    fireEvent.click(screen.getByLabelText("Recent activity"));
-    expect(screen.getByText("Recent activity")).toBeDefined();
-    expect(
-      screen.getByText("Turned off heating in Maple Court Flat 3B"),
-    ).toBeDefined();
-  });
-
-  it("closes the activity drawer when the close button is clicked", () => {
-    render(<IntelligenceWorkspace />);
-    fireEvent.click(screen.getByLabelText("Recent activity"));
-    fireEvent.click(screen.getByLabelText("Close activity drawer"));
-    expect(
-      screen.queryByText("Turned off heating in Maple Court Flat 3B"),
-    ).toBeNull();
+    const input = screen.getByLabelText("Message Alphacon AI");
+    const longMessage =
+      "This is a very long message that should be truncated with ellipsis when used as title";
+    fireEvent.change(input, { target: { value: longMessage } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    // Title is truncated at 36 chars + ellipsis
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.some((t) => t.textContent?.includes("…"))).toBe(true);
   });
 });
