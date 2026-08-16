@@ -102,4 +102,4 @@ Pre-commit hooks enforce code quality standards.
 
 ---
 
-**Maintainer:** Akin Ola
+**Maintainer:** Nestra Team
