@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -140,10 +141,12 @@ async def signup_endpoint(
 
             await session.commit()
 
-            # Send welcome and verification emails
+            # Send welcome and verification emails asynchronously (don't wait for completion)
             email_service = get_email_service()
-            await email_service.send_welcome_email(user.email, user.full_name)
-            await email_service.send_verification_email(user.email, user.full_name, verify_token)
+            asyncio.create_task(email_service.send_welcome_email(user.email, user.full_name))
+            asyncio.create_task(
+                email_service.send_verification_email(user.email, user.full_name, verify_token)
+            )
 
             token = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
@@ -282,11 +285,14 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                 session.add(verification_token)
                 await session.commit()
 
+                # Send reset email asynchronously (don't wait for completion)
                 email_service = get_email_service()
-                await email_service.send_password_reset_email(
-                    user.email,
-                    user.full_name,
-                    token,
+                asyncio.create_task(
+                    email_service.send_password_reset_email(
+                        user.email,
+                        user.full_name,
+                        token,
+                    )
                 )
 
             except IntegrityError as e:
