@@ -280,7 +280,6 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
 
 export function IntelligenceWorkspace() {
   const chat = useChatManager();
-  const [showActivity, setShowActivity] = useState(false);
 
   const hasMessages = chat.activeChat.messages.length > 0;
 
