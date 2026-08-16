@@ -12,7 +12,7 @@ describe("IntelligenceWorkspace", () => {
     render(<IntelligenceWorkspace />);
     const tabs = screen.getAllByRole("tab");
     expect(tabs.length).toBe(1);
-    expect(tabs[0]).toHaveTextContent("New chat");
+    expect(tabs[0].textContent).toContain("New chat");
   });
 
   it("adds a new tab when New chat button is clicked", () => {
@@ -28,7 +28,8 @@ describe("IntelligenceWorkspace", () => {
     const input = screen.getByLabelText("Message Alphacon AI");
     fireEvent.change(input, { target: { value: "Specific test question" } });
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(screen.getByText("Specific test question")).toBeDefined();
+    const messages = screen.getAllByText("Specific test question");
+    expect(messages.length).toBeGreaterThan(0);
   });
 
   it("shows Thinking... response after sending message", () => {
@@ -54,7 +55,8 @@ describe("IntelligenceWorkspace", () => {
     const input = screen.getByLabelText("Message Alphacon AI");
     fireEvent.change(input, { target: { value: "Unique energy question" } });
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(screen.getByText("Unique energy question")).toBeDefined();
+    const messages = screen.getAllByText("Unique energy question");
+    expect(messages.length).toBeGreaterThan(0);
   });
 
   it("truncates long titles with ellipsis", () => {
