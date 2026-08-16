@@ -1,10 +1,11 @@
 "use client"; // Client: auto-verify with token
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useVerifyEmail } from "@/lib/api/hooks/use-auth";
 
-export default function VerifyEmailPage() {
+function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const verifyEmail = useVerifyEmail();
@@ -49,15 +50,41 @@ export default function VerifyEmailPage() {
         <>
           <div className="bg-red-bg border border-red rounded-[9px] px-3 py-2 mb-6">
             <p className="text-[12px] text-red m-0">
-              <strong>Invalid verification link</strong> — no token provided.
+              <strong>Missing verification link</strong> — this link may have
+              expired.
             </p>
           </div>
 
           <p className="text-[12px] text-text-3 text-center m-0">
-            Please check the link in your email or request a new one.
+            You can request a new verification link from the login page.
           </p>
         </>
       )}
+
+      {verifyEmail.isSuccess && (
+        <>
+          <div className="bg-green-bg border border-green rounded-[9px] px-3 py-2 mb-6">
+            <p className="text-[12px] text-green m-0">
+              <strong>Email verified!</strong> Your email address has been
+              confirmed. You can now sign in.
+            </p>
+          </div>
+
+          <a href="/login">
+            <button className="w-full rounded-[8px] bg-accent px-4 py-2 text-center font-medium text-white hover:bg-accent/90">
+              Return to login
+            </button>
+          </a>
+        </>
+      )}
     </>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailForm />
+    </Suspense>
   );
 }
