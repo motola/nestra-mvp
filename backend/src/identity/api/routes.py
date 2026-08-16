@@ -473,3 +473,35 @@ async def verify_email_endpoint(body: VerifyEmailRequest) -> VerifyEmailResponse
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to verify email",
             ) from e
+
+
+@router.post("/resend-verification-email", status_code=status.HTTP_204_NO_CONTENT)
+async def resend_verification_email_endpoint(
+    body: VerifyEmailRequest,
+) -> None:
+    """Resend verification email to user's email address."""
+    async with SessionLocal() as session:
+        # Find user by their pending verification token
+        result = await session.execute(
+            select(VerificationTokenModel).where(VerificationTokenModel.token == body.token)
+        )
+        token_record = result.scalar_one_or_none()
+
+        if not token_record:
+            # Token doesn't exist - silently succeed (privacy)
+            return
+
+        # Query user
+        user_result = await session.execute(
+            select(UserModel).where(UserModel.id == token_record.user_id)
+        )
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            return
+
+        # Send verification email asynchronously
+        email_service = get_email_service()
+        asyncio.create_task(
+            email_service.send_verification_email(user.email, user.full_name, token_record.token)
+        )
