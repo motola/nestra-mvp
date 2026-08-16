@@ -35,6 +35,7 @@ from identity.repository.models import (
     UserModel,
     VerificationTokenModel,
 )
+from identity.services.email_service import get_email_service
 from identity.services.signup import _hash_password, _verify_password
 
 router = APIRouter(prefix="/auth", tags=["identity"])
@@ -125,7 +126,23 @@ async def signup_endpoint(
             )
             session.add(membership)
 
+            # Create email verification token
+            verify_token = secrets.token_urlsafe(32)
+            verify_expires = now + timedelta(hours=24)
+            verification_token = VerificationTokenModel(
+                user_id=user.id,
+                token=verify_token,
+                token_type=TokenType.EMAIL_VERIFICATION,
+                expires_at=verify_expires,
+                created_at=now,
+            )
+            session.add(verification_token)
+
             await session.commit()
+
+            # Send verification email
+            email_service = get_email_service()
+            await email_service.send_verification_email(user.email, verify_token)
 
             token = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
@@ -264,8 +281,8 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                 session.add(verification_token)
                 await session.commit()
 
-                # TODO: Send email with password reset link
-                # await send_password_reset_email(user.email, token)
+                email_service = get_email_service()
+                await email_service.send_password_reset_email(user.email, token)
 
             except IntegrityError as e:
                 await session.rollback()
