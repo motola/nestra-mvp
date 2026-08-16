@@ -280,16 +280,14 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
 
 export function IntelligenceWorkspace() {
   const chat = useChatManager();
+  const [showActivity, setShowActivity] = useState(false);
 
   const hasMessages = chat.activeChat.messages.length > 0;
 
   return (
     <div className="min-h-full flex flex-col">
-      <div className="flex items-center justify-between px-7 py-3 border-b border-border bg-surface">
-        <div>
-          <h2 className="text-[13px] font-semibold text-text">Intelligence</h2>
-          <p className="text-[11px] text-text-3">Chat with your AI assistant</p>
-        </div>
+      <div className="px-7 py-3 border-b border-border bg-surface">
+        <h2 className="text-[13px] font-semibold text-text">Intelligence</h2>
       </div>
 
       <TabsBar

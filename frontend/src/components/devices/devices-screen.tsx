@@ -18,10 +18,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
 import { useDevices } from "@/lib/use-devices";
-import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
 import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
@@ -587,12 +585,11 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
-  const { demoMode } = useDemoMode();
   const { devices, loading, error } = useDevices(
     "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
   );
 
-  if (!demoMode) {
+  if (loading || error) {
     return (
       <>
         <PageHeader
@@ -613,18 +610,37 @@ export function DevicesScreen() {
     );
   }
 
-  // Fallback to fixtures if loading or error
-  const displayDevices = loading || error ? DEVICES_MAPLE : devices;
-  const total = displayDevices.length;
-  const online = displayDevices.filter((d) => d.reachable).length;
-  const unreachable = displayDevices.filter((d) => !d.reachable).length;
+  const total = devices.length;
+  const online = devices.filter((d) => d.reachable).length;
+  const unreachable = devices.filter((d) => !d.reachable).length;
+
+  if (!total) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="WORKSPACE"
+          title="Devices"
+          sub="0 devices · 0 online"
+          primary={
+            <Button variant="primary" icon={Plus}>
+              Pair device
+            </Button>
+          }
+        />
+        <EmptyDataState
+          title="No devices connected"
+          description="Connect your first smart home integration to start monitoring devices."
+        />
+      </>
+    );
+  }
 
   return (
     <>
       <PageHeader
         eyebrow="WORKSPACE"
         title="Devices"
-        sub="401 devices across 12 properties · synced from connected vendor integrations"
+        sub={`${total} devices · ${online} online`}
         primary={
           <Button variant="primary" icon={Plus}>
             Pair device
@@ -641,8 +657,8 @@ export function DevicesScreen() {
         <div className="grid grid-cols-4 gap-3">
           <StatCard
             label="Total devices"
-            value="401"
-            sub="Across 12 properties"
+            value={total}
+            sub="Connected devices"
           />
           <StatCard label="Online" value={online} sub="Reporting normally" />
           <StatCard
@@ -654,23 +670,21 @@ export function DevicesScreen() {
             label="Unreachable"
             value={unreachable}
             variant="amber"
-            sub={
-              <span className="text-amber">Hallway motion · Maple Court</span>
-            }
+            sub="Check connections"
           />
         </div>
 
         <div>
           <SectionHead
             title="All devices"
-            sub={`MAPLE COURT — SHOWING ${total} OF 401 · FILTER BY PROPERTY ABOVE`}
+            sub={`SHOWING ${total} DEVICES · FILTER BY PROPERTY ABOVE`}
             right={
               <Button variant="ghost" size="sm">
                 Filters
               </Button>
             }
           />
-          <DeviceList devices={displayDevices} onSelect={setSelected} />
+          <DeviceList devices={devices} onSelect={setSelected} />
         </div>
 
         <Card className="p-[18px] flex items-start gap-3.5">

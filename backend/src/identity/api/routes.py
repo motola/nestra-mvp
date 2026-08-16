@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -13,20 +14,28 @@ from config import get_settings
 from db import SessionLocal
 from dependencies import SettingsDep
 from identity.api.schemas import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginRequest,
     MeResponse,
     OrganizationOut,
+    ResetPasswordRequest,
     SignupRequest,
     TokenResponse,
     UserOut,
+    VerifyEmailRequest,
+    VerifyEmailResponse,
 )
 from identity.domain.roles import AuthMethod, OrgRole, OrgStatus, SubscriptionTier
 from identity.repository.models import (
     OrganizationModel,
     OrgMembershipModel,
     PortfolioModel,
+    TokenType,
     UserModel,
+    VerificationTokenModel,
 )
+from identity.services.email_service import get_email_service
 from identity.services.signup import _hash_password, _verify_password
 
 router = APIRouter(prefix="/auth", tags=["identity"])
@@ -117,7 +126,24 @@ async def signup_endpoint(
             )
             session.add(membership)
 
+            # Create email verification token
+            verify_token = secrets.token_urlsafe(32)
+            verify_expires = now + timedelta(hours=24)
+            verification_token = VerificationTokenModel(
+                user_id=user.id,
+                token=verify_token,
+                token_type=TokenType.EMAIL_VERIFICATION,
+                expires_at=verify_expires,
+                created_at=now,
+            )
+            session.add(verification_token)
+
             await session.commit()
+
+            # Send welcome and verification emails
+            email_service = get_email_service()
+            await email_service.send_welcome_email(user.email, user.full_name)
+            await email_service.send_verification_email(user.email, user.full_name, verify_token)
 
             token = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
@@ -224,3 +250,220 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
                 slug=org.slug,
             ),
         )
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswordResponse:
+    """Generate a password reset token and send it to the user's email.
+
+    Returns a success message without revealing if the email exists.
+    """
+    now = datetime.now(tz=UTC)
+    expires = now + timedelta(hours=24)
+
+    async with SessionLocal() as session:
+        # Query user by email
+        result = await session.execute(select(UserModel).where(UserModel.email == body.email))
+        user = result.scalar_one_or_none()
+
+        # Generate token regardless of user existence (security best practice)
+        token = secrets.token_urlsafe(32)
+
+        if user:
+            try:
+                # Create verification token in database
+                verification_token = VerificationTokenModel(
+                    user_id=user.id,
+                    token=token,
+                    token_type=TokenType.PASSWORD_RESET,
+                    expires_at=expires,
+                    created_at=now,
+                )
+                session.add(verification_token)
+                await session.commit()
+
+                email_service = get_email_service()
+                await email_service.send_password_reset_email(
+                    user.email,
+                    user.full_name,
+                    token,
+                )
+
+            except IntegrityError as e:
+                await session.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to create reset token",
+                ) from e
+
+        return ForgotPasswordResponse(message="Check your email for password reset instructions")
+
+
+@router.post("/reset-password", response_model=TokenResponse)
+async def reset_password_endpoint(
+    body: ResetPasswordRequest,
+    settings: SettingsDep,
+) -> TokenResponse:
+    """Reset a user's password using a valid reset token.
+
+    Returns a new JWT token for immediate login after password reset.
+    """
+    async with SessionLocal() as session:
+        # Query verification token
+        result = await session.execute(
+            select(VerificationTokenModel).where(VerificationTokenModel.token == body.token)
+        )
+        token_record = result.scalar_one_or_none()
+
+        if not token_record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired token",
+            )
+
+        now = datetime.now(tz=UTC)
+
+        # Check if token is expired
+        if token_record.expires_at < now:
+            # Clean up expired token
+            await session.delete(token_record)
+            await session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token has expired",
+            )
+
+        # Check if token has already been used
+        if token_record.used_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token has already been used",
+            )
+
+        # Verify token type
+        if token_record.token_type != TokenType.PASSWORD_RESET:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type",
+            )
+
+        # Query user
+        user_result = await session.execute(
+            select(UserModel).where(UserModel.id == token_record.user_id)
+        )
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        try:
+            # Update user password
+            user.password_hash = _hash_password(body.new_password)
+
+            # Mark token as used
+            token_record.used_at = now
+
+            await session.commit()
+
+            # Get user's first organization for token creation
+            membership_result = await session.execute(
+                select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
+            )
+            membership = membership_result.scalars().first()
+
+            if not membership:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="User has no organization membership",
+                )
+
+            # Create and return JWT token
+            jwt_token = _create_token(user.id, membership.organization_id, settings.secret_key)
+            return TokenResponse(
+                access_token=jwt_token,
+                token_type="bearer",
+                organization_id=membership.organization_id,
+            )
+
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to reset password",
+            ) from e
+
+
+@router.post("/verify-email", response_model=VerifyEmailResponse)
+async def verify_email_endpoint(body: VerifyEmailRequest) -> VerifyEmailResponse:
+    """Verify a user's email address using a verification token."""
+    async with SessionLocal() as session:
+        # Query verification token
+        result = await session.execute(
+            select(VerificationTokenModel).where(VerificationTokenModel.token == body.token)
+        )
+        token_record = result.scalar_one_or_none()
+
+        if not token_record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired token",
+            )
+
+        now = datetime.now(tz=UTC)
+
+        # Check if token is expired
+        if token_record.expires_at < now:
+            # Clean up expired token
+            await session.delete(token_record)
+            await session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token has expired",
+            )
+
+        # Check if token has already been used
+        if token_record.used_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email has already been verified",
+            )
+
+        # Verify token type
+        if token_record.token_type != TokenType.EMAIL_VERIFICATION:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type",
+            )
+
+        # Query user
+        user_result = await session.execute(
+            select(UserModel).where(UserModel.id == token_record.user_id)
+        )
+        user = user_result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        try:
+            # Mark email as verified
+            user.email_verified = True
+
+            # Mark token as used
+            token_record.used_at = now
+
+            await session.commit()
+
+            return VerifyEmailResponse(message="Email verified successfully")
+
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to verify email",
+            ) from e
