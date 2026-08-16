@@ -2,13 +2,27 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { useVerifyEmail } from "@/lib/api/hooks/use-auth";
+import { useState, useEffect } from "react";
+import {
+  useVerifyEmail,
+  useResendVerificationEmail,
+} from "@/lib/api/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const verifyEmail = useVerifyEmail();
+  const resendEmail = useResendVerificationEmail();
+  const [showResent, setShowResent] = useState(false);
+
+  const handleResend = () => {
+    if (token) {
+      resendEmail.mutate({ token });
+      setShowResent(true);
+      setTimeout(() => setShowResent(false), 3000);
+    }
+  };
 
   useEffect(() => {
     if (token && !verifyEmail.isPending) {
@@ -40,9 +54,24 @@ function VerifyEmailForm() {
             </p>
           </div>
 
-          <p className="text-[12px] text-text-3 text-center m-0">
-            Please try signing up again or contact support if you need help.
-          </p>
+          {token && (
+            <>
+              <p className="text-[12px] text-text-3 text-center mb-4 m-0">
+                Didn&apos;t receive the email or link expired?
+              </p>
+              <Button
+                variant="primary"
+                type="button"
+                disabled={resendEmail.isPending}
+                className="w-full justify-center"
+                onClick={handleResend}
+              >
+                {resendEmail.isPending
+                  ? "Sending…"
+                  : "Resend verification email"}
+              </Button>
+            </>
+          )}
         </>
       )}
 
@@ -55,9 +84,15 @@ function VerifyEmailForm() {
             </p>
           </div>
 
-          <p className="text-[12px] text-text-3 text-center m-0">
+          <p className="text-[12px] text-text-3 text-center mb-4 m-0">
             You can request a new verification link from the login page.
           </p>
+
+          <a href="/login">
+            <Button variant="primary" className="w-full justify-center">
+              Return to login
+            </Button>
+          </a>
         </>
       )}
 
@@ -76,6 +111,14 @@ function VerifyEmailForm() {
             </button>
           </a>
         </>
+      )}
+
+      {showResent && (
+        <div className="bg-green-bg border border-green rounded-[9px] px-3 py-2 mt-4">
+          <p className="text-[12px] text-green m-0">
+            ✓ Verification email resent! Check your inbox.
+          </p>
+        </div>
       )}
     </>
   );
