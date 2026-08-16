@@ -129,3 +129,15 @@ export function useVerifyEmail() {
     },
   });
 }
+
+// ─── Resend Verification Email ────────────────────────────────────────────────
+
+export function useResendVerificationEmail() {
+  return useMutation<void, ApiError, VerifyEmailPayload>({
+    mutationFn: (payload) =>
+      apiFetch<void>("/auth/resend-verification-email", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  });
+}
