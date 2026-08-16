@@ -21,7 +21,6 @@ import { cn } from "@/lib/cn";
 import { DEVICES_MAPLE } from "@/lib/fixtures";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
 import { useDevices } from "@/lib/use-devices";
-import { useDemoMode } from "@/lib/use-demo-mode";
 import { Button } from "@/components/ui/button";
 import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";

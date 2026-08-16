@@ -18,7 +18,6 @@ import {
 import { cn } from "@/lib/cn";
 import { PROPERTIES } from "@/lib/fixtures";
 import { Button } from "@/components/ui/button";
-import { useDemoMode } from "@/lib/use-demo-mode";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

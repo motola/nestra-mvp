@@ -11,7 +11,6 @@ import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyDataState } from "@/components/ui/empty-state";
-import { useDemoMode } from "@/lib/use-demo-mode";
 
 // ─── Toggle switch ────────────────────────────────────────────────────────────
 

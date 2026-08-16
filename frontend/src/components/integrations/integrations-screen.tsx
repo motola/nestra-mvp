@@ -14,7 +14,6 @@ import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { EmptyDataState } from "@/components/ui/empty-state";
-import { useDemoMode } from "@/lib/use-demo-mode";
 import { BluetoothPairingModal } from "@/components/integrations/bluetooth-pairing-modal";
 import { useBluetoothDevices } from "@/integrations/bluetooth";
 
