@@ -62,7 +62,7 @@ class EmailService:
         settings = get_settings()
         self.sendgrid_client = SendGridAPIClient(settings.sendgrid_api_key)
         self.frontend_url = settings.frontend_url
-        self.from_email = Email("noreply@alphacon.io", "Alphacon AI")
+        self.from_email = Email("founders@alphacon.ai", "Alphacon AI")
 
     async def send_welcome_email(
         self,
