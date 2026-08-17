@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     sendgrid_api_key: str = ""
     google_oauth_client_id: str = ""
     google_oauth_client_secret: str = ""
+    microsoft_oauth_client_id: str = ""
+    microsoft_oauth_client_secret: str = ""
+    microsoft_oauth_tenant: str = "common"
     frontend_url: str = "https://nestra-mvp.fly.dev"
 
     @model_validator(mode="after")

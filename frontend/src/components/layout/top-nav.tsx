@@ -1,18 +1,17 @@
 "use client"; // Client: account menu
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Bell, Building, ChevronRight, LogOut, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth/provider";
+import { useLogout } from "@/lib/api/hooks/use-auth";
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
-  const { user, organization, clearSession } = useAuth();
-  const router = useRouter();
+  const { user, organization } = useAuth();
+  const logout = useLogout();
 
   const handleLogout = () => {
-    clearSession();
-    router.push("/login");
+    logout.mutate();
   };
 
   const initials =

@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLogin, useGoogleOAuthUrl } from "@/lib/api/hooks/use-auth";
+import {
+  useLogin,
+  useGoogleOAuthUrl,
+  useMicrosoftOAuthUrl,
+} from "@/lib/api/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 const schema = z.object({
@@ -17,6 +21,7 @@ type FormValues = z.infer<typeof schema>;
 export default function LoginPage() {
   const login = useLogin();
   const googleOAuthUrl = useGoogleOAuthUrl();
+  const microsoftOAuthUrl = useMicrosoftOAuthUrl();
 
   const {
     register,
@@ -31,6 +36,12 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     if (googleOAuthUrl.data?.url) {
       window.location.href = googleOAuthUrl.data.url;
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    if (microsoftOAuthUrl.data?.url) {
+      window.location.href = microsoftOAuthUrl.data.url;
     }
   };
 
@@ -111,15 +122,28 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <Button
-        variant="secondary"
-        type="button"
-        onClick={handleGoogleLogin}
-        disabled={googleOAuthUrl.isPending}
-        className="w-full justify-center"
-      >
-        {googleOAuthUrl.isPending ? "Loading…" : "Sign in with Google"}
-      </Button>
+      <div className="flex gap-3 justify-center">
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleOAuthUrl.isPending}
+          className="w-12 h-12 p-0 justify-center"
+          title="Sign in with Google"
+        >
+          {googleOAuthUrl.isPending ? "…" : "G"}
+        </Button>
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={handleMicrosoftLogin}
+          disabled={microsoftOAuthUrl.isPending}
+          className="w-12 h-12 p-0 justify-center"
+          title="Sign in with Microsoft"
+        >
+          {microsoftOAuthUrl.isPending ? "…" : "M"}
+        </Button>
+      </div>
 
       <p className="text-[12px] text-text-3 text-center mt-5 m-0">
         No account?{" "}

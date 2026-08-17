@@ -142,6 +142,28 @@ export function useResendVerificationEmail() {
   });
 }
 
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+export function useLogout() {
+  const { clearSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<void, ApiError, void>({
+    mutationFn: () =>
+      apiFetch<void>("/auth/logout", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      clearSession();
+      router.push("/login");
+    },
+    onError: () => {
+      clearSession();
+      router.push("/login");
+    },
+  });
+}
+
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
 
 interface GoogleOAuthUrlResponse {
@@ -170,6 +192,44 @@ export function useGoogleOAuthCallback() {
   return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
     mutationFn: (payload) =>
       apiFetch<TokenResponse>("/auth/google/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
+    },
+  });
+}
+
+// ─── Microsoft OAuth ──────────────────────────────────────────────────────────
+
+interface MicrosoftOAuthUrlResponse {
+  url: string;
+}
+
+interface MicrosoftOAuthCallbackPayload {
+  code: string;
+}
+
+export function useMicrosoftOAuthUrl() {
+  return useQuery<MicrosoftOAuthUrlResponse, ApiError>({
+    queryKey: ["microsoft-oauth-url"],
+    queryFn: () =>
+      apiFetch<MicrosoftOAuthUrlResponse>("/auth/microsoft/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useMicrosoftOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/microsoft/callback", {
         method: "POST",
         body: JSON.stringify(payload),
       }),

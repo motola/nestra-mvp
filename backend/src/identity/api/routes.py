@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from urllib.parse import urlencode
@@ -23,6 +24,8 @@ from identity.api.schemas import (
     GoogleOAuthUrlResponse,
     LoginRequest,
     MeResponse,
+    MicrosoftOAuthCallbackRequest,
+    MicrosoftOAuthUrlResponse,
     OrganizationOut,
     ResetPasswordRequest,
     SignupRequest,
@@ -36,6 +39,7 @@ from identity.repository.models import (
     OrganizationModel,
     OrgMembershipModel,
     PortfolioModel,
+    RevokedTokenModel,
     TokenType,
     UserModel,
     VerificationTokenModel,
@@ -46,17 +50,20 @@ from identity.services.signup import _hash_password, _verify_password
 router = APIRouter(prefix="/auth", tags=["identity"])
 
 
-def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> str:
-    """Create a JWT token valid for 7 days."""
+def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> tuple[str, str]:
+    """Create a JWT token valid for 7 days. Returns (token, jti)."""
     now = datetime.now(tz=UTC)
     expires = now + timedelta(days=7)
+    jti = str(uuid.uuid4())
     payload = {
         "sub": str(user_id),
         "org": str(org_id),
+        "jti": jti,
         "iat": now.timestamp(),
         "exp": expires.timestamp(),
     }
-    return jwt.encode(payload, secret_key, algorithm="HS256")
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
+    return token, jti
 
 
 def _decode_token(token: str, secret_key: str) -> dict[str, Any]:
@@ -68,6 +75,15 @@ def _decode_token(token: str, secret_key: str) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         ) from e
+
+
+async def _is_token_revoked(jti: str) -> bool:
+    """Check if a token has been revoked."""
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(RevokedTokenModel).where(RevokedTokenModel.token_jti == jti)
+        )
+        return result.scalar_one_or_none() is not None
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -152,7 +168,7 @@ async def signup_endpoint(
                 email_service.send_verification_email(user.email, user.full_name, verify_token)
             )
 
-            token = _create_token(user.id, org.id, settings.secret_key)
+            token, _jti = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
                 access_token=token,
                 token_type="bearer",
@@ -214,7 +230,7 @@ async def login_endpoint(
                 detail="User has no organization membership",
             )
 
-        token = _create_token(user.id, membership.organization_id, settings.secret_key)
+        token, _jti = _create_token(user.id, membership.organization_id, settings.secret_key)
         return TokenResponse(
             access_token=token,
             token_type="bearer",
@@ -223,9 +239,42 @@ async def login_endpoint(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout_endpoint() -> None:
-    """Revoke the current session token (stateless — just return 204)."""
-    pass
+async def logout_endpoint(request: Request, settings: SettingsDep) -> None:
+    """Revoke the current session token by adding it to the revocation list."""
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header",
+        )
+
+    token = auth_header[7:]
+    try:
+        payload = _decode_token(token, settings.secret_key)
+    except HTTPException:
+        return
+
+    jti = payload.get("jti")
+    user_id = UUID(payload["sub"])
+
+    if not jti:
+        return
+
+    now = datetime.now(tz=UTC)
+    expires = datetime.fromtimestamp(payload["exp"], tz=UTC)
+
+    async with SessionLocal() as session:
+        try:
+            revoked_token = RevokedTokenModel(
+                user_id=user_id,
+                token_jti=jti,
+                revoked_at=now,
+                expires_at=expires,
+            )
+            session.add(revoked_token)
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
 
 
 @router.get("/me", response_model=MeResponse)
@@ -243,6 +292,14 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
 
     settings = get_settings()
     payload = _decode_token(auth, settings.secret_key)
+
+    # Check if token has been revoked
+    jti = payload.get("jti")
+    if jti and await _is_token_revoked(jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
 
     user_id = UUID(payload["sub"])
     org_id = UUID(payload["org"])
@@ -441,7 +498,9 @@ async def reset_password_endpoint(
             )
 
             # Create and return JWT token
-            jwt_token = _create_token(user.id, membership.organization_id, settings.secret_key)
+            jwt_token, _jti = _create_token(
+                user.id, membership.organization_id, settings.secret_key
+            )
             return TokenResponse(
                 access_token=jwt_token,
                 token_type="bearer",
@@ -730,7 +789,187 @@ async def google_oauth_callback_endpoint(
                 detail="User has no organization membership",
             )
 
-        token = _create_token(user.id, user_membership.organization_id, settings.secret_key)
+        token, _jti = _create_token(user.id, user_membership.organization_id, settings.secret_key)
+        return TokenResponse(
+            access_token=token,
+            token_type="bearer",
+            organization_id=user_membership.organization_id,
+        )
+
+
+@router.get("/microsoft/url", response_model=MicrosoftOAuthUrlResponse)
+async def microsoft_oauth_url_endpoint(settings: SettingsDep) -> MicrosoftOAuthUrlResponse:
+    """Generate and return the Microsoft OAuth authorization URL."""
+    if not settings.microsoft_oauth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Microsoft OAuth not configured",
+        )
+
+    params = {
+        "client_id": settings.microsoft_oauth_client_id,
+        "redirect_uri": f"{settings.frontend_url}/auth/microsoft/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "response_mode": "query",
+    }
+    url = f"https://login.microsoftonline.com/{settings.microsoft_oauth_tenant}/oauth2/v2.0/authorize?{urlencode(params)}"
+    return MicrosoftOAuthUrlResponse(url=url)
+
+
+@router.post("/microsoft/callback", response_model=TokenResponse)
+async def microsoft_oauth_callback_endpoint(
+    body: MicrosoftOAuthCallbackRequest,
+    settings: SettingsDep,
+) -> TokenResponse:
+    """Exchange Microsoft authorization code for user token."""
+    if not settings.microsoft_oauth_client_id or not settings.microsoft_oauth_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Microsoft OAuth not configured",
+        )
+
+    async with httpx.AsyncClient() as client:
+        # Exchange code for token
+        token_response = await client.post(
+            f"https://login.microsoftonline.com/{settings.microsoft_oauth_tenant}/oauth2/v2.0/token",
+            data={
+                "code": body.code,
+                "client_id": settings.microsoft_oauth_client_id,
+                "client_secret": settings.microsoft_oauth_client_secret,
+                "redirect_uri": f"{settings.frontend_url}/auth/microsoft/callback",
+                "grant_type": "authorization_code",
+                "scope": "openid email profile",
+            },
+        )
+
+        if token_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to exchange authorization code",
+            )
+
+        token_data = token_response.json()
+
+        # Get user info from Microsoft Graph
+        user_response = await client.get(
+            "https://graph.microsoft.com/v1.0/me",
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+        )
+
+        if user_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to get user info from Microsoft",
+            )
+
+        user_info = user_response.json()
+        microsoft_id = user_info.get("id")
+        email = user_info.get("userPrincipalName")
+        name = user_info.get("displayName", "Microsoft User")
+
+    if not microsoft_id or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required info from Microsoft",
+        )
+
+    now = datetime.now(tz=UTC)
+
+    async with SessionLocal() as session:
+        # Try to find user by microsoft_id first
+        result = await session.execute(
+            select(UserModel).where(UserModel.microsoft_id == microsoft_id)
+        )
+        user = result.scalar_one_or_none()
+
+        if user:
+            # Existing Microsoft OAuth user
+            user.last_login_at = now
+            await session.commit()
+        else:
+            # Check if user exists by email
+            email_result = await session.execute(select(UserModel).where(UserModel.email == email))
+            email_user = email_result.scalar_one_or_none()
+
+            if email_user:
+                # Link Microsoft ID to existing user
+                email_user.microsoft_id = microsoft_id
+                email_user.auth_method = AuthMethod.MICROSOFT_SSO
+                email_user.last_login_at = now
+                email_user.email_verified = True
+                user = email_user
+                await session.commit()
+            else:
+                # Create new user with Microsoft OAuth
+                try:
+                    # Create organization for new user
+                    slug = email.split("@")[0].lower()
+                    org = OrganizationModel(
+                        name=f"{name}'s Portfolio",
+                        slug=slug,
+                        legal_name=name,
+                        status=OrgStatus.ACTIVE,
+                        subscription_tier=SubscriptionTier.STARTER,
+                        created_at=now,
+                    )
+                    session.add(org)
+                    await session.flush()
+
+                    # Create user
+                    user = UserModel(
+                        email=email,
+                        full_name=name,
+                        microsoft_id=microsoft_id,
+                        password_hash=None,
+                        auth_method=AuthMethod.MICROSOFT_SSO,
+                        is_active=True,
+                        email_verified=True,
+                        last_login_at=now,
+                    )
+                    session.add(user)
+                    await session.flush()
+
+                    # Create default portfolio
+                    portfolio = PortfolioModel(
+                        organization_id=org.id,
+                        name="Default Portfolio",
+                        description="",
+                        is_default=True,
+                        created_at=now,
+                    )
+                    session.add(portfolio)
+
+                    # Create org membership
+                    membership = OrgMembershipModel(
+                        user_id=user.id,
+                        organization_id=org.id,
+                        org_role=OrgRole.OWNER,
+                        joined_at=now,
+                    )
+                    session.add(membership)
+
+                    await session.commit()
+                except IntegrityError as e:
+                    await session.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Failed to create user account",
+                    ) from e
+
+        # Get user's first organization
+        membership_result = await session.execute(
+            select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
+        )
+        user_membership: OrgMembershipModel | None = membership_result.scalars().first()
+
+        if not user_membership:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User has no organization membership",
+            )
+
+        token, _jti = _create_token(user.id, user_membership.organization_id, settings.secret_key)
         return TokenResponse(
             access_token=token,
             token_type="bearer",

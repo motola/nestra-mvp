@@ -32,6 +32,7 @@ class AuthMethod(StrEnum):
     PASSWORD = "PASSWORD"
     MAGIC_LINK = "MAGIC_LINK"
     GOOGLE_SSO = "GOOGLE_SSO"
+    MICROSOFT_SSO = "MICROSOFT_SSO"
     APPLE_SSO = "APPLE_SSO"
 
 
