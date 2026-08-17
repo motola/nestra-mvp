@@ -722,17 +722,17 @@ async def google_oauth_callback_endpoint(
         membership_result = await session.execute(
             select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
         )
-        membership = membership_result.scalars().first()
+        user_membership: OrgMembershipModel | None = membership_result.scalars().first()
 
-        if not membership:
+        if not user_membership:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="User has no organization membership",
             )
 
-        token = _create_token(user.id, membership.organization_id, settings.secret_key)
+        token = _create_token(user.id, user_membership.organization_id, settings.secret_key)
         return TokenResponse(
             access_token=token,
             token_type="bearer",
-            organization_id=membership.organization_id,
+            organization_id=user_membership.organization_id,
         )
