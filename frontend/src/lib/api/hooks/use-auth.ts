@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
@@ -160,6 +160,74 @@ export function useLogout() {
     onError: () => {
       clearSession();
       router.push("/login");
+    },
+  });
+}
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+interface OAuthUrlResponse {
+  url: string;
+}
+
+interface OAuthCallbackPayload {
+  code: string;
+}
+
+export function useGoogleOAuthUrl() {
+  return useQuery<OAuthUrlResponse, ApiError>({
+    queryKey: ["google-oauth-url"],
+    queryFn: () =>
+      apiFetch<OAuthUrlResponse>("/auth/google/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useGoogleOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, OAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/google/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
+    },
+  });
+}
+
+// ─── Microsoft OAuth ──────────────────────────────────────────────────────────
+
+export function useMicrosoftOAuthUrl() {
+  return useQuery<OAuthUrlResponse, ApiError>({
+    queryKey: ["microsoft-oauth-url"],
+    queryFn: () =>
+      apiFetch<OAuthUrlResponse>("/auth/microsoft/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useMicrosoftOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, OAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/microsoft/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
     },
   });
 }

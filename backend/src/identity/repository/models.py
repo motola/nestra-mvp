@@ -60,7 +60,9 @@ class UserModel(Base):
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    microsoft_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     auth_method: Mapped[AuthMethod] = mapped_column(
         Enum(AuthMethod, name="auth_method"), nullable=False
     )
