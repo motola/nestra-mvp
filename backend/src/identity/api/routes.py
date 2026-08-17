@@ -24,6 +24,8 @@ from identity.api.schemas import (
     GoogleOAuthUrlResponse,
     LoginRequest,
     MeResponse,
+    MicrosoftOAuthCallbackRequest,
+    MicrosoftOAuthUrlResponse,
     OrganizationOut,
     ResetPasswordRequest,
     SignupRequest,
@@ -787,7 +789,187 @@ async def google_oauth_callback_endpoint(
                 detail="User has no organization membership",
             )
 
-        token = _create_token(user.id, user_membership.organization_id, settings.secret_key)
+        token, _jti = _create_token(user.id, user_membership.organization_id, settings.secret_key)
+        return TokenResponse(
+            access_token=token,
+            token_type="bearer",
+            organization_id=user_membership.organization_id,
+        )
+
+
+@router.get("/microsoft/url", response_model=MicrosoftOAuthUrlResponse)
+async def microsoft_oauth_url_endpoint(settings: SettingsDep) -> MicrosoftOAuthUrlResponse:
+    """Generate and return the Microsoft OAuth authorization URL."""
+    if not settings.microsoft_oauth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Microsoft OAuth not configured",
+        )
+
+    params = {
+        "client_id": settings.microsoft_oauth_client_id,
+        "redirect_uri": f"{settings.frontend_url}/auth/microsoft/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "response_mode": "query",
+    }
+    url = f"https://login.microsoftonline.com/{settings.microsoft_oauth_tenant}/oauth2/v2.0/authorize?{urlencode(params)}"
+    return MicrosoftOAuthUrlResponse(url=url)
+
+
+@router.post("/microsoft/callback", response_model=TokenResponse)
+async def microsoft_oauth_callback_endpoint(
+    body: MicrosoftOAuthCallbackRequest,
+    settings: SettingsDep,
+) -> TokenResponse:
+    """Exchange Microsoft authorization code for user token."""
+    if not settings.microsoft_oauth_client_id or not settings.microsoft_oauth_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Microsoft OAuth not configured",
+        )
+
+    async with httpx.AsyncClient() as client:
+        # Exchange code for token
+        token_response = await client.post(
+            f"https://login.microsoftonline.com/{settings.microsoft_oauth_tenant}/oauth2/v2.0/token",
+            data={
+                "code": body.code,
+                "client_id": settings.microsoft_oauth_client_id,
+                "client_secret": settings.microsoft_oauth_client_secret,
+                "redirect_uri": f"{settings.frontend_url}/auth/microsoft/callback",
+                "grant_type": "authorization_code",
+                "scope": "openid email profile",
+            },
+        )
+
+        if token_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to exchange authorization code",
+            )
+
+        token_data = token_response.json()
+
+        # Get user info from Microsoft Graph
+        user_response = await client.get(
+            "https://graph.microsoft.com/v1.0/me",
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+        )
+
+        if user_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to get user info from Microsoft",
+            )
+
+        user_info = user_response.json()
+        microsoft_id = user_info.get("id")
+        email = user_info.get("userPrincipalName")
+        name = user_info.get("displayName", "Microsoft User")
+
+    if not microsoft_id or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required info from Microsoft",
+        )
+
+    now = datetime.now(tz=UTC)
+
+    async with SessionLocal() as session:
+        # Try to find user by microsoft_id first
+        result = await session.execute(
+            select(UserModel).where(UserModel.microsoft_id == microsoft_id)
+        )
+        user = result.scalar_one_or_none()
+
+        if user:
+            # Existing Microsoft OAuth user
+            user.last_login_at = now
+            await session.commit()
+        else:
+            # Check if user exists by email
+            email_result = await session.execute(select(UserModel).where(UserModel.email == email))
+            email_user = email_result.scalar_one_or_none()
+
+            if email_user:
+                # Link Microsoft ID to existing user
+                email_user.microsoft_id = microsoft_id
+                email_user.auth_method = AuthMethod.MICROSOFT_SSO
+                email_user.last_login_at = now
+                email_user.email_verified = True
+                user = email_user
+                await session.commit()
+            else:
+                # Create new user with Microsoft OAuth
+                try:
+                    # Create organization for new user
+                    slug = email.split("@")[0].lower()
+                    org = OrganizationModel(
+                        name=f"{name}'s Portfolio",
+                        slug=slug,
+                        legal_name=name,
+                        status=OrgStatus.ACTIVE,
+                        subscription_tier=SubscriptionTier.STARTER,
+                        created_at=now,
+                    )
+                    session.add(org)
+                    await session.flush()
+
+                    # Create user
+                    user = UserModel(
+                        email=email,
+                        full_name=name,
+                        microsoft_id=microsoft_id,
+                        password_hash=None,
+                        auth_method=AuthMethod.MICROSOFT_SSO,
+                        is_active=True,
+                        email_verified=True,
+                        last_login_at=now,
+                    )
+                    session.add(user)
+                    await session.flush()
+
+                    # Create default portfolio
+                    portfolio = PortfolioModel(
+                        organization_id=org.id,
+                        name="Default Portfolio",
+                        description="",
+                        is_default=True,
+                        created_at=now,
+                    )
+                    session.add(portfolio)
+
+                    # Create org membership
+                    membership = OrgMembershipModel(
+                        user_id=user.id,
+                        organization_id=org.id,
+                        org_role=OrgRole.OWNER,
+                        joined_at=now,
+                    )
+                    session.add(membership)
+
+                    await session.commit()
+                except IntegrityError as e:
+                    await session.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Failed to create user account",
+                    ) from e
+
+        # Get user's first organization
+        membership_result = await session.execute(
+            select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
+        )
+        user_membership: OrgMembershipModel | None = membership_result.scalars().first()
+
+        if not user_membership:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User has no organization membership",
+            )
+
+        token, _jti = _create_token(user.id, user_membership.organization_id, settings.secret_key)
         return TokenResponse(
             access_token=token,
             token_type="bearer",

@@ -85,3 +85,17 @@ class GoogleOAuthUserInfo(BaseModel):
     name: str
     picture: str | None = None
     email_verified: bool
+
+
+class MicrosoftOAuthUrlResponse(BaseModel):
+    url: str
+
+
+class MicrosoftOAuthCallbackRequest(BaseModel):
+    code: str
+
+
+class MicrosoftOAuthUserInfo(BaseModel):
+    id: str
+    userPrincipalName: str
+    displayName: str
