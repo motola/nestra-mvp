@@ -17,11 +17,16 @@ class Settings(BaseSettings):
     debug: bool = False
 
     lifx_api_token: str = ""
+    lifx_client_id: str = ""
+    lifx_client_secret: str = ""
     govee_api_key: str = ""
     govee_ble_address: str = ""
+    shelly_client_id: str = ""
+    shelly_client_secret: str = ""
     anthropic_api_key: str = ""
     sendgrid_api_key: str = ""
     frontend_url: str = "https://nestra-mvp.fly.dev"
+    backend_url: str = "https://nestra-mvp-api.fly.dev"
 
     @model_validator(mode="after")
     def _reject_insecure_secret_in_production(self) -> Settings:

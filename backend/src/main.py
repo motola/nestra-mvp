@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import get_settings
 from identity.api.routes import router as identity_router
+from integrations.device_oauth.routes import router as device_oauth_router
 from property.api.routes import router as property_router
 
 _settings = get_settings()
@@ -35,4 +36,5 @@ async def health() -> dict[str, str]:
 
 
 app.include_router(identity_router)
+app.include_router(device_oauth_router)
 app.include_router(property_router)
