@@ -17,6 +17,7 @@ type FormValues = z.infer<typeof schema>;
 export default function ForgotPasswordPage() {
   const forgotPassword = useForgotPassword();
   const [submitted, setSubmitted] = useState(false);
+  const [accountExists, setAccountExists] = useState(true);
 
   const {
     register,
@@ -26,13 +27,45 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = (values: FormValues) => {
     forgotPassword.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        setAccountExists(response.account_exists);
         setSubmitted(true);
       },
     });
   };
 
   if (submitted) {
+    if (!accountExists) {
+      return (
+        <>
+          <h1 className="font-serif text-[26px] leading-[1.2] text-text m-0 mb-1">
+            No account found
+          </h1>
+          <p className="text-[13px] text-text-3 mb-6 m-0">
+            We couldn&apos;t find an account with that email address.
+          </p>
+
+          <div className="bg-amber-bg border border-amber rounded-[9px] px-3 py-2 mb-6">
+            <p className="text-[12px] text-amber m-0">
+              <strong>Create a new account</strong> — sign up to get started
+            </p>
+          </div>
+
+          <Link href="/signup">
+            <Button variant="primary" className="w-full justify-center">
+              Create account
+            </Button>
+          </Link>
+
+          <Link href="/login">
+            <Button variant="secondary" className="w-full justify-center mt-3">
+              Back to sign in
+            </Button>
+          </Link>
+        </>
+      );
+    }
+
     return (
       <>
         <h1 className="font-serif text-[26px] leading-[1.2] text-text m-0 mb-1">

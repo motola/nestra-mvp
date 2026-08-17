@@ -288,6 +288,7 @@ async def forgot_password_endpoint(
         # Generate token regardless of user existence (security best practice)
         token = secrets.token_urlsafe(32)
 
+        # Only send email if account exists AND is active (not deleted)
         if user and user.is_active:
             try:
                 # Create verification token in database
@@ -313,6 +314,11 @@ async def forgot_password_endpoint(
                     )
                 )
 
+                return ForgotPasswordResponse(
+                    message="Check your email for password reset instructions",
+                    account_exists=True,
+                )
+
             except IntegrityError as e:
                 await session.rollback()
                 raise HTTPException(
@@ -320,7 +326,11 @@ async def forgot_password_endpoint(
                     detail="Failed to create reset token",
                 ) from e
 
-        return ForgotPasswordResponse(message="Check your email for password reset instructions")
+        # Account doesn't exist or is deleted - suggest creating one
+        return ForgotPasswordResponse(
+            message="No account found with this email. Would you like to create one?",
+            account_exists=False,
+        )
 
 
 @router.post("/reset-password", response_model=TokenResponse)
