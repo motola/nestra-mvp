@@ -523,12 +523,7 @@ async def resend_verification_email_endpoint(
 
 @router.get("/google/url", response_model=GoogleOAuthUrlResponse)
 async def google_oauth_url_endpoint(settings: SettingsDep) -> GoogleOAuthUrlResponse:
-    """Generate and return the Google OAuth authorization URL.
-
-    Requires Google OAuth credentials to be set via fly secrets:
-      flyctl secrets set GOOGLE_OAUTH_CLIENT_ID=<client_id>
-      flyctl secrets set GOOGLE_OAUTH_CLIENT_SECRET=<client_secret>
-    """
+    """Generate and return the Google OAuth authorization URL."""
     if not settings.google_oauth_client_id:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
