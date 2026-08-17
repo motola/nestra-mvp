@@ -86,7 +86,8 @@ export function useForgotPassword() {
 
 interface ResetPasswordPayload {
   token: string;
-  new_password: string;
+  password: string;
+  password_confirm: string;
 }
 
 export function useResetPassword() {

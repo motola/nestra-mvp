@@ -40,7 +40,8 @@ function ResetPasswordForm() {
 
     resetPassword.mutate({
       token,
-      new_password: values.password,
+      password: values.password,
+      password_confirm: values.password_confirm,
     });
   };
 
@@ -115,12 +116,9 @@ function ResetPasswordForm() {
         </div>
 
         {resetPassword.error && (
-          <div className="bg-red-bg border border-red rounded-[9px] px-3 py-2 mb-6">
-            <p className="text-[12px] text-red m-0">
-              <strong>Error resetting password</strong> —{" "}
-              {resetPassword.error.message || "Please try again"}
-            </p>
-          </div>
+          <p className="text-[12px] text-red bg-red-bg rounded-[9px] px-3 py-2 m-0">
+            {resetPassword.error.message}
+          </p>
         )}
 
         <Button
