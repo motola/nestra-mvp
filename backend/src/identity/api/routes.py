@@ -4,8 +4,10 @@ import asyncio
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from urllib.parse import urlencode
 from uuid import UUID
 
+import httpx
 import jwt
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
@@ -17,6 +19,8 @@ from dependencies import SettingsDep
 from identity.api.schemas import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    GoogleOAuthCallbackRequest,
+    GoogleOAuthUrlResponse,
     LoginRequest,
     MeResponse,
     OrganizationOut,
@@ -173,7 +177,11 @@ async def login_endpoint(
         result = await session.execute(select(UserModel).where(UserModel.email == body.email))
         user = result.scalar_one_or_none()
 
-        if not user or not _verify_password(body.password, user.password_hash):
+        if (
+            not user
+            or not user.password_hash
+            or not _verify_password(body.password, user.password_hash)
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
@@ -510,4 +518,181 @@ async def resend_verification_email_endpoint(
         email_service = get_email_service()
         asyncio.create_task(
             email_service.send_verification_email(user.email, user.full_name, token_record.token)
+        )
+
+
+@router.get("/google/url", response_model=GoogleOAuthUrlResponse)
+async def google_oauth_url_endpoint(settings: SettingsDep) -> GoogleOAuthUrlResponse:
+    """Generate and return the Google OAuth authorization URL."""
+    if not settings.google_oauth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth not configured",
+        )
+
+    params = {
+        "client_id": settings.google_oauth_client_id,
+        "redirect_uri": f"{settings.frontend_url}/auth/google/callback",
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "online",
+    }
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    return GoogleOAuthUrlResponse(url=url)
+
+
+@router.post("/google/callback", response_model=TokenResponse)
+async def google_oauth_callback_endpoint(
+    body: GoogleOAuthCallbackRequest,
+    settings: SettingsDep,
+) -> TokenResponse:
+    """Exchange Google authorization code for user token."""
+    if not settings.google_oauth_client_id or not settings.google_oauth_client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth not configured",
+        )
+
+    async with httpx.AsyncClient() as client:
+        # Exchange code for token
+        token_response = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": body.code,
+                "client_id": settings.google_oauth_client_id,
+                "client_secret": settings.google_oauth_client_secret,
+                "redirect_uri": f"{settings.frontend_url}/auth/google/callback",
+                "grant_type": "authorization_code",
+            },
+        )
+
+        if token_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to exchange authorization code",
+            )
+
+        token_data = token_response.json()
+
+        # Verify ID token and get user info
+        user_response = await client.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+        )
+
+        if user_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to get user info from Google",
+            )
+
+        user_info = user_response.json()
+        google_id = user_info.get("id")
+        email = user_info.get("email")
+        name = user_info.get("name", "Google User")
+
+    if not google_id or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required info from Google",
+        )
+
+    now = datetime.now(tz=UTC)
+
+    async with SessionLocal() as session:
+        # Try to find user by google_id first
+        result = await session.execute(select(UserModel).where(UserModel.google_id == google_id))
+        user = result.scalar_one_or_none()
+
+        if user:
+            # Existing Google OAuth user
+            user.last_login_at = now
+            await session.commit()
+        else:
+            # Check if user exists by email
+            email_result = await session.execute(select(UserModel).where(UserModel.email == email))
+            email_user = email_result.scalar_one_or_none()
+
+            if email_user:
+                # Link Google ID to existing user
+                email_user.google_id = google_id
+                email_user.auth_method = AuthMethod.GOOGLE_SSO
+                email_user.last_login_at = now
+                email_user.email_verified = True
+                user = email_user
+                await session.commit()
+            else:
+                # Create new user with Google OAuth
+                try:
+                    # Create organization for new user
+                    slug = email.split("@")[0].lower()
+                    org = OrganizationModel(
+                        name=f"{name}'s Portfolio",
+                        slug=slug,
+                        legal_name=name,
+                        status=OrgStatus.ACTIVE,
+                        subscription_tier=SubscriptionTier.STARTER,
+                        created_at=now,
+                    )
+                    session.add(org)
+                    await session.flush()
+
+                    # Create user
+                    user = UserModel(
+                        email=email,
+                        full_name=name,
+                        google_id=google_id,
+                        password_hash=None,
+                        auth_method=AuthMethod.GOOGLE_SSO,
+                        is_active=True,
+                        email_verified=True,
+                        last_login_at=now,
+                    )
+                    session.add(user)
+                    await session.flush()
+
+                    # Create default portfolio
+                    portfolio = PortfolioModel(
+                        organization_id=org.id,
+                        name="Default Portfolio",
+                        description="",
+                        is_default=True,
+                        created_at=now,
+                    )
+                    session.add(portfolio)
+
+                    # Create org membership
+                    membership = OrgMembershipModel(
+                        user_id=user.id,
+                        organization_id=org.id,
+                        org_role=OrgRole.OWNER,
+                        joined_at=now,
+                    )
+                    session.add(membership)
+
+                    await session.commit()
+                except IntegrityError as e:
+                    await session.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Failed to create user account",
+                    ) from e
+
+        # Get user's first organization
+        membership_result = await session.execute(
+            select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
+        )
+        membership = membership_result.scalars().first()
+
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User has no organization membership",
+            )
+
+        token = _create_token(user.id, membership.organization_id, settings.secret_key)
+        return TokenResponse(
+            access_token=token,
+            token_type="bearer",
+            organization_id=membership.organization_id,
         )

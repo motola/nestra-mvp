@@ -12,7 +12,8 @@ class User(BaseModel):
     id: UUID
     email: str
     full_name: str
-    password_hash: str
+    password_hash: str | None
+    google_id: str | None = None
     auth_method: AuthMethod
     last_login_at: datetime | None = None
     is_active: bool = True

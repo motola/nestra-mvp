@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
@@ -139,5 +139,43 @@ export function useResendVerificationEmail() {
         method: "POST",
         body: JSON.stringify(payload),
       }),
+  });
+}
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+interface GoogleOAuthUrlResponse {
+  url: string;
+}
+
+interface GoogleOAuthCallbackPayload {
+  code: string;
+}
+
+export function useGoogleOAuthUrl() {
+  return useQuery<GoogleOAuthUrlResponse, ApiError>({
+    queryKey: ["google-oauth-url"],
+    queryFn: () =>
+      apiFetch<GoogleOAuthUrlResponse>("/auth/google/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useGoogleOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/google/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
+    },
   });
 }
