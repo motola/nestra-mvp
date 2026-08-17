@@ -141,3 +141,25 @@ export function useResendVerificationEmail() {
       }),
   });
 }
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+export function useLogout() {
+  const { clearSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<void, ApiError, void>({
+    mutationFn: () =>
+      apiFetch<void>("/auth/logout", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      clearSession();
+      router.push("/login");
+    },
+    onError: () => {
+      clearSession();
+      router.push("/login");
+    },
+  });
+}

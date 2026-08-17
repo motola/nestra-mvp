@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -32,6 +33,7 @@ from identity.repository.models import (
     OrganizationModel,
     OrgMembershipModel,
     PortfolioModel,
+    RevokedTokenModel,
     TokenType,
     UserModel,
     VerificationTokenModel,
@@ -42,17 +44,20 @@ from identity.services.signup import _hash_password, _verify_password
 router = APIRouter(prefix="/auth", tags=["identity"])
 
 
-def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> str:
-    """Create a JWT token valid for 7 days."""
+def _create_token(user_id: UUID, org_id: UUID, secret_key: str) -> tuple[str, str]:
+    """Create a JWT token valid for 7 days. Returns (token, jti)."""
     now = datetime.now(tz=UTC)
     expires = now + timedelta(days=7)
+    jti = str(uuid.uuid4())
     payload = {
         "sub": str(user_id),
         "org": str(org_id),
+        "jti": jti,
         "iat": now.timestamp(),
         "exp": expires.timestamp(),
     }
-    return jwt.encode(payload, secret_key, algorithm="HS256")
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
+    return token, jti
 
 
 def _decode_token(token: str, secret_key: str) -> dict[str, Any]:
@@ -64,6 +69,15 @@ def _decode_token(token: str, secret_key: str) -> dict[str, Any]:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         ) from e
+
+
+async def _is_token_revoked(jti: str) -> bool:
+    """Check if a token has been revoked."""
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(RevokedTokenModel).where(RevokedTokenModel.token_jti == jti)
+        )
+        return result.scalar_one_or_none() is not None
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -148,7 +162,7 @@ async def signup_endpoint(
                 email_service.send_verification_email(user.email, user.full_name, verify_token)
             )
 
-            token = _create_token(user.id, org.id, settings.secret_key)
+            token, _jti = _create_token(user.id, org.id, settings.secret_key)
             return TokenResponse(
                 access_token=token,
                 token_type="bearer",
@@ -204,7 +218,7 @@ async def login_endpoint(
                 detail="User has no organization membership",
             )
 
-        token = _create_token(user.id, membership.organization_id, settings.secret_key)
+        token, _jti = _create_token(user.id, membership.organization_id, settings.secret_key)
         return TokenResponse(
             access_token=token,
             token_type="bearer",
@@ -213,9 +227,42 @@ async def login_endpoint(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout_endpoint() -> None:
-    """Revoke the current session token (stateless — just return 204)."""
-    pass
+async def logout_endpoint(request: Request, settings: SettingsDep) -> None:
+    """Revoke the current session token by adding it to the revocation list."""
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header",
+        )
+
+    token = auth_header[7:]
+    try:
+        payload = _decode_token(token, settings.secret_key)
+    except HTTPException:
+        return
+
+    jti = payload.get("jti")
+    user_id = UUID(payload["sub"])
+
+    if not jti:
+        return
+
+    now = datetime.now(tz=UTC)
+    expires = datetime.fromtimestamp(payload["exp"], tz=UTC)
+
+    async with SessionLocal() as session:
+        try:
+            revoked_token = RevokedTokenModel(
+                user_id=user_id,
+                token_jti=jti,
+                revoked_at=now,
+                expires_at=expires,
+            )
+            session.add(revoked_token)
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
 
 
 @router.get("/me", response_model=MeResponse)
@@ -233,6 +280,14 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
 
     settings = get_settings()
     payload = _decode_token(auth, settings.secret_key)
+
+    # Check if token has been revoked
+    jti = payload.get("jti")
+    if jti and await _is_token_revoked(jti):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
 
     user_id = UUID(payload["sub"])
     org_id = UUID(payload["org"])
@@ -431,7 +486,9 @@ async def reset_password_endpoint(
             )
 
             # Create and return JWT token
-            jwt_token = _create_token(user.id, membership.organization_id, settings.secret_key)
+            jwt_token, _jti = _create_token(
+                user.id, membership.organization_id, settings.secret_key
+            )
             return TokenResponse(
                 access_token=jwt_token,
                 token_type="bearer",
