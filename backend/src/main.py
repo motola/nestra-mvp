@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from config import get_settings
 from identity.api.routes import router as identity_router
@@ -27,6 +29,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Handle validation errors with user-friendly messages instead of tracebacks."""
+    errors = exc.errors()
+    messages: list[str] = []
+    for error in errors:
+        field = ".".join(str(x) for x in error["loc"][1:])
+        msg = error.get("msg", "Invalid value")
+        messages.append(f"{field}: {msg}" if field else msg)
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": " | ".join(messages)},
+    )
 
 
 @app.get("/health")

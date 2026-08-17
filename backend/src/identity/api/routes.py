@@ -9,7 +9,7 @@ from uuid import UUID
 
 import httpx
 import jwt
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -189,6 +189,19 @@ async def login_endpoint(
                 detail="Invalid email or password",
             )
 
+        if not _verify_password(body.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+
+        # Check if account is active (not deleted/deactivated)
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This account has been deactivated. Contact support to reactivate.",
+            )
+
         # Get user's first organization (default to first membership)
         membership_result = await session.execute(
             select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
@@ -266,13 +279,22 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
 
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
-async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswordResponse:
+async def forgot_password_endpoint(
+    body: ForgotPasswordRequest,
+    request: Request,
+) -> ForgotPasswordResponse:
     """Generate a password reset token and send it to the user's email.
 
     Returns a success message without revealing if the email exists.
     """
     now = datetime.now(tz=UTC)
     expires = now + timedelta(hours=24)
+
+    # Extract device and IP from request headers
+    user_agent = request.headers.get("user-agent", "Unknown")
+    client_ip = request.headers.get(
+        "x-forwarded-for", request.client.host if request.client else "Unknown"
+    )
 
     async with SessionLocal() as session:
         # Query user by email
@@ -282,7 +304,8 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
         # Generate token regardless of user existence (security best practice)
         token = secrets.token_urlsafe(32)
 
-        if user:
+        # Only send email if account exists AND is active (not deleted)
+        if user and user.is_active:
             try:
                 # Create verification token in database
                 verification_token = VerificationTokenModel(
@@ -302,7 +325,14 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                         user.email,
                         user.full_name,
                         token,
+                        request_device=user_agent,
+                        request_ip=client_ip,
                     )
+                )
+
+                return ForgotPasswordResponse(
+                    message="Check your email for password reset instructions",
+                    account_exists=True,
                 )
 
             except IntegrityError as e:
@@ -312,7 +342,11 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                     detail="Failed to create reset token",
                 ) from e
 
-        return ForgotPasswordResponse(message="Check your email for password reset instructions")
+        # Account doesn't exist or is deleted - suggest creating one
+        return ForgotPasswordResponse(
+            message="No account found with this email. Would you like to create one?",
+            account_exists=False,
+        )
 
 
 @router.post("/reset-password", response_model=TokenResponse)
@@ -378,6 +412,10 @@ async def reset_password_endpoint(
         try:
             # Update user password
             user.password_hash = _hash_password(body.new_password)
+
+            # Reactivate account if it was deactivated (password reset re-enables access)
+            if not user.is_active:
+                user.is_active = True
 
             # Mark token as used
             token_record.used_at = now
