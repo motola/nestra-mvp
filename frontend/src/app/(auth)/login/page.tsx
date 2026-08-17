@@ -137,7 +137,6 @@ export default function LoginPage() {
             <svg
               className="w-6 h-6"
               viewBox="0 0 24 24"
-              fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -173,7 +172,6 @@ export default function LoginPage() {
             <svg
               className="w-6 h-6"
               viewBox="0 0 24 24"
-              fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <rect x="1" y="1" width="9" height="9" fill="#F25022" />
