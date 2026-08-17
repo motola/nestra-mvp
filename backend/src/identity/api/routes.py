@@ -7,7 +7,7 @@ from typing import Any
 from uuid import UUID
 
 import jwt
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -256,13 +256,22 @@ async def me_endpoint(auth: str | None = None) -> MeResponse:
 
 
 @router.post("/forgot-password", response_model=ForgotPasswordResponse)
-async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswordResponse:
+async def forgot_password_endpoint(
+    body: ForgotPasswordRequest,
+    request: Request,
+) -> ForgotPasswordResponse:
     """Generate a password reset token and send it to the user's email.
 
     Returns a success message without revealing if the email exists.
     """
     now = datetime.now(tz=UTC)
     expires = now + timedelta(hours=24)
+
+    # Extract device and IP from request headers
+    user_agent = request.headers.get("user-agent", "Unknown")
+    client_ip = request.headers.get(
+        "x-forwarded-for", request.client.host if request.client else "Unknown"
+    )
 
     async with SessionLocal() as session:
         # Query user by email
@@ -292,6 +301,8 @@ async def forgot_password_endpoint(body: ForgotPasswordRequest) -> ForgotPasswor
                         user.email,
                         user.full_name,
                         token,
+                        request_device=user_agent,
+                        request_ip=client_ip,
                     )
                 )
 
