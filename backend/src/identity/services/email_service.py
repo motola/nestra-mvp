@@ -137,7 +137,7 @@ class EmailService:
     ) -> None:
         """Send password reset email with token link and request details."""
         html_content = _load_template("reset_password")
-        reset_url = f"{self.frontend_url}/auth/reset?token={reset_token}"
+        reset_url = f"{self.frontend_url}/reset-password?token={reset_token}"
         request_time = datetime.now().strftime("%Y-%m-%d %H:%M %Z")
 
         html_content = _replace_template_vars(
@@ -161,6 +161,39 @@ class EmailService:
             self.sendgrid_client.send(message)
         except Exception as e:
             raise ValueError(f"Failed to send password reset email: {e}") from e
+
+    async def send_password_reset_confirmation_email(
+        self,
+        user_email: str,
+        first_name: str,
+    ) -> None:
+        """Send password reset confirmation email."""
+        subject = "Password Reset Confirmed"
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2>Hi {first_name},</h2>
+                    <p>Your password has been successfully reset.</p>
+                    <p>If you did not request this change, please contact support immediately.</p>
+                    <p>You can now sign in with your new password.</p>
+                    <p>Best regards,<br/>Alphacon AI Team</p>
+                </div>
+            </body>
+        </html>
+        """
+
+        message = Mail(
+            from_email=self.from_email,
+            to_emails=To(user_email),
+            subject=subject,
+            html_content=html_content,
+        )
+
+        try:
+            self.sendgrid_client.send(message)
+        except Exception as e:
+            raise ValueError(f"Failed to send password reset confirmation email: {e}") from e
 
 
 def get_email_service() -> EmailService:

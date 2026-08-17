@@ -102,7 +102,7 @@ export function useResetPassword() {
       }),
     onSuccess: ({ access_token }) => {
       setSession(access_token);
-      router.push("/overview");
+      router.push("/login");
     },
   });
 }
