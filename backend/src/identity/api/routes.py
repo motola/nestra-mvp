@@ -424,6 +424,12 @@ async def reset_password_endpoint(
                     detail="User has no organization membership",
                 )
 
+            # Send password reset confirmation email asynchronously
+            email_service = get_email_service()
+            asyncio.create_task(
+                email_service.send_password_reset_confirmation_email(user.email, user.full_name)
+            )
+
             # Create and return JWT token
             jwt_token = _create_token(user.id, membership.organization_id, settings.secret_key)
             return TokenResponse(
