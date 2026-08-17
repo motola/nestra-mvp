@@ -61,3 +61,27 @@ class VerifyEmailRequest(BaseModel):
 
 class VerifyEmailResponse(BaseModel):
     message: str
+
+
+class GoogleOAuthUrlResponse(BaseModel):
+    url: str
+
+
+class GoogleOAuthCallbackRequest(BaseModel):
+    code: str
+
+
+class GoogleOAuthToken(BaseModel):
+    access_token: str
+    expires_in: int
+    scope: str
+    token_type: str
+    id_token: str
+
+
+class GoogleOAuthUserInfo(BaseModel):
+    sub: str
+    email: EmailStr
+    name: str
+    picture: str | None = None
+    email_verified: bool

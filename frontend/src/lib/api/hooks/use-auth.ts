@@ -166,19 +166,19 @@ export function useLogout() {
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────
 
-interface OAuthUrlResponse {
+interface GoogleOAuthUrlResponse {
   url: string;
 }
 
-interface OAuthCallbackPayload {
+interface GoogleOAuthCallbackPayload {
   code: string;
 }
 
 export function useGoogleOAuthUrl() {
-  return useQuery<OAuthUrlResponse, ApiError>({
+  return useQuery<GoogleOAuthUrlResponse, ApiError>({
     queryKey: ["google-oauth-url"],
     queryFn: () =>
-      apiFetch<OAuthUrlResponse>("/auth/google/url", {
+      apiFetch<GoogleOAuthUrlResponse>("/auth/google/url", {
         method: "GET",
       }),
     enabled: true,
@@ -189,7 +189,7 @@ export function useGoogleOAuthCallback() {
   const { setSession } = useAuth();
   const router = useRouter();
 
-  return useMutation<TokenResponse, ApiError, OAuthCallbackPayload>({
+  return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
     mutationFn: (payload) =>
       apiFetch<TokenResponse>("/auth/google/callback", {
         method: "POST",
@@ -204,11 +204,19 @@ export function useGoogleOAuthCallback() {
 
 // ─── Microsoft OAuth ──────────────────────────────────────────────────────────
 
+interface MicrosoftOAuthUrlResponse {
+  url: string;
+}
+
+interface MicrosoftOAuthCallbackPayload {
+  code: string;
+}
+
 export function useMicrosoftOAuthUrl() {
-  return useQuery<OAuthUrlResponse, ApiError>({
+  return useQuery<MicrosoftOAuthUrlResponse, ApiError>({
     queryKey: ["microsoft-oauth-url"],
     queryFn: () =>
-      apiFetch<OAuthUrlResponse>("/auth/microsoft/url", {
+      apiFetch<MicrosoftOAuthUrlResponse>("/auth/microsoft/url", {
         method: "GET",
       }),
     enabled: true,
@@ -219,7 +227,7 @@ export function useMicrosoftOAuthCallback() {
   const { setSession } = useAuth();
   const router = useRouter();
 
-  return useMutation<TokenResponse, ApiError, OAuthCallbackPayload>({
+  return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
     mutationFn: (payload) =>
       apiFetch<TokenResponse>("/auth/microsoft/callback", {
         method: "POST",
