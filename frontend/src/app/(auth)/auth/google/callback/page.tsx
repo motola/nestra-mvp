@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGoogleOAuthCallback } from "@/lib/api/hooks/use-auth";
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackForm() {
   const searchParams = useSearchParams();
   const googleCallback = useGoogleOAuthCallback();
 
@@ -32,5 +32,13 @@ export default function GoogleCallbackPage() {
         <p className="text-[12px] text-red">{googleCallback.error.message}</p>
       )}
     </div>
+  );
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <GoogleCallbackForm />
+    </Suspense>
   );
 }

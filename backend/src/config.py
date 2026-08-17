@@ -21,8 +21,10 @@ class Settings(BaseSettings):
     govee_ble_address: str = ""
     anthropic_api_key: str = ""
     sendgrid_api_key: str = ""
-    google_oauth_client_id: str = ""
-    google_oauth_client_secret: str = ""
+    google_oauth_client_id: str = ""  # Set via: flyctl secrets set GOOGLE_OAUTH_CLIENT_ID=...
+    google_oauth_client_secret: str = (
+        ""  # Set via: flyctl secrets set GOOGLE_OAUTH_CLIENT_SECRET=...
+    )
     frontend_url: str = "https://nestra-mvp.fly.dev"
 
     @model_validator(mode="after")
