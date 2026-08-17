@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -32,10 +32,12 @@ app.add_middleware(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """Handle validation errors with user-friendly messages instead of tracebacks."""
     errors = exc.errors()
-    messages = []
+    messages: list[str] = []
     for error in errors:
         field = ".".join(str(x) for x in error["loc"][1:])
         msg = error.get("msg", "Invalid value")

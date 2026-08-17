@@ -173,10 +173,23 @@ async def login_endpoint(
         result = await session.execute(select(UserModel).where(UserModel.email == body.email))
         user = result.scalar_one_or_none()
 
-        if not user or not _verify_password(body.password, user.password_hash):
+        if not user or not user.password_hash:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
+            )
+
+        if not _verify_password(body.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+
+        # Check if account is active (not deleted/deactivated)
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This account has been deactivated. Contact support to reactivate.",
             )
 
         # Get user's first organization (default to first membership)
@@ -281,7 +294,8 @@ async def forgot_password_endpoint(
         # Generate token regardless of user existence (security best practice)
         token = secrets.token_urlsafe(32)
 
-        if user:
+        # Only send email if account exists AND is active (not deleted)
+        if user and user.is_active:
             try:
                 # Create verification token in database
                 verification_token = VerificationTokenModel(
@@ -306,6 +320,11 @@ async def forgot_password_endpoint(
                     )
                 )
 
+                return ForgotPasswordResponse(
+                    message="Check your email for password reset instructions",
+                    account_exists=True,
+                )
+
             except IntegrityError as e:
                 await session.rollback()
                 raise HTTPException(
@@ -313,7 +332,11 @@ async def forgot_password_endpoint(
                     detail="Failed to create reset token",
                 ) from e
 
-        return ForgotPasswordResponse(message="Check your email for password reset instructions")
+        # Account doesn't exist or is deleted - suggest creating one
+        return ForgotPasswordResponse(
+            message="No account found with this email. Would you like to create one?",
+            account_exists=False,
+        )
 
 
 @router.post("/reset-password", response_model=TokenResponse)
@@ -380,6 +403,10 @@ async def reset_password_endpoint(
             # Update user password
             user.password_hash = _hash_password(body.new_password)
 
+            # Reactivate account if it was deactivated (password reset re-enables access)
+            if not user.is_active:
+                user.is_active = True
+
             # Mark token as used
             token_record.used_at = now
 
@@ -396,6 +423,12 @@ async def reset_password_endpoint(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="User has no organization membership",
                 )
+
+            # Send password reset confirmation email asynchronously
+            email_service = get_email_service()
+            asyncio.create_task(
+                email_service.send_password_reset_confirmation_email(user.email, user.full_name)
+            )
 
             # Create and return JWT token
             jwt_token = _create_token(user.id, membership.organization_id, settings.secret_key)

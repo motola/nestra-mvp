@@ -68,14 +68,15 @@ interface ForgotPasswordPayload {
   email: string;
 }
 
-interface MessageResponse {
+interface ForgotPasswordResponse {
   message: string;
+  account_exists: boolean;
 }
 
 export function useForgotPassword() {
-  return useMutation<MessageResponse, ApiError, ForgotPasswordPayload>({
+  return useMutation<ForgotPasswordResponse, ApiError, ForgotPasswordPayload>({
     mutationFn: (payload) =>
-      apiFetch<MessageResponse>("/auth/forgot-password", {
+      apiFetch<ForgotPasswordResponse>("/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -101,7 +102,7 @@ export function useResetPassword() {
       }),
     onSuccess: ({ access_token }) => {
       setSession(access_token);
-      router.push("/overview");
+      router.push("/login");
     },
   });
 }

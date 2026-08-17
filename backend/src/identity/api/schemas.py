@@ -47,6 +47,7 @@ class ForgotPasswordRequest(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
+    account_exists: bool = True
 
 
 class ResetPasswordRequest(BaseModel):
