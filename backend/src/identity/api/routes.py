@@ -179,6 +179,13 @@ async def login_endpoint(
                 detail="Invalid email or password",
             )
 
+        # Check if account is active (not deleted/deactivated)
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This account has been deactivated. Contact support to reactivate.",
+            )
+
         # Get user's first organization (default to first membership)
         membership_result = await session.execute(
             select(OrgMembershipModel).where(OrgMembershipModel.user_id == user.id)
@@ -281,7 +288,7 @@ async def forgot_password_endpoint(
         # Generate token regardless of user existence (security best practice)
         token = secrets.token_urlsafe(32)
 
-        if user:
+        if user and user.is_active:
             try:
                 # Create verification token in database
                 verification_token = VerificationTokenModel(
@@ -379,6 +386,10 @@ async def reset_password_endpoint(
         try:
             # Update user password
             user.password_hash = _hash_password(body.new_password)
+
+            # Reactivate account if it was deactivated (password reset re-enables access)
+            if not user.is_active:
+                user.is_active = True
 
             # Mark token as used
             token_record.used_at = now
