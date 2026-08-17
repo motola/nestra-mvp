@@ -1,7 +1,7 @@
 """Add revoked_tokens table for logout token revocation
 
 Revision ID: a1b2c3d4e5f6
-Revises: 8f5e3a2c1b6d
+Revises: 9c7d4e1a2b5f
 Create Date: 2026-08-17 00:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from alembic import op
 
 revision: str = "a1b2c3d4e5f6"
-down_revision: str | Sequence[str] | None = "8f5e3a2c1b6d"
+down_revision: str | Sequence[str] | None = "9c7d4e1a2b5f"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
