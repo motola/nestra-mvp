@@ -173,7 +173,13 @@ async def login_endpoint(
         result = await session.execute(select(UserModel).where(UserModel.email == body.email))
         user = result.scalar_one_or_none()
 
-        if not user or not _verify_password(body.password, user.password_hash):
+        if not user or not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+            )
+
+        if not _verify_password(body.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
