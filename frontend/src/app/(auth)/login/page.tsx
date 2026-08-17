@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLogin } from "@/lib/api/hooks/use-auth";
+import { useLogin, useGoogleOAuthUrl } from "@/lib/api/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 const schema = z.object({
@@ -16,6 +16,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const login = useLogin();
+  const googleOAuthUrl = useGoogleOAuthUrl();
 
   const {
     register,
@@ -26,6 +27,12 @@ export default function LoginPage() {
   });
 
   const onSubmit = (values: FormValues) => login.mutate(values);
+
+  const handleGoogleLogin = async () => {
+    if (googleOAuthUrl.data?.url) {
+      window.location.href = googleOAuthUrl.data.url;
+    }
+  };
 
   return (
     <>
@@ -94,6 +101,25 @@ export default function LoginPage() {
           {login.isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
+
+      <div className="relative my-5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border"></div>
+        </div>
+        <div className="relative flex justify-center text-[12px]">
+          <span className="px-2 bg-bg text-text-3">Or continue with</span>
+        </div>
+      </div>
+
+      <Button
+        variant="secondary"
+        type="button"
+        onClick={handleGoogleLogin}
+        disabled={googleOAuthUrl.isPending}
+        className="w-full justify-center"
+      >
+        {googleOAuthUrl.isPending ? "Loading…" : "Sign in with Google"}
+      </Button>
 
       <p className="text-[12px] text-text-3 text-center mt-5 m-0">
         No account?{" "}
