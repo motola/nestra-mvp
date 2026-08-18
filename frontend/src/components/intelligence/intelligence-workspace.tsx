@@ -173,9 +173,8 @@ function EmptyState() {
           Start a conversation
         </h1>
         <p className="text-[13px] text-text-2 mt-2.5 leading-[1.6] m-0">
-          Ask questions about your data, get insights, or request actions.
-          I&apos;ll show what I checked and ask before anything that changes
-          state.
+          Ask questions about your data and get insights. I&apos;ll confirm
+          before making changes.
         </p>
       </div>
     </div>
