@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
@@ -68,14 +68,15 @@ interface ForgotPasswordPayload {
   email: string;
 }
 
-interface MessageResponse {
+interface ForgotPasswordResponse {
   message: string;
+  account_exists: boolean;
 }
 
 export function useForgotPassword() {
-  return useMutation<MessageResponse, ApiError, ForgotPasswordPayload>({
+  return useMutation<ForgotPasswordResponse, ApiError, ForgotPasswordPayload>({
     mutationFn: (payload) =>
-      apiFetch<MessageResponse>("/auth/forgot-password", {
+      apiFetch<ForgotPasswordResponse>("/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -138,5 +139,103 @@ export function useResendVerificationEmail() {
         method: "POST",
         body: JSON.stringify(payload),
       }),
+  });
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────────────
+
+export function useLogout() {
+  const { clearSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<void, ApiError, void>({
+    mutationFn: () =>
+      apiFetch<void>("/auth/logout", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      clearSession();
+      router.push("/login");
+    },
+    onError: () => {
+      clearSession();
+      router.push("/login");
+    },
+  });
+}
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────────
+
+interface GoogleOAuthUrlResponse {
+  url: string;
+}
+
+interface GoogleOAuthCallbackPayload {
+  code: string;
+}
+
+export function useGoogleOAuthUrl() {
+  return useQuery<GoogleOAuthUrlResponse, ApiError>({
+    queryKey: ["google-oauth-url"],
+    queryFn: () =>
+      apiFetch<GoogleOAuthUrlResponse>("/auth/google/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useGoogleOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/google/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
+    },
+  });
+}
+
+// ─── Microsoft OAuth ──────────────────────────────────────────────────────────
+
+interface MicrosoftOAuthUrlResponse {
+  url: string;
+}
+
+interface MicrosoftOAuthCallbackPayload {
+  code: string;
+}
+
+export function useMicrosoftOAuthUrl() {
+  return useQuery<MicrosoftOAuthUrlResponse, ApiError>({
+    queryKey: ["microsoft-oauth-url"],
+    queryFn: () =>
+      apiFetch<MicrosoftOAuthUrlResponse>("/auth/microsoft/url", {
+        method: "GET",
+      }),
+    enabled: true,
+  });
+}
+
+export function useMicrosoftOAuthCallback() {
+  const { setSession } = useAuth();
+  const router = useRouter();
+
+  return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
+    mutationFn: (payload) =>
+      apiFetch<TokenResponse>("/auth/microsoft/callback", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: ({ access_token }) => {
+      setSession(access_token);
+      router.push("/intelligence");
+    },
   });
 }
