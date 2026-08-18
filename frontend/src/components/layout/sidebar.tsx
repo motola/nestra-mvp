@@ -109,16 +109,12 @@ export function Sidebar() {
         href="/devices"
         icon={Monitor}
         label="Devices"
-        badge="1"
-        badgeVariant="alert"
         active={active("/devices")}
       />
       <SidebarItem
         href="/integrations"
         icon={Plug}
         label="Integrations"
-        badge="1"
-        badgeVariant="warn"
         active={active("/integrations")}
       />
       <SidebarItem
