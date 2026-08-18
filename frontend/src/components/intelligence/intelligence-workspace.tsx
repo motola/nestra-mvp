@@ -1,6 +1,6 @@
 "use client"; // Client: chat tabs, messages, composer, quick-actions tray, activity slide-over
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Plus, Sparkles, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
@@ -216,8 +216,48 @@ function Transcript({ messages }: { messages: Message[] }) {
   );
 }
 
+const PLACEHOLDER_TEXTS = [
+  "Ask anything, or run an action",
+  "Set goals and create routines",
+  "Draft the weekly energy report",
+];
+
 function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
   const [draft, setDraft] = useState("");
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentText = PLACEHOLDER_TEXTS[placeholderIndex];
+    const speed = isDeleting ? 50 : 100;
+    const delay = isDeleting ? 50 : 2000;
+
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting && charIndex < currentText.length) {
+      timeout = setTimeout(() => {
+        setDisplayedPlaceholder(currentText.slice(0, charIndex + 1));
+        setCharIndex(charIndex + 1);
+      }, speed);
+    } else if (!isDeleting && charIndex === currentText.length) {
+      timeout = setTimeout(() => {
+        setIsDeleting(true);
+      }, delay);
+    } else if (isDeleting && charIndex > 0) {
+      timeout = setTimeout(() => {
+        setDisplayedPlaceholder(currentText.slice(0, charIndex - 1));
+        setCharIndex(charIndex - 1);
+      }, speed);
+    } else if (isDeleting && charIndex === 0) {
+      setIsDeleting(false);
+      setPlaceholderIndex((placeholderIndex + 1) % PLACEHOLDER_TEXTS.length);
+      setCharIndex(0);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [charIndex, isDeleting, placeholderIndex]);
 
   function submit(text?: string) {
     const msg = (text ?? draft).trim();
@@ -236,7 +276,7 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
     >
       <div className="flex gap-2.5 items-end justify-center">
         {/* Espresso composer pill */}
-        <div className="w-[65%] max-w-2xl bg-accent border border-accent-2 rounded-panel px-3.5 py-3 flex items-center gap-3">
+        <div className="w-[65%] max-w-2xl bg-accent border border-accent-2 rounded-panel px-3.5 py-3.5 flex items-center gap-3">
           <span
             className="w-[9px] h-[9px] rounded-full bg-green shrink-0"
             style={{ boxShadow: "0 0 8px rgba(6,118,71,0.6)" }}
@@ -247,12 +287,12 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") submit();
             }}
-            placeholder='Ask anything, or run an action — "add a property", "draft the weekly energy report"…'
+            placeholder={displayedPlaceholder}
             aria-label="Message Alphacon AI"
             className="flex-1 bg-transparent border-none outline-none font-sans text-[14px] min-w-0 composer-input"
             style={{ color: "#ffffff", caretColor: "#ffffff" }}
           />
-          <style>{`.composer-input::placeholder{color:#ffffff;opacity:1;}`}</style>
+          <style>{`.composer-input::placeholder{color:#ffffff;opacity:0.8;}`}</style>
           <button
             onClick={() => submit()}
             aria-label="Send message"
@@ -262,15 +302,6 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
             →
           </button>
         </div>
-      </div>
-
-      <div className="flex justify-between mt-2 px-0.5">
-        <span className="text-[11px] text-text-3">
-          Operator persona · asks before any action that changes device state
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-3">
-          ⌘ K to focus · ⏎ to send
-        </span>
       </div>
     </div>
   );
