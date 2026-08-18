@@ -236,7 +236,7 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
     >
       <div className="flex gap-2.5 items-end">
         {/* Espresso composer pill */}
-        <div className="flex-1 min-w-0 bg-accent border border-accent-2 rounded-panel px-3.5 py-3 flex items-center gap-3">
+        <div className="w-1/2 max-w-lg bg-accent border border-accent-2 rounded-panel px-3.5 py-3 flex items-center gap-3">
           <span
             className="w-[9px] h-[9px] rounded-full bg-green shrink-0"
             style={{ boxShadow: "0 0 8px rgba(6,118,71,0.6)" }}
