@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bell, Building, ChevronRight, LogOut, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth/provider";
 import { useLogout } from "@/lib/api/hooks/use-auth";
+import { LogoMark } from "@/components/ui/logo";
 
 export function TopNav() {
   const [open, setOpen] = useState(false);
@@ -25,12 +26,7 @@ export function TopNav() {
     <header className="h-14 bg-surface border-b border-border flex items-center px-5 gap-5 shrink-0 z-20">
       {/* Brand mark */}
       <div className="flex items-center gap-2.5 shrink-0">
-        <div className="w-7 h-7 rounded-[7px] bg-graphite flex items-center justify-center relative shrink-0">
-          <span className="font-serif text-[19px] text-white leading-none select-none">
-            A
-          </span>
-          <span className="absolute top-[3px] right-[3px] w-[5px] h-[5px] rounded-full bg-accent" />
-        </div>
+        <LogoMark />
         <span className="font-serif text-[22px] tracking-[-0.01em] text-text">
           Alphacon
         </span>
@@ -50,21 +46,26 @@ export function TopNav() {
       </div>
 
       {/* Search */}
-      <div className="ml-2 flex-1 max-w-[360px] min-w-0 bg-accent-bg border border-accent rounded-[9px] px-3 py-1.5 flex items-center gap-2 cursor-text overflow-hidden">
-        <Search size={14} strokeWidth={1.5} className="text-accent shrink-0" />
-        <span className="text-[12px] text-accent-2 truncate flex-1 select-none">
-          Search properties, devices, stays…
+      <button
+        onClick={() => {
+          // TODO: Open search modal/command palette
+        }}
+        className="ml-2 flex-1 max-w-[280px] bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors duration-[120ms]"
+      >
+        <Search size={13} strokeWidth={1.5} className="text-text-3 shrink-0" />
+        <span className="text-[12px] text-text-2 truncate flex-1 select-none">
+          Search…
         </span>
-        <kbd className="shrink-0 font-mono text-[10px] text-accent-2 bg-accent-bg border border-accent px-[5px] py-[1px] rounded">
-          ⌘ K
+        <kbd className="shrink-0 font-mono text-[9px] text-text-3 bg-surface-2 border border-border px-1.5 py-0.5 rounded">
+          ⌘K
         </kbd>
-      </div>
+      </button>
 
       {/* Bell + account */}
       <div className="ml-auto flex items-center gap-3.5">
-        <button className="bg-transparent border-0 cursor-pointer p-1.5 relative">
+        <button className="bg-transparent border-0 cursor-pointer p-1.5 relative hover:text-text transition-colors">
           <Bell size={18} strokeWidth={1.5} className="text-text-2" />
-          <span className="absolute top-1 right-1 w-[7px] h-[7px] rounded-full bg-amber" />
+          {/* TODO: Show badge only when there are actual notifications */}
         </button>
 
         <div className="relative">

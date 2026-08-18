@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { Card, SectionHead } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { useAuth } from "@/lib/auth/provider";
 import { cn } from "@/lib/cn";
 
 // ─── Shared form primitives ───────────────────────────────────────────────────
@@ -85,7 +86,15 @@ function SettingsCard({
 
 // ─── Organization tab ─────────────────────────────────────────────────────────
 
-function OrgTab() {
+function OrgTab({
+  displayName,
+  legalName,
+  slug,
+}: {
+  displayName: string;
+  legalName: string;
+  slug: string;
+}) {
   return (
     <>
       <SettingsCard
@@ -99,13 +108,13 @@ function OrgTab() {
       >
         <div className="grid grid-cols-2 gap-3.5">
           <Field label="Display name">
-            <TextInput value="" />
+            <TextInput value={displayName} />
           </Field>
           <Field label="Legal name">
-            <TextInput value="" />
+            <TextInput value={legalName} />
           </Field>
           <Field label="URL slug" hint="yourorg.nestra.com">
-            <TextInput value="" />
+            <TextInput value={slug} />
           </Field>
           <Field label="Default timezone">
             <SelectInput
@@ -238,6 +247,7 @@ const TABS = [
 export function SettingsScreen() {
   const [tab, setTab] = useState("organization");
   const isAudit = tab === "audit";
+  const { organization } = useAuth();
 
   return (
     <>
@@ -257,7 +267,13 @@ export function SettingsScreen() {
           isAudit ? "max-w-[1200px]" : "max-w-[920px]",
         )}
       >
-        {tab === "organization" && <OrgTab />}
+        {tab === "organization" && (
+          <OrgTab
+            displayName={organization?.name || ""}
+            legalName={organization?.name || ""}
+            slug={organization?.slug || ""}
+          />
+        )}
         {tab === "portfolios" && <PortfoliosTab />}
         {tab === "billing" && <BillingTab />}
         {tab === "security" && <SecurityTab />}
