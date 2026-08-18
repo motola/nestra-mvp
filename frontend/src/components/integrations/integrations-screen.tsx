@@ -1,363 +1,507 @@
-"use client";
+"use client"; // Client: tab switching
 
-import {
-  Plus,
-  Plug,
-  CheckCircle,
-  AlertCircle,
-  Trash2,
-  RefreshCw,
-  type LucideIcon,
-} from "lucide-react";
+import { useState } from "react";
+import { Plus, BookOpen, Wifi } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
+import type { Integration, Vendor } from "@/lib/fixtures";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyDataState } from "@/components/ui/empty-state";
+import { Tag } from "@/components/ui/tag";
+import { Tabs } from "@/components/ui/tabs";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
+import type { TableColumn } from "@/components/ui/data-table";
+import { PageHeader } from "@/components/ui/page-header";
+import { AlertCard } from "@/components/ui/alert-card";
+import { BluetoothPairingModal } from "@/components/integrations/bluetooth-pairing-modal";
+import { useBluetoothDevices } from "@/lib/api/hooks/use-bluetooth";
 
-// ─── Type definitions ────────────────────────────────────────────────────────
+// ─── Vendor logo placeholder (graphite chip + initials) ───────────────────────
 
-interface Vendor {
-  id: string;
-  name: string;
-  icon: LucideIcon;
-  color: string;
-  description: string;
-}
-
-interface ConnectedIntegration {
-  id: string;
-  vendor: Vendor;
-  status: "connected" | "needs_auth" | "error";
-  lastSync: string;
-  deviceCount: number;
-  connectedAt: string;
-}
-
-// ─── Available vendors ─────────────────────────────────────────────────────────
-
-const AVAILABLE_VENDORS: Vendor[] = [
-  {
-    id: "google",
-    name: "Google Home",
-    icon: Plus,
-    color: "text-blue-500",
-    description: "Connect Google Home devices and get real-time updates",
-  },
-  {
-    id: "microsoft",
-    name: "Microsoft",
-    icon: Plus,
-    color: "text-blue-600",
-    description: "Integrate Cortana and Azure IoT devices",
-  },
-  {
-    id: "august",
-    name: "August Smart Lock",
-    icon: Plug,
-    color: "text-amber-600",
-    description: "Manage August smart locks and access",
-  },
-  {
-    id: "philips-hue",
-    name: "Philips Hue",
-    icon: Plus,
-    color: "text-amber-400",
-    description: "Control Philips Hue lights and color scenes",
-  },
-  {
-    id: "apple",
-    name: "Apple HomeKit",
-    icon: Plus,
-    color: "text-gray-700",
-    description: "Sync HomeKit devices and automations",
-  },
-  {
-    id: "amazon",
-    name: "Amazon Alexa",
-    icon: Plus,
-    color: "text-blue-400",
-    description: "Connect Alexa devices and smart home skills",
-  },
-];
-
-// ─── Mock connected integrations ──────────────────────────────────────────────
-
-const MOCK_CONNECTED: ConnectedIntegration[] = [
-  {
-    id: "int-1",
-    vendor: AVAILABLE_VENDORS[0],
-    status: "connected",
-    lastSync: "2 minutes ago",
-    deviceCount: 12,
-    connectedAt: "Aug 15, 2026",
-  },
-  {
-    id: "int-2",
-    vendor: AVAILABLE_VENDORS[2],
-    status: "connected",
-    lastSync: "5 minutes ago",
-    deviceCount: 3,
-    connectedAt: "Aug 10, 2026",
-  },
-];
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const variants: Record<
-    string,
-    { bg: string; text: string; icon: LucideIcon }
-  > = {
-    connected: {
-      bg: "bg-green-50",
-      text: "text-green-700",
-      icon: CheckCircle,
-    },
-    needs_auth: {
-      bg: "bg-amber-50",
-      text: "text-amber-700",
-      icon: AlertCircle,
-    },
-    error: {
-      bg: "bg-red-50",
-      text: "text-red-700",
-      icon: AlertCircle,
-    },
-  };
-
-  const variant = variants[status] || variants.error;
-  const Icon = variant.icon;
-
+function VendorLogo({ name, size = 36 }: { name: string; size?: number }) {
   return (
     <div
-      className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px]",
-        variant.bg,
-      )}
+      className="rounded-[10px] bg-graphite flex items-center justify-center shrink-0"
+      style={{ width: size, height: size }}
     >
-      <Icon size={14} className={variant.text} strokeWidth={2} />
-      <span className={cn("text-[12px] font-medium", variant.text)}>
-        {status === "connected"
-          ? "Connected"
-          : status === "needs_auth"
-            ? "Needs Auth"
-            : "Error"}
+      <span
+        className="font-serif text-white leading-none select-none"
+        style={{ fontSize: Math.round(size * 0.36) }}
+      >
+        {name.slice(0, 2).toUpperCase()}
       </span>
     </div>
   );
 }
 
-// ─── Connected integration card ──────────────────────────────────────────────
+// ─── Connected tab ────────────────────────────────────────────────────────────
 
-function ConnectedCard({ integration }: { integration: ConnectedIntegration }) {
+function IntegrationCard({ item: i }: { item: Integration }) {
   return (
-    <Card className="p-4 flex items-start justify-between">
-      <div className="flex items-start gap-3.5 flex-1">
-        <div className="w-10 h-10 rounded-[8px] bg-surface-2 flex items-center justify-center shrink-0">
-          <Plug size={18} strokeWidth={1.5} className="text-text-2" />
-        </div>
+    <Card hoverable className="p-[18px]">
+      <div className="flex items-center gap-3.5">
+        <VendorLogo name={i.vendor} size={48} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <p className="text-[14px] font-semibold text-text m-0">
-              {integration.vendor.name}
-            </p>
-            <StatusBadge status={integration.status} />
+          <div className="flex items-center gap-2.5">
+            <span className="font-serif text-[18px] text-text">{i.vendor}</span>
+            {i.status === "ACTIVE" ? (
+              <Tag variant="ok" withDot>
+                active
+              </Tag>
+            ) : (
+              <Tag variant="warn" withDot>
+                token expired
+              </Tag>
+            )}
           </div>
-          <p className="text-[12px] text-text-3 m-0 mb-2">
-            Connected {integration.connectedAt}
-          </p>
-          <div className="flex gap-4">
-            <div>
-              <MonoLabel className="text-text-3">Last sync</MonoLabel>
-              <p className="text-[12px] text-text m-0">
-                {integration.lastSync}
-              </p>
-            </div>
-            <div>
-              <MonoLabel className="text-text-3">Devices</MonoLabel>
-              <p className="text-[12px] text-text m-0">
-                {integration.deviceCount} synced
-              </p>
-            </div>
-          </div>
+          <MonoLabel className="mt-1 block">property · {i.ownerName}</MonoLabel>
         </div>
+        <Button variant={i.needsReauth ? "primary" : "ghost"} size="sm">
+          {i.needsReauth ? "Reauthorize" : "Manage"}
+        </Button>
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
-        {integration.status === "needs_auth" ? (
-          <Button variant="secondary" size="sm" icon={RefreshCw}>
-            Re-auth
-          </Button>
-        ) : (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={RefreshCw}
-              title="Re-sync now"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={Trash2}
-              className="text-red hover:text-red"
-              title="Disconnect"
-            />
-          </>
-        )}
+      <div className="h-px bg-border my-3.5" />
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "devices", value: String(i.devices), mono: true },
+          { label: "last sync", value: i.lastSync, mono: false },
+          { label: "connected", value: i.connectedAt, mono: true },
+        ].map(({ label, value, mono }) => (
+          <div key={label}>
+            <MonoLabel>{label}</MonoLabel>
+            <p
+              className={cn(
+                "mt-1 m-0",
+                mono
+                  ? "font-mono text-[18px] font-semibold text-text"
+                  : "text-[13px] text-text",
+              )}
+            >
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-1.5 mt-3.5 flex-wrap">
+        {i.scopes.map((s) => (
+          <Tag key={s} variant="neutral">
+            {s}
+          </Tag>
+        ))}
       </div>
     </Card>
   );
 }
 
-// ─── Vendor grid ────────────────────────────────────────────────────────────────
-
-function VendorGrid({
-  vendors,
-  connectedIds,
-  onConnect,
+function ConnectedTab({
+  bluetoothDevices,
 }: {
-  vendors: Vendor[];
-  connectedIds: string[];
-  onConnect: (vendor: Vendor) => void;
+  bluetoothDevices: Array<{ id: string; name: string; mac_address: string }>;
 }) {
+  const reauth = INTEGRATIONS.find((i) => i.needsReauth);
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {vendors.map((vendor) => {
-        const isConnected = connectedIds.includes(vendor.id);
-        return (
-          <Card
-            key={vendor.id}
-            className={cn(
-              "p-4 cursor-pointer transition-all",
-              isConnected ? "opacity-60" : "hover:bg-surface-2",
-            )}
-          >
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-8 h-8 rounded-[6px] bg-surface-2 flex items-center justify-center shrink-0">
-                <Plug size={16} strokeWidth={1.5} className="text-text-2" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-text m-0">
-                  {vendor.name}
-                </p>
-              </div>
-              {isConnected && (
-                <CheckCircle
-                  size={16}
-                  className="text-green shrink-0"
-                  fill="currentColor"
-                />
-              )}
-            </div>
-            <p className="text-[12px] text-text-2 mb-3 m-0 leading-[1.4]">
-              {vendor.description}
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-full"
-              disabled={isConnected}
-              onClick={() => onConnect(vendor)}
-            >
-              {isConnected ? "Connected" : "Connect"}
-            </Button>
-          </Card>
-        );
-      })}
-    </div>
+    <>
+      {reauth && (
+        <AlertCard
+          severity="amber"
+          title="SmartThings token expired"
+          desc="Your portfolio's SmartThings access token expired 6 hours ago. 12 devices are not receiving state updates. Reconnect to restore — your scopes will carry over."
+          meta="Integration · Northern Portfolio · Today 03:14"
+          actions={["Reauthorize", "Open integration"]}
+        />
+      )}
+      <SectionHead
+        title="Connected vendors"
+        sub={`${INTEGRATIONS.length} integrations · ${bluetoothDevices.length} Bluetooth devices`}
+      />
+      <div className="grid grid-cols-2 gap-3">
+        {INTEGRATIONS.map((i) => (
+          <IntegrationCard key={i.id} item={i} />
+        ))}
+      </div>
+
+      {bluetoothDevices.length > 0 && (
+        <>
+          <SectionHead
+            title="Bluetooth devices"
+            sub={`${bluetoothDevices.length} PAIRED DEVICES`}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            {bluetoothDevices.map((device) => (
+              <Card key={device.id} hoverable className="p-[18px]">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-[10px] bg-accent/10 flex items-center justify-center">
+                    <Wifi size={20} className="text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-text truncate">
+                      {device.name}
+                    </p>
+                    <p className="text-[11px] font-mono text-text-3">
+                      {device.mac_address}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
-// ─── Main export ─────────────────────────────────────────────────────────────
+// ─── Catalog tab ──────────────────────────────────────────────────────────────
+
+const CATALOG_CATS = [
+  "All vendors",
+  "Thermostats",
+  "Lights",
+  "Locks",
+  "Sensors",
+  "Plugs & meters",
+  "Hubs & bridges",
+];
+
+function VendorCard({ v }: { v: Vendor }) {
+  return (
+    <Card hoverable className="p-[18px] flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <VendorLogo name={v.name} size={36} />
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-text m-0">{v.name}</p>
+          <p className="text-[12px] text-text-3 mt-0.5 m-0">{v.cats}</p>
+        </div>
+        {v.connected && (
+          <Tag variant="ok" withDot>
+            connected
+          </Tag>
+        )}
+      </div>
+      <div className="h-px bg-border" />
+      <div className="flex justify-between items-center">
+        <MonoLabel>{v.connected ? "manage" : "set up oauth"}</MonoLabel>
+        <Button variant={v.connected ? "secondary" : "primary"} size="sm">
+          {v.connected ? "Manage" : "Connect"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function BluetoothVendorCard({ onPair }: { onPair: () => void }) {
+  return (
+    <Card hoverable className="p-[18px] flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-[7px] bg-accent flex items-center justify-center">
+          <Wifi size={18} className="text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-text m-0">Bluetooth</p>
+          <p className="text-[12px] text-text-3 mt-0.5 m-0">
+            Web Bluetooth API
+          </p>
+        </div>
+      </div>
+      <div className="h-px bg-border" />
+      <div className="flex justify-between items-center">
+        <MonoLabel>pair device</MonoLabel>
+        <Button variant="primary" size="sm" onClick={onPair}>
+          Pair
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function CatalogTab({ onBluetoothPair }: { onBluetoothPair: () => void }) {
+  const [cat, setCat] = useState("All vendors");
+  return (
+    <>
+      <div className="flex gap-1.5 flex-wrap">
+        {CATALOG_CATS.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCat(c)}
+            className="border-0 p-0 bg-transparent cursor-pointer"
+          >
+            <Tag variant={cat === c ? "graphite" : "neutral"}>{c}</Tag>
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <BluetoothVendorCard onPair={onBluetoothPair} />
+        {VENDORS.map((v) => (
+          <VendorCard key={v.id} v={v} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ─── Webhooks tab ─────────────────────────────────────────────────────────────
+
+const WEBHOOK_ROWS = [
+  {
+    vendor: "Nest",
+    topic: "device.state",
+    events: "1,847",
+    last: "2 min ago",
+    status: "active",
+  },
+  {
+    vendor: "Hue",
+    topic: "lights.changed",
+    events: "4,329",
+    last: "30 sec ago",
+    status: "active",
+  },
+  {
+    vendor: "August",
+    topic: "lock.state",
+    events: "412",
+    last: "1 min ago",
+    status: "active",
+  },
+  {
+    vendor: "Shelly",
+    topic: "energy.usage",
+    events: "8,201",
+    last: "1 min ago",
+    status: "active",
+  },
+  {
+    vendor: "SmartThings",
+    topic: "hub.events",
+    events: "230",
+    last: "6 h ago",
+    status: "error",
+  },
+  {
+    vendor: "Ecobee",
+    topic: "thermostat.state",
+    events: "942",
+    last: "5 min ago",
+    status: "active",
+  },
+];
+
+type WebhookRow = (typeof WEBHOOK_ROWS)[number];
+
+const WEBHOOK_COLS: TableColumn<WebhookRow>[] = [
+  {
+    k: "vendor",
+    label: "Vendor",
+    w: "1fr",
+    render: (r) => <span className="font-medium">{r.vendor}</span>,
+  },
+  {
+    k: "topic",
+    label: "Topic",
+    w: "1.4fr",
+    render: (r) => (
+      <span className="font-mono text-[12px] text-text-2">{r.topic}</span>
+    ),
+  },
+  {
+    k: "events",
+    label: "Events · 24h",
+    w: "1fr",
+    align: "right",
+    render: (r) => (
+      <span className="[font-variant-numeric:tabular-nums]">{r.events}</span>
+    ),
+  },
+  {
+    k: "last",
+    label: "Last received",
+    w: "1fr",
+    render: (r) => <MonoLabel>{r.last}</MonoLabel>,
+  },
+  {
+    k: "status",
+    label: "Status",
+    w: "0.8fr",
+    render: (r) => (
+      <Tag variant={r.status === "active" ? "ok" : "alert"} withDot>
+        {r.status}
+      </Tag>
+    ),
+  },
+  {
+    k: "act",
+    label: "",
+    w: "70px",
+    align: "right",
+    render: () => (
+      <Button variant="ghost" size="sm">
+        Rotate
+      </Button>
+    ),
+  },
+];
+
+function WebhooksTab() {
+  return (
+    <>
+      <SectionHead
+        title="Webhook subscriptions"
+        sub="VENDOR → ALPHACON · INCOMING EVENTS"
+      />
+      <DataTable columns={WEBHOOK_COLS} rows={WEBHOOK_ROWS} />
+    </>
+  );
+}
+
+// ─── Errors tab ───────────────────────────────────────────────────────────────
+
+const ERROR_ROWS = [
+  {
+    time: "today 03:14",
+    vendor: "SmartThings",
+    code: "AuthExpired",
+    message: "Refresh token returned 401 invalid_grant",
+    retriable: true,
+    userVisible: true,
+  },
+  {
+    time: "Y'day 18:32",
+    vendor: "Nest",
+    code: "RateLimited",
+    message: "Backoff for 47s · /thermostat/cmd",
+    retriable: true,
+    userVisible: false,
+  },
+  {
+    time: "Y'day 11:09",
+    vendor: "Hue",
+    code: "DeviceOffline",
+    message: "Bridge unreachable for 3 min · Maple Court",
+    retriable: false,
+    userVisible: true,
+  },
+  {
+    time: "29 Mar",
+    vendor: "August",
+    code: "CommandRejected",
+    message: "Lock not in manual mode · Larkspur House",
+    retriable: false,
+    userVisible: true,
+  },
+];
+
+type ErrorRow = (typeof ERROR_ROWS)[number];
+
+const ERROR_COLS: TableColumn<ErrorRow>[] = [
+  {
+    k: "time",
+    label: "Time",
+    w: "120px",
+    render: (r) => <MonoLabel>{r.time}</MonoLabel>,
+  },
+  { k: "vendor", label: "Vendor", w: "1fr" },
+  {
+    k: "code",
+    label: "Error",
+    w: "1fr",
+    render: (r) => (
+      <span className="font-mono text-[12px] font-medium text-red">
+        {r.code}
+      </span>
+    ),
+  },
+  {
+    k: "message",
+    label: "Message",
+    w: "2.5fr",
+    wrap: true,
+    render: (r) => <span className="text-[12px] text-text-2">{r.message}</span>,
+  },
+  {
+    k: "flags",
+    label: "Flags",
+    w: "1.2fr",
+    render: (r) => (
+      <div className="flex gap-1">
+        {r.retriable && <Tag variant="neutral">retriable</Tag>}
+        {r.userVisible && <Tag variant="warn">user-visible</Tag>}
+      </div>
+    ),
+  },
+];
+
+function ErrorsTab() {
+  return (
+    <>
+      <SectionHead
+        title="Adapter errors"
+        sub="LAST 7 DAYS · CLASSIFIED BY ADAPTERROR HIERARCHY"
+      />
+      <DataTable columns={ERROR_COLS} rows={ERROR_ROWS} />
+    </>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
 
 export function IntegrationsScreen() {
-  const connected = MOCK_CONNECTED;
-
-  const connectedIds = connected.map((c) => c.vendor.id);
-  const unconnectedVendors = AVAILABLE_VENDORS.filter(
-    (v) => !connectedIds.includes(v.id),
-  );
-
-  const handleConnect = (vendor: Vendor) => {
-    console.log("Connecting to:", vendor.name);
-    // TODO: Initiate OAuth flow
-  };
-
-  const showEmpty = connected.length === 0;
+  const [tab, setTab] = useState("connected");
+  const [showBluetoothModal, setShowBluetoothModal] = useState(false);
+  const { data: bluetoothDevices = [] } = useBluetoothDevices();
+  const active = INTEGRATIONS.filter((i) => i.status === "ACTIVE").length;
 
   return (
     <>
       <PageHeader
         eyebrow="WORKSPACE"
         title="Integrations"
-        sub={`${connected.length} connection${connected.length !== 1 ? "s" : ""}`}
+        sub={`${INTEGRATIONS.length} connections · ${active} active · 1 needs reauth`}
         primary={
           <Button variant="primary" icon={Plus}>
             Connect vendor
           </Button>
         }
+        secondary={
+          <Button variant="secondary" icon={BookOpen}>
+            View adapter docs
+          </Button>
+        }
       />
 
-      <div className="px-7 pt-5 pb-8 flex flex-col gap-8">
-        {showEmpty ? (
-          <EmptyDataState
-            title="No integrations connected"
-            description="Connect your first smart home vendor to start syncing devices."
-          />
-        ) : (
-          <>
-            {/* Connected integrations */}
-            <div>
-              <SectionHead
-                title="Connected integrations"
-                sub={`${connected.length} ACTIVE CONNECTION${connected.length !== 1 ? "S" : ""}`}
-              />
-              <div className="space-y-3 mt-4">
-                {connected.map((integration) => (
-                  <ConnectedCard
-                    key={integration.id}
-                    integration={integration}
-                  />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Available vendors */}
-        <div>
-          <SectionHead
-            title={showEmpty ? "Available vendors" : "Add more integrations"}
-            sub={`${unconnectedVendors.length} VENDOR${unconnectedVendors.length !== 1 ? "S" : ""} AVAILABLE`}
-          />
-          <div className="mt-4">
-            <VendorGrid
-              vendors={unconnectedVendors}
-              connectedIds={connectedIds}
-              onConnect={handleConnect}
-            />
-          </div>
-        </div>
-
-        {/* Info card */}
-        <Card className="p-[18px] flex items-start gap-3.5 bg-blue-50 border-blue-200">
-          <div className="w-9 h-9 rounded-[8px] bg-blue-100 flex items-center justify-center shrink-0">
-            <Plug size={16} strokeWidth={1.5} color="#2563eb" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[13px] font-semibold text-blue-900 m-0">
-              OAuth-secured integrations
-            </p>
-            <p className="text-[12px] text-blue-800 mt-1 leading-[1.6] m-0 max-w-[720px]">
-              All integrations use OAuth 2.0 for secure authentication. Your
-              credentials are encrypted and never stored in plain text. Each
-              vendor integration can be revoked independently at any time.
-            </p>
-          </div>
-        </Card>
+      <div className="px-7 border-b border-border bg-surface">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "connected", label: "Connected", count: INTEGRATIONS.length },
+            { id: "catalog", label: "Catalog", count: 10 },
+            { id: "webhooks", label: "Webhooks", count: 18 },
+            { id: "errors", label: "Errors", count: 1 },
+          ]}
+        />
       </div>
+
+      <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
+        {tab === "connected" && (
+          <ConnectedTab bluetoothDevices={bluetoothDevices} />
+        )}
+        {tab === "catalog" && (
+          <CatalogTab onBluetoothPair={() => setShowBluetoothModal(true)} />
+        )}
+        {tab === "webhooks" && <WebhooksTab />}
+        {tab === "errors" && <ErrorsTab />}
+      </div>
+
+      {showBluetoothModal && (
+        <BluetoothPairingModal
+          propertyId="550e8400-e29b-41d4-a716-446655440000"
+          onSuccess={() => setShowBluetoothModal(false)}
+          onCancel={() => setShowBluetoothModal(false)}
+        />
+      )}
     </>
   );
 }
