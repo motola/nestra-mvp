@@ -168,11 +168,11 @@ function EmptyState() {
       <div className="max-w-[520px]">
         <h1
           className="font-serif text-text m-0"
-          style={{ fontSize: 40, lineHeight: 1.12, letterSpacing: "-0.01em" }}
+          style={{ fontSize: 32, lineHeight: 1.12, letterSpacing: "-0.01em" }}
         >
           Start a conversation
         </h1>
-        <p className="text-[13px] text-text-2 mt-2.5 leading-[1.6] m-0">
+        <p className="text-[12px] text-text-2 mt-2.5 leading-[1.6] m-0">
           Ask questions about your data and get insights. I&apos;ll confirm
           before making changes.
         </p>
