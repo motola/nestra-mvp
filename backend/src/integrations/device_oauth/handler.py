@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import httpx
+from sqlalchemy import select
 
 from config import get_settings
 from db import SessionLocal
@@ -129,14 +130,13 @@ class DeviceOAuthHandler:
 
         async with SessionLocal() as session:
             # Check if token already exists for this org+vendor
-            existing = (
-                await session.query(OAuthTokenModel)
-                .filter_by(
-                    organization_id=organization_id,
-                    vendor=vendor,
+            result = await session.execute(
+                select(OAuthTokenModel).where(
+                    OAuthTokenModel.organization_id == organization_id,
+                    OAuthTokenModel.vendor == vendor,
                 )
-                .first()
             )
+            existing = result.scalar_one_or_none()
 
             if existing:
                 # Update existing token
@@ -185,14 +185,13 @@ class DeviceOAuthHandler:
             Stored token or None if not found
         """
         async with SessionLocal() as session:
-            token = (
-                await session.query(OAuthTokenModel)
-                .filter_by(
-                    organization_id=organization_id,
-                    vendor=vendor,
+            result = await session.execute(
+                select(OAuthTokenModel).where(
+                    OAuthTokenModel.organization_id == organization_id,
+                    OAuthTokenModel.vendor == vendor,
                 )
-                .first()
             )
+            token = result.scalar_one_or_none()
 
             if token:
                 return OAuthTokenOut.from_orm(token)
