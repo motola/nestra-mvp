@@ -50,7 +50,8 @@ export function TopNav() {
         onClick={() => {
           // TODO: Open search modal/command palette
         }}
-        className="ml-2 flex-1 max-w-[280px] bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors duration-[120ms]"
+        className="ml-2 w-40 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors duration-[120ms]"
+
       >
         <Search size={13} strokeWidth={1.5} className="text-text-3 shrink-0" />
         <span className="text-[12px] text-text-2 truncate flex-1 select-none">
