@@ -127,7 +127,7 @@ export default function LoginPage() {
           variant="secondary"
           type="button"
           onClick={handleGoogleLogin}
-          disabled={googleOAuthUrl.isPending}
+          disabled={googleOAuthUrl.isPending || googleOAuthUrl.isError}
           className="w-12 h-12 p-0 justify-center items-center"
           title="Sign in with Google"
         >
@@ -158,9 +158,9 @@ export default function LoginPage() {
           variant="secondary"
           type="button"
           onClick={handleMicrosoftLogin}
-          disabled={microsoftOAuthUrl.isPending}
-          className="w-12 h-12 p-0 justify-center items-center"
-          title="Sign in with Microsoft"
+          disabled={microsoftOAuthUrl.isPending || microsoftOAuthUrl.isError}
+          className="w-12 h-12 p-0 justify-center items-center opacity-50 cursor-not-allowed"
+          title="Microsoft sign in not configured"
         >
           <svg
             className="w-6 h-6"
