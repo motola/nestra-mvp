@@ -107,32 +107,42 @@ export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
                   className={cn(
                     "p-3 rounded-[8px] border text-left transition-colors",
                     role === r.id
-                      ? "bg-graphite border-graphite"
+                      ? "bg-surface-2 border-border"
                       : "bg-surface-2 border-border hover:border-border-strong",
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-4 h-4 rounded border",
-                        role === r.id ? "bg-text border-text" : "border-border",
-                      )}
-                    />
-                    <div>
-                      <p
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 flex items-center justify-center">
+                      <div
                         className={cn(
-                          "text-[13px] font-semibold m-0",
-                          role === r.id ? "text-white" : "text-text",
+                          "w-5 h-5 rounded-[4px] border-2 flex items-center justify-center transition-all",
+                          role === r.id
+                            ? "bg-graphite border-graphite"
+                            : "border-text-3",
                         )}
                       >
+                        {role === r.id && (
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={3}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[13px] font-semibold m-0 text-text">
                         {r.label}
                       </p>
-                      <p
-                        className={cn(
-                          "text-[12px] m-0 mt-0.5",
-                          role === r.id ? "text-white/70" : "text-text-3",
-                        )}
-                      >
+                      <p className="text-[12px] m-0 mt-0.5 text-text-3">
                         {r.description}
                       </p>
                     </div>
@@ -143,7 +153,7 @@ export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-2 justify-between">
             <Button
               type="button"
               variant="secondary"
