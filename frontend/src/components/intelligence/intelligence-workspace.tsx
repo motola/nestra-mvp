@@ -324,10 +324,6 @@ export function IntelligenceWorkspace() {
 
   return (
     <div className="min-h-full flex flex-col">
-      <div className="px-7 py-3 border-b border-border bg-surface">
-        <h2 className="text-[13px] font-semibold text-text">Intelligence</h2>
-      </div>
-
       <TabsBar
         chats={chat.chats}
         activeId={chat.activeId}

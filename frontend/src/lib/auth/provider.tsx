@@ -44,6 +44,19 @@ interface MeResponse {
   organization: AuthOrganization;
 }
 
+// Mock user for development/testing
+const MOCK_DEV_USER: AuthUser = {
+  id: "dev-user-123",
+  email: "dev@localhost.local",
+  full_name: "Dev User",
+};
+
+const MOCK_DEV_ORG: AuthOrganization = {
+  id: "dev-org-123",
+  name: "Dev Organization",
+  slug: "dev-org",
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [organization, setOrganization] = useState<AuthOrganization | null>(
@@ -53,6 +66,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Hydrate session from cookie on mount
   useEffect(() => {
+    // Dev mode: bypass auth if ?devmode=1 in URL
+    const isDev =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("devmode");
+
+    if (isDev) {
+      setUser(MOCK_DEV_USER);
+      setOrganization(MOCK_DEV_ORG);
+      setIsLoading(false);
+      return;
+    }
+
     const token = getToken();
     const devmode =
       new URLSearchParams(window.location.search).get("devmode") === "true";
