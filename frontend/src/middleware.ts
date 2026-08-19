@@ -8,6 +8,8 @@ const AUTH_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/verify-email",
+  "/auth/google/callback",
+  "/auth/microsoft/callback",
 ];
 
 export function middleware(request: NextRequest) {
