@@ -24,9 +24,8 @@ interface Chat {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-let _counter = 20;
 function uid(prefix: string): string {
-  return `${prefix}${_counter++}`;
+  return `${prefix}${Math.random().toString(36).slice(2, 9)}`;
 }
 
 // ─── Chat state hook ──────────────────────────────────────────────────────────
