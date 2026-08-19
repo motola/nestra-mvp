@@ -224,7 +224,8 @@ export function useMicrosoftOAuthUrl() {
       apiFetch<MicrosoftOAuthUrlResponse>("/auth/microsoft/url", {
         method: "GET",
       }),
-    enabled: true,
+    enabled: false,
+    retry: false,
   });
 }
 
