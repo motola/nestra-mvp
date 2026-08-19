@@ -413,7 +413,19 @@ export function PortfolioScreen() {
       />
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        <PortfolioListView onPortfolioClick={setSelectedPortfolioId} />
+        {PORTFOLIOS.length === 0 ? (
+          <div className="border border-border rounded-panel p-12 text-center">
+            <p className="text-[16px] text-text font-serif m-0">
+              No portfolios yet
+            </p>
+            <p className="text-[14px] text-text-2 mt-2 m-0">
+              Create your first portfolio to start managing your properties and
+              integrations.
+            </p>
+          </div>
+        ) : (
+          <PortfolioListView onPortfolioClick={setSelectedPortfolioId} />
+        )}
       </div>
 
       {showAddForm && (
