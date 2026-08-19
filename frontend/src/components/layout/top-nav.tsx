@@ -51,7 +51,7 @@ export function TopNav() {
       {/* Search */}
       <button
         onClick={() => setOpenSearch(true)}
-        className="ml-2 w-72 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-accent hover:bg-surface-2 transition-colors duration-[120ms]"
+        className="ml-2 w-72 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors transition-colors duration-[120ms]"
       >
         <Search size={13} strokeWidth={1.5} className="text-text-3 shrink-0" />
         <span className="text-[12px] text-text-2 truncate flex-1 select-none">
