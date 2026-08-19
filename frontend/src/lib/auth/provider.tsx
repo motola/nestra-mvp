@@ -111,12 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setSession = useCallback((token: string) => {
     setToken(token);
-    apiFetch<MeResponse>(`/auth/me?auth=${encodeURIComponent(token)}`).then(
-      ({ user, organization }) => {
+    apiFetch<MeResponse>(`/auth/me?auth=${encodeURIComponent(token)}`)
+      .then(({ user, organization }) => {
         setUser(user);
         setOrganization(organization);
-      },
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to fetch user session:", error);
+        clearToken();
+      });
   }, []);
 
   const clearSession = useCallback(() => {
