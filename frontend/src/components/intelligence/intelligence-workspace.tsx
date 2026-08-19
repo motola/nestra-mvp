@@ -199,7 +199,7 @@ function Transcript({ messages }: { messages: Message[] }) {
             )}
             <div
               className={cn(
-                "px-4 py-3 rounded-lg max-w-md",
+                "px-4 py-3 rounded-lg max-w-xl",
                 m.role === "you"
                   ? "bg-accent text-white"
                   : "bg-surface-2 text-text border border-border",
