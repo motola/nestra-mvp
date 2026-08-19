@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
-type Role = "admin" | "manager" | "viewer";
+type Role = "admin" | "manager" | "team_member" | "viewer";
 
 interface InviteMemberFormProps {
   onClose: () => void;
@@ -22,6 +22,11 @@ const ROLES: { id: Role; label: string; description: string }[] = [
     id: "manager",
     label: "Manager",
     description: "Manage portfolios, properties, and integrations",
+  },
+  {
+    id: "team_member",
+    label: "Team Member",
+    description: "Access to assigned portfolios and properties",
   },
   {
     id: "viewer",
