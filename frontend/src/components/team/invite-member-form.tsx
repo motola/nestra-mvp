@@ -153,16 +153,11 @@ export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-              className="flex-1"
-            >
+          <div className="flex gap-3 mt-2 justify-between">
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" className="flex-1">
+            <Button type="submit" variant="primary">
               Send Invite
             </Button>
           </div>
