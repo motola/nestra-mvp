@@ -64,18 +64,10 @@ export const VENDOR_LOGOS: Record<string, React.ReactNode> = {
   ),
   Shelly: (
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="48" fill="#003A70" />
-      <text
-        x="50"
-        y="60"
-        textAnchor="middle"
-        fontSize="35"
-        fontWeight="bold"
-        fill="white"
-        fontFamily="Arial"
-      >
-        S
-      </text>
+      <circle cx="50" cy="50" r="48" fill="#0084FF" />
+      <rect x="30" y="35" width="40" height="30" fill="white" rx="4" />
+      <circle cx="40" cy="50" r="3" fill="#0084FF" />
+      <circle cx="60" cy="50" r="3" fill="#0084FF" />
     </svg>
   ),
   SmartThings: (
@@ -114,6 +106,42 @@ export const VENDOR_LOGOS: Record<string, React.ReactNode> = {
       <rect x="60" y="20" width="20" height="20" fill="#7FBA00" />
       <rect x="20" y="60" width="20" height="20" fill="#00A4EF" />
       <rect x="60" y="60" width="20" height="20" fill="#FFB900" />
+    </svg>
+  ),
+  LIFX: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#1D1D1D" />
+      <circle cx="50" cy="50" r="28" fill="#FFB81C" />
+      <circle cx="50" cy="50" r="18" fill="#1D1D1D" />
+    </svg>
+  ),
+  Yale: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#C60C30" rx="12" />
+      <rect x="25" y="30" width="50" height="40" fill="white" rx="4" />
+      <circle cx="50" cy="50" r="8" fill="#C60C30" />
+    </svg>
+  ),
+  Tado: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#003DA5" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="40"
+        fontWeight="bold"
+        fill="white"
+        fontFamily="Arial"
+      >
+        ◉
+      </text>
+    </svg>
+  ),
+  Aqara: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#009FDF" />
+      <path d="M 30 50 L 50 65 L 70 50 L 50 35 Z" fill="white" />
     </svg>
   ),
 };

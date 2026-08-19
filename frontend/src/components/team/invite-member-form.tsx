@@ -153,7 +153,7 @@ export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-2 justify-between">
+          <div className="flex gap-3 mt-2">
             <Button
               type="button"
               variant="secondary"

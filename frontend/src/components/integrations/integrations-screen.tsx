@@ -180,52 +180,15 @@ function CatalogTab() {
 
 // ─── Webhooks tab ─────────────────────────────────────────────────────────────
 
-const WEBHOOK_ROWS = [
-  {
-    vendor: "Nest",
-    topic: "device.state",
-    events: "1,847",
-    last: "2 min ago",
-    status: "active",
-  },
-  {
-    vendor: "Hue",
-    topic: "lights.changed",
-    events: "4,329",
-    last: "30 sec ago",
-    status: "active",
-  },
-  {
-    vendor: "August",
-    topic: "lock.state",
-    events: "412",
-    last: "1 min ago",
-    status: "active",
-  },
-  {
-    vendor: "Shelly",
-    topic: "energy.usage",
-    events: "8,201",
-    last: "1 min ago",
-    status: "active",
-  },
-  {
-    vendor: "SmartThings",
-    topic: "hub.events",
-    events: "230",
-    last: "6 h ago",
-    status: "error",
-  },
-  {
-    vendor: "Ecobee",
-    topic: "thermostat.state",
-    events: "942",
-    last: "5 min ago",
-    status: "active",
-  },
-];
+type WebhookRow = {
+  vendor: string;
+  topic: string;
+  events: string;
+  last: string;
+  status: string;
+};
 
-type WebhookRow = (typeof WEBHOOK_ROWS)[number];
+const WEBHOOK_ROWS: WebhookRow[] = [];
 
 const WEBHOOK_COLS: TableColumn<WebhookRow>[] = [
   {
@@ -306,42 +269,16 @@ function WebhooksTab() {
 
 // ─── Errors tab ───────────────────────────────────────────────────────────────
 
-const ERROR_ROWS = [
-  {
-    time: "today 03:14",
-    vendor: "SmartThings",
-    code: "AuthExpired",
-    message: "Refresh token returned 401 invalid_grant",
-    retriable: true,
-    userVisible: true,
-  },
-  {
-    time: "Y'day 18:32",
-    vendor: "Nest",
-    code: "RateLimited",
-    message: "Backoff for 47s · /thermostat/cmd",
-    retriable: true,
-    userVisible: false,
-  },
-  {
-    time: "Y'day 11:09",
-    vendor: "Hue",
-    code: "DeviceOffline",
-    message: "Bridge unreachable for 3 min · Maple Court",
-    retriable: false,
-    userVisible: true,
-  },
-  {
-    time: "29 Mar",
-    vendor: "August",
-    code: "CommandRejected",
-    message: "Lock not in manual mode · Larkspur House",
-    retriable: false,
-    userVisible: true,
-  },
-];
+type ErrorRow = {
+  time: string;
+  vendor: string;
+  code: string;
+  message: string;
+  retriable: boolean;
+  userVisible: boolean;
+};
 
-type ErrorRow = (typeof ERROR_ROWS)[number];
+const ERROR_ROWS: ErrorRow[] = [];
 
 const ERROR_COLS: TableColumn<ErrorRow>[] = [
   {
