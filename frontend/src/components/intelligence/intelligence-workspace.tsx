@@ -24,9 +24,8 @@ interface Chat {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-let _counter = 20;
 function uid(prefix: string): string {
-  return `${prefix}${_counter++}`;
+  return `${prefix}${Math.random().toString(36).slice(2, 9)}`;
 }
 
 // ─── Chat state hook ──────────────────────────────────────────────────────────
@@ -184,25 +183,35 @@ function EmptyState() {
 function Transcript({ messages }: { messages: Message[] }) {
   return (
     <div className="flex-1 overflow-y-auto px-7 py-6 pb-2">
-      <div className="max-w-[760px] mx-auto flex flex-col gap-5">
+      <div className="max-w-[760px] mx-auto flex flex-col gap-4">
         {messages.map((m) => (
-          <div key={m.id} className="flex gap-3.5 items-start">
-            <span
+          <div
+            key={m.id}
+            className={cn(
+              "flex gap-3.5 items-start",
+              m.role === "you" ? "justify-end" : "justify-start",
+            )}
+          >
+            {m.role === "ai" && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] w-7 shrink-0 pt-[2px] text-green">
+                AI
+              </span>
+            )}
+            <div
               className={cn(
-                "font-mono text-[10px] uppercase tracking-[0.08em] w-7 shrink-0 pt-[2px]",
-                m.role === "ai" ? "text-green" : "text-text-3",
+                "px-4 py-3 rounded-lg max-w-xl",
+                m.role === "you"
+                  ? "bg-accent text-white"
+                  : "bg-surface-2 text-text border border-border",
               )}
             >
-              {m.role === "ai" ? "AI" : "You"}
-            </span>
-            <p
-              className={cn(
-                "flex-1 text-[14px] leading-[1.65] m-0",
-                m.role === "ai" ? "text-text" : "text-text-2",
-              )}
-            >
-              {m.text}
-            </p>
+              <p className="text-[14px] leading-[1.65] m-0">{m.text}</p>
+            </div>
+            {m.role === "you" && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] w-7 shrink-0 pt-[2px] text-text-3">
+                You
+              </span>
+            )}
           </div>
         ))}
         <div className="flex justify-center pt-1">
