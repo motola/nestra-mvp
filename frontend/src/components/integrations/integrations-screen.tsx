@@ -13,24 +13,8 @@ import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
-
-// ─── Vendor logo placeholder (graphite chip + initials) ───────────────────────
-
-function VendorLogo({ name, size = 36 }: { name: string; size?: number }) {
-  return (
-    <div
-      className="rounded-[10px] bg-graphite flex items-center justify-center shrink-0"
-      style={{ width: size, height: size }}
-    >
-      <span
-        className="font-serif text-white leading-none select-none"
-        style={{ fontSize: Math.round(size * 0.36) }}
-      >
-        {name.slice(0, 2).toUpperCase()}
-      </span>
-    </div>
-  );
-}
+import { VendorLogo } from "@/components/integrations/vendor-logos";
+import { useProperty } from "@/lib/property/provider";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -94,28 +78,40 @@ function IntegrationCard({ item: i }: { item: Integration }) {
   );
 }
 
-function ConnectedTab() {
-  const reauth = INTEGRATIONS.find((i) => i.needsReauth);
+function ConnectedTab({ integrations }: { integrations: Integration[] }) {
+  const reauth = integrations.find((i) => i.needsReauth);
   return (
     <>
       {reauth && (
         <AlertCard
           severity="amber"
-          title="SmartThings token expired"
-          desc="Your portfolio's SmartThings access token expired 6 hours ago. 12 devices are not receiving state updates. Reconnect to restore — your scopes will carry over."
-          meta="Integration · Northern Portfolio · Today 03:14"
+          title={`${reauth.vendor} token expired`}
+          desc={`Your ${reauth.vendor} access token expired. Reconnect to restore — your scopes will carry over.`}
+          meta={`Integration · ${reauth.ownerName} · Today 03:14`}
           actions={["Reauthorize", "Open integration"]}
         />
       )}
       <SectionHead
         title="Connected vendors"
-        sub={`${INTEGRATIONS.length} INTEGRATIONS`}
+        sub={`${integrations.length} INTEGRATIONS`}
       />
-      <div className="grid grid-cols-2 gap-3">
-        {INTEGRATIONS.map((i) => (
-          <IntegrationCard key={i.id} item={i} />
-        ))}
-      </div>
+      {integrations.length === 0 ? (
+        <div className="border border-border rounded-panel p-12 text-center">
+          <p className="text-[16px] text-text font-serif m-0">
+            No connections yet
+          </p>
+          <p className="text-[14px] text-text-2 mt-2 m-0">
+            Browse the Catalog to connect your first vendor and start syncing
+            devices.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {integrations.map((i) => (
+            <IntegrationCard key={i.id} item={i} />
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -291,7 +287,19 @@ function WebhooksTab() {
         title="Webhook subscriptions"
         sub="VENDOR → ALPHACON · INCOMING EVENTS"
       />
-      <DataTable columns={WEBHOOK_COLS} rows={WEBHOOK_ROWS} />
+      {WEBHOOK_ROWS.length === 0 ? (
+        <div className="border border-border rounded-panel p-12 text-center">
+          <p className="text-[16px] text-text font-serif m-0">
+            No webhooks configured
+          </p>
+          <p className="text-[14px] text-text-2 mt-2 m-0">
+            When you connect vendors, their webhook subscriptions will appear
+            here for monitoring.
+          </p>
+        </div>
+      ) : (
+        <DataTable columns={WEBHOOK_COLS} rows={WEBHOOK_ROWS} />
+      )}
     </>
   );
 }
@@ -380,7 +388,17 @@ function ErrorsTab() {
         title="Adapter errors"
         sub="LAST 7 DAYS · CLASSIFIED BY ADAPTERROR HIERARCHY"
       />
-      <DataTable columns={ERROR_COLS} rows={ERROR_ROWS} />
+      {ERROR_ROWS.length === 0 ? (
+        <div className="border border-border rounded-panel p-12 text-center">
+          <p className="text-[16px] text-text font-serif m-0">No errors</p>
+          <p className="text-[14px] text-text-2 mt-2 m-0">
+            All integrations are running smoothly. Errors from the past 7 days
+            would appear here.
+          </p>
+        </div>
+      ) : (
+        <DataTable columns={ERROR_COLS} rows={ERROR_ROWS} />
+      )}
     </>
   );
 }
@@ -389,14 +407,24 @@ function ErrorsTab() {
 
 export function IntegrationsScreen() {
   const [tab, setTab] = useState("connected");
-  const active = INTEGRATIONS.filter((i) => i.status === "ACTIVE").length;
+  const { selectedProperty } = useProperty();
+
+  // Use all integrations if no property selected (for demo), or filter by property
+  const propertyIntegrations = selectedProperty
+    ? INTEGRATIONS.filter((i) => i.ownerName === selectedProperty.name)
+    : INTEGRATIONS;
+
+  const active = propertyIntegrations.filter(
+    (i) => i.status === "ACTIVE",
+  ).length;
+  const needsReauth = propertyIntegrations.filter((i) => i.needsReauth).length;
 
   return (
     <>
       <PageHeader
-        eyebrow="WORKSPACE"
+        eyebrow={selectedProperty?.name.toUpperCase() || "WORKSPACE"}
         title="Integrations"
-        sub={`${INTEGRATIONS.length} connections · ${active} active · 1 needs reauth`}
+        sub={`${propertyIntegrations.length} connections · ${active} active ${needsReauth ? `· ${needsReauth} needs reauth` : ""}`}
         primary={
           <Button variant="primary" icon={Plus}>
             Connect vendor
@@ -414,7 +442,11 @@ export function IntegrationsScreen() {
           value={tab}
           onChange={setTab}
           tabs={[
-            { id: "connected", label: "Connected", count: INTEGRATIONS.length },
+            {
+              id: "connected",
+              label: "Connected",
+              count: propertyIntegrations.length,
+            },
             { id: "catalog", label: "Catalog", count: 10 },
             { id: "webhooks", label: "Webhooks", count: 18 },
             { id: "errors", label: "Errors", count: 1 },
@@ -423,7 +455,9 @@ export function IntegrationsScreen() {
       </div>
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        {tab === "connected" && <ConnectedTab />}
+        {tab === "connected" && (
+          <ConnectedTab integrations={propertyIntegrations} />
+        )}
         {tab === "catalog" && <CatalogTab />}
         {tab === "webhooks" && <WebhooksTab />}
         {tab === "errors" && <ErrorsTab />}
