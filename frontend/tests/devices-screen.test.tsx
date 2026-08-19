@@ -11,14 +11,9 @@ vi.mock("@/lib/use-devices", () => ({
 }));
 
 describe("DevicesScreen", () => {
-  it("renders full ui structure with zero data when no devices", () => {
+  it("renders empty state when no devices", () => {
     render(<DevicesScreen />);
     expect(screen.getByRole("heading", { name: "Devices" })).toBeDefined();
-    expect(screen.getByText("Total devices")).toBeDefined();
-    expect(screen.getByText("Online")).toBeDefined();
-    expect(screen.getByText("Categories")).toBeDefined();
-    expect(screen.getByText("All devices")).toBeDefined();
-    expect(screen.getByText("All")).toBeDefined();
-    expect(screen.getByText("Needs attention")).toBeDefined();
+    expect(screen.getByText("No devices connected")).toBeDefined();
   });
 });
