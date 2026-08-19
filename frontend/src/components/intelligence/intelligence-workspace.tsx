@@ -202,7 +202,7 @@ function Transcript({ messages }: { messages: Message[] }) {
               className={cn(
                 "px-4 py-3 rounded-lg max-w-xs",
                 m.role === "you"
-                  ? "bg-graphite text-white"
+                  ? "bg-accent text-white"
                   : "bg-surface-2 text-text border border-border",
               )}
             >
