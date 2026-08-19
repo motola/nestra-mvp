@@ -1,7 +1,7 @@
 "use client"; // Client: account menu
 
 import { useState } from "react";
-import { Bell, Building, ChevronRight, LogOut, Search } from "lucide-react";
+import { Bell, Building, ChevronRight, LogOut, Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/provider";
 import { useLogout } from "@/lib/api/hooks/use-auth";
 import { LogoMark } from "@/components/ui/logo";
@@ -9,6 +9,8 @@ import { LogoMark } from "@/components/ui/logo";
 export function TopNav() {
   const [openAccount, setOpenAccount] = useState(false);
   const [openNotifications, setOpenNotifications] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { user, organization } = useAuth();
   const logout = useLogout();
 
@@ -48,10 +50,8 @@ export function TopNav() {
 
       {/* Search */}
       <button
-        onClick={() => {
-          // TODO: Open search modal/command palette
-        }}
-        className="ml-2 w-72 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors duration-[120ms]"
+        onClick={() => setOpenSearch(true)}
+        className="ml-2 w-72 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-accent hover:bg-surface-2 transition-colors duration-[120ms]"
       >
         <Search size={13} strokeWidth={1.5} className="text-text-3 shrink-0" />
         <span className="text-[12px] text-text-2 truncate flex-1 select-none">
@@ -107,6 +107,54 @@ export function TopNav() {
           )}
         </div>
       </div>
+
+      {/* Search Modal */}
+      {openSearch && (
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-20 z-[100]">
+          <div className="bg-surface rounded-card border border-border shadow-lg w-full max-w-2xl">
+            {/* Search Input */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+              <Search size={18} strokeWidth={1.5} className="text-text-3" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setOpenSearch(false);
+                }}
+                placeholder="Search properties, devices, integrations…"
+                className="flex-1 bg-transparent border-0 outline-none text-[14px] text-text placeholder:text-text-3"
+              />
+              <button
+                onClick={() => setOpenSearch(false)}
+                className="p-1 hover:bg-surface-2 rounded transition-colors"
+              >
+                <X size={18} className="text-text-2" />
+              </button>
+            </div>
+
+            {/* Search Results */}
+            <div className="px-4 py-6 text-center">
+              {searchQuery ? (
+                <p className="text-[14px] text-text-2">
+                  Searching for &quot;{searchQuery}&quot;…
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[14px] text-text-2">
+                    Start typing to search
+                  </p>
+                  <p className="text-[12px] text-text-3">
+                    Search across properties, devices, integrations, and team
+                    members
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
