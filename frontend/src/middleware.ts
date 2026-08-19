@@ -13,20 +13,20 @@ const AUTH_PATHS = [
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const token = request.cookies.get(TOKEN_KEY)?.value;
-  const isDevMode = searchParams.has("devmode");
+  const devmode = searchParams.get("devmode") === "true";
 
   const isAuthPath = AUTH_PATHS.some((p) => pathname.startsWith(p));
 
   if (isAuthPath) {
     // Already authenticated — bounce to the app
-    if (token || isDevMode) {
+    if (token) {
       return NextResponse.redirect(new URL("/intelligence", request.url));
     }
     return NextResponse.next();
   }
 
-  // Dev mode bypasses auth
-  if (isDevMode) {
+  // Devmode bypass for development
+  if (devmode) {
     return NextResponse.next();
   }
 

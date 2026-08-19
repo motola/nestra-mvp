@@ -572,11 +572,17 @@ function DeviceList({
           Re-sync from vendors
         </Button>
       </div>
-      <DataTable
-        columns={DEVICE_COLUMNS}
-        rows={filtered}
-        onRowClick={onSelect}
-      />
+      {devices.length === 0 ? (
+        <div className="border border-border rounded-panel p-8 text-center">
+          <p className="text-[14px] text-text-2 m-0">No devices to display</p>
+        </div>
+      ) : (
+        <DataTable
+          columns={DEVICE_COLUMNS}
+          rows={filtered}
+          onRowClick={onSelect}
+        />
+      )}
     </div>
   );
 }
@@ -589,32 +595,11 @@ export function DevicesScreen() {
     "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
   );
 
-  if (loading || error) {
-    return (
-      <>
-        <PageHeader
-          eyebrow="WORKSPACE"
-          title="Devices"
-          sub="0 devices · 0 online"
-          primary={
-            <Button variant="primary" icon={Plus}>
-              Pair device
-            </Button>
-          }
-        />
-        <EmptyDataState
-          title="No devices connected"
-          description="Connect your first smart home integration to start monitoring devices."
-        />
-      </>
-    );
-  }
-
   const total = devices.length;
   const online = devices.filter((d) => d.reachable).length;
   const unreachable = devices.filter((d) => !d.reachable).length;
 
-  if (!total) {
+  if (loading || error) {
     return (
       <>
         <PageHeader
@@ -663,7 +648,7 @@ export function DevicesScreen() {
           <StatCard label="Online" value={online} sub="Reporting normally" />
           <StatCard
             label="Categories"
-            value={8}
+            value={0}
             sub="Thermostats, lights, locks, sensors…"
           />
           <StatCard

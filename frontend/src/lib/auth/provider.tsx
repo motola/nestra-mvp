@@ -79,7 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const token = getToken();
+    const devmode =
+      new URLSearchParams(window.location.search).get("devmode") === "true";
+
     if (!token) {
+      if (devmode) {
+        // Dev mode: create mock session
+        setUser({
+          id: "dev-user",
+          email: "dev@alphacon.ai",
+          full_name: "Dev User",
+        });
+        setOrganization({
+          id: "dev-org",
+          name: "Dev Organization",
+          slug: "dev-org",
+        });
+      }
       setIsLoading(false);
       return;
     }
