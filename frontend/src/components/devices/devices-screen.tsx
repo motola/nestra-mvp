@@ -591,15 +591,13 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
-  const { devices, loading, error } = useDevices(
-    "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
-  );
+  const { devices, error } = useDevices("b4e3df93-f5e0-4e8f-beaa-33e2aead82ba");
 
   const total = devices.length;
   const online = devices.filter((d) => d.reachable).length;
   const unreachable = devices.filter((d) => !d.reachable).length;
 
-  if (loading || error) {
+  if (error) {
     return (
       <>
         <PageHeader
