@@ -7,7 +7,8 @@ import { useLogout } from "@/lib/api/hooks/use-auth";
 import { LogoMark } from "@/components/ui/logo";
 
 export function TopNav() {
-  const [open, setOpen] = useState(false);
+  const [openAccount, setOpenAccount] = useState(false);
+  const [openNotifications, setOpenNotifications] = useState(false);
   const { user, organization } = useAuth();
   const logout = useLogout();
 
@@ -63,14 +64,26 @@ export function TopNav() {
 
       {/* Bell + account */}
       <div className="ml-auto flex items-center gap-3.5">
-        <button className="bg-transparent border-0 cursor-pointer p-1.5 relative hover:text-text transition-colors">
-          <Bell size={18} strokeWidth={1.5} className="text-text-2" />
-          {/* TODO: Show badge only when there are actual notifications */}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setOpenNotifications(!openNotifications)}
+            className="bg-transparent border-0 cursor-pointer p-1.5 relative hover:text-text transition-colors"
+          >
+            <Bell size={18} strokeWidth={1.5} className="text-text-2" />
+          </button>
+
+          {openNotifications && (
+            <div className="absolute top-full right-0 mt-1 bg-surface border border-border rounded-card shadow-md py-2 z-50 min-w-[240px]">
+              <div className="px-3 py-2 text-[12px] text-text-2 text-center">
+                No alerts or notifications
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="relative">
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => setOpenAccount(!openAccount)}
             className="flex items-center gap-2 pl-[3px] pr-2 py-[3px] rounded-tag border border-border cursor-pointer hover:border-border-strong transition-colors"
           >
             <div className="w-[26px] h-[26px] rounded-full bg-graphite text-white flex items-center justify-center font-mono text-[10px] font-medium tracking-[0.5px]">
@@ -81,7 +94,7 @@ export function TopNav() {
             </span>
           </button>
 
-          {open && (
+          {openAccount && (
             <div className="absolute top-full right-0 mt-1 bg-surface border border-border rounded-card shadow-md py-1 z-50 min-w-[180px]">
               <button
                 onClick={handleLogout}
