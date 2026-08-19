@@ -195,9 +195,14 @@ export function useGoogleOAuthCallback() {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    onSuccess: ({ access_token }) => {
+    onSuccess: async ({ access_token }) => {
       setSession(access_token);
+      // Wait a brief moment for session to be stored
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.push("/intelligence");
+    },
+    onError: (error) => {
+      console.error("Google OAuth callback error:", error);
     },
   });
 }
@@ -233,9 +238,14 @@ export function useMicrosoftOAuthCallback() {
         method: "POST",
         body: JSON.stringify(payload),
       }),
-    onSuccess: ({ access_token }) => {
+    onSuccess: async ({ access_token }) => {
       setSession(access_token);
+      // Wait a brief moment for session to be stored
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.push("/intelligence");
+    },
+    onError: (error) => {
+      console.error("Microsoft OAuth callback error:", error);
     },
   });
 }
