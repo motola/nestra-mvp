@@ -101,7 +101,7 @@ export default function SignupPage() {
         variant="secondary"
         type="button"
         onClick={handleGoogleSignup}
-        disabled={googleOAuthUrl.isPending || !email}
+        disabled={googleOAuthUrl.isPending}
         className="w-full justify-center gap-2 mb-4"
       >
         <svg
