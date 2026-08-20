@@ -70,6 +70,7 @@ class GoogleOAuthUrlResponse(BaseModel):
 class GoogleOAuthCallbackRequest(BaseModel):
     code: str
     org_name: str | None = None  # Optional: provided by frontend for new signups
+    signup_email: str | None = None  # Optional: email from signup form instead of provider's
 
 
 class GoogleOAuthToken(BaseModel):
@@ -95,6 +96,7 @@ class MicrosoftOAuthUrlResponse(BaseModel):
 class MicrosoftOAuthCallbackRequest(BaseModel):
     code: str
     org_name: str | None = None  # Optional: provided by frontend for new signups
+    signup_email: str | None = None  # Optional: email from signup form instead of provider's
 
 
 class MicrosoftOAuthUserInfo(BaseModel):

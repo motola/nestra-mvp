@@ -687,7 +687,8 @@ async def google_oauth_callback_endpoint(
 
         user_info = user_response.json()
         google_id = user_info.get("id")
-        email = user_info.get("email")
+        # Use signup email if provided (from signup form), otherwise use Google's email
+        email = body.signup_email or user_info.get("email")
         name = user_info.get("name", "Google User")
 
     if not google_id or not email:
@@ -867,7 +868,8 @@ async def microsoft_oauth_callback_endpoint(
 
         user_info = user_response.json()
         microsoft_id = user_info.get("id")
-        email = user_info.get("userPrincipalName")
+        # Use signup email if provided (from signup form), otherwise use Microsoft's email
+        email = body.signup_email or user_info.get("userPrincipalName")
         name = user_info.get("displayName", "Microsoft User")
 
     if not microsoft_id or not email:
