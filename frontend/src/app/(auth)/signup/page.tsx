@@ -65,7 +65,8 @@ export default function SignupPage() {
       // Auto-detect org name from domain
       const autoOrgName = extractOrgNameFromEmail(email);
       if (googleOAuthUrl.data?.url) {
-        // Store org name for backend (via query param or session)
+        // Store email and org name for backend
+        sessionStorage.setItem("signup_email", email);
         sessionStorage.setItem("signup_org_name", autoOrgName);
         window.location.href = googleOAuthUrl.data.url;
       }
@@ -78,7 +79,8 @@ export default function SignupPage() {
       return;
     }
     if (googleOAuthUrl.data?.url) {
-      // Store org name for backend
+      // Store email and org name for backend
+      sessionStorage.setItem("signup_email", email);
       sessionStorage.setItem("signup_org_name", orgName);
       window.location.href = googleOAuthUrl.data.url;
     }

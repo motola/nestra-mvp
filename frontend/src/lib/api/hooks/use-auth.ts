@@ -191,13 +191,16 @@ export function useGoogleOAuthCallback() {
 
   return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
     mutationFn: (payload) => {
-      // Include org_name from sessionStorage if available (from signup flow)
+      // Include signup email and org_name from sessionStorage if available
+      const signupEmail = sessionStorage.getItem("signup_email");
       const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_email");
       sessionStorage.removeItem("signup_org_name");
       return apiFetch<TokenResponse>("/auth/google/callback", {
         method: "POST",
         body: JSON.stringify({
           ...payload,
+          ...(signupEmail && { signup_email: signupEmail }),
           ...(orgName && { org_name: orgName }),
         }),
       });
@@ -242,13 +245,16 @@ export function useMicrosoftOAuthCallback() {
 
   return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
     mutationFn: (payload) => {
-      // Include org_name from sessionStorage if available (from signup flow)
+      // Include signup email and org_name from sessionStorage if available
+      const signupEmail = sessionStorage.getItem("signup_email");
       const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_email");
       sessionStorage.removeItem("signup_org_name");
       return apiFetch<TokenResponse>("/auth/microsoft/callback", {
         method: "POST",
         body: JSON.stringify({
           ...payload,
+          ...(signupEmail && { signup_email: signupEmail }),
           ...(orgName && { org_name: orgName }),
         }),
       });
