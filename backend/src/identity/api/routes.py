@@ -725,8 +725,10 @@ async def google_oauth_callback_endpoint(
                 try:
                     # Create organization for new user
                     slug = email.split("@")[0].lower()
+                    # Use provided org_name or auto-generate from name
+                    org_display_name = body.org_name or f"{name}'s Portfolio"
                     org = OrganizationModel(
-                        name=f"{name}'s Portfolio",
+                        name=org_display_name,
                         slug=slug,
                         legal_name=name,
                         status=OrgStatus.ACTIVE,
@@ -905,8 +907,10 @@ async def microsoft_oauth_callback_endpoint(
                 try:
                     # Create organization for new user
                     slug = email.split("@")[0].lower()
+                    # Use provided org_name or auto-generate from name
+                    org_display_name = body.org_name or f"{name}'s Portfolio"
                     org = OrganizationModel(
-                        name=f"{name}'s Portfolio",
+                        name=org_display_name,
                         slug=slug,
                         legal_name=name,
                         status=OrgStatus.ACTIVE,
