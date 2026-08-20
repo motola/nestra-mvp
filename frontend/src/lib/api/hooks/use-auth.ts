@@ -190,11 +190,18 @@ export function useGoogleOAuthCallback() {
   const router = useRouter();
 
   return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
-    mutationFn: (payload) =>
-      apiFetch<TokenResponse>("/auth/google/callback", {
+    mutationFn: (payload) => {
+      // Include org_name from sessionStorage if available (from signup flow)
+      const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_org_name");
+      return apiFetch<TokenResponse>("/auth/google/callback", {
         method: "POST",
-        body: JSON.stringify(payload),
-      }),
+        body: JSON.stringify({
+          ...payload,
+          ...(orgName && { org_name: orgName }),
+        }),
+      });
+    },
     onSuccess: async ({ access_token }) => {
       setSession(access_token);
       // Wait a brief moment for session to be stored
@@ -234,11 +241,18 @@ export function useMicrosoftOAuthCallback() {
   const router = useRouter();
 
   return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
-    mutationFn: (payload) =>
-      apiFetch<TokenResponse>("/auth/microsoft/callback", {
+    mutationFn: (payload) => {
+      // Include org_name from sessionStorage if available (from signup flow)
+      const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_org_name");
+      return apiFetch<TokenResponse>("/auth/microsoft/callback", {
         method: "POST",
-        body: JSON.stringify(payload),
-      }),
+        body: JSON.stringify({
+          ...payload,
+          ...(orgName && { org_name: orgName }),
+        }),
+      });
+    },
     onSuccess: async ({ access_token }) => {
       setSession(access_token);
       // Wait a brief moment for session to be stored
