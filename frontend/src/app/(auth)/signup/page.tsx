@@ -1,7 +1,7 @@
 "use client"; // Client: react-hook-form + mutation
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,7 +37,7 @@ function Field({
   );
 }
 
-export default function SignupPage() {
+function SignupForm() {
   const signup = useSignup();
   const googleOAuthUrl = useGoogleOAuthUrl();
   const [showOrgModal, setShowOrgModal] = useState(false);
@@ -266,5 +266,22 @@ export default function SignupPage() {
         </div>
       )}
     </>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="max-w-[420px] w-full bg-surface border border-border rounded-card p-8">
+            <div className="h-20 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }

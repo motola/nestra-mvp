@@ -1,6 +1,7 @@
 "use client"; // Client: react-hook-form + mutation
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,7 +19,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const login = useLogin();
   const googleOAuthUrl = useGoogleOAuthUrl();
   const microsoftOAuthUrl = useMicrosoftOAuthUrl();
@@ -54,7 +55,11 @@ export default function LoginPage() {
         Welcome back to your portfolio console.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+        noValidate
+      >
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-text">
             Email address
@@ -185,5 +190,22 @@ export default function LoginPage() {
         </Link>
       </p>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="max-w-[420px] w-full bg-surface border border-border rounded-card p-8">
+            <div className="h-20 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
