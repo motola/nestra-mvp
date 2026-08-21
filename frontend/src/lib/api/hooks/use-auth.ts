@@ -181,7 +181,9 @@ export function useGoogleOAuthUrl() {
       apiFetch<GoogleOAuthUrlResponse>("/auth/google/url", {
         method: "GET",
       }),
-    enabled: true,
+    enabled: typeof window !== "undefined",
+    retry: false,
+    throwOnError: false,
   });
 }
 
