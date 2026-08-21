@@ -182,6 +182,8 @@ export function useGoogleOAuthUrl() {
         method: "GET",
       }),
     enabled: typeof window !== "undefined",
+    staleTime: Infinity,
+    gcTime: Infinity,
     retry: false,
     throwOnError: false,
   });
