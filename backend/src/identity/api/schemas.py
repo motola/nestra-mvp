@@ -103,3 +103,12 @@ class MicrosoftOAuthUserInfo(BaseModel):
     id: str
     userPrincipalName: str
     displayName: str
+
+
+class EmailAvailabilityRequest(BaseModel):
+    email: EmailStr
+
+
+class EmailAvailabilityResponse(BaseModel):
+    available: bool
+    message: str
