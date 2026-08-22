@@ -243,6 +243,136 @@ export const VENDOR_LOGOS: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  "Drayton Wiser": (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#D32F2F" />
+      <path d="M 35 40 L 50 50 L 35 60 Z" fill="white" />
+      <path d="M 65 40 L 50 50 L 65 60 Z" fill="white" />
+    </svg>
+  ),
+  Arlo: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#00A3E0" />
+      <circle cx="50" cy="45" r="10" fill="white" />
+      <path
+        d="M 35 65 L 40 60 L 50 70 L 60 60 L 65 65"
+        stroke="white"
+        strokeWidth="3"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  Sonos: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#000000" />
+      <path
+        d="M 40 40 Q 50 35 60 40 Q 50 50 40 40 M 40 55 Q 50 50 60 55 Q 50 65 40 55"
+        fill="white"
+      />
+    </svg>
+  ),
+  "Apple HomeKit": (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#555555" />
+      <path d="M 40 45 L 50 35 L 60 45 L 60 65 L 40 65 Z" fill="white" />
+      <rect x="46" y="52" width="8" height="8" fill="#555555" />
+    </svg>
+  ),
+  Lutron: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#003D7A" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="45"
+        fontWeight="bold"
+        fill="white"
+        fontFamily="Arial"
+      >
+        L
+      </text>
+    </svg>
+  ),
+  Leviton: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#003D82" />
+      <rect x="30" y="40" width="40" height="20" fill="white" rx="3" />
+      <circle cx="40" cy="50" r="3" fill="#003D82" />
+      <circle cx="60" cy="50" r="3" fill="#003D82" />
+    </svg>
+  ),
+  Inovelli: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#2D3436" />
+      <rect x="25" y="30" width="50" height="40" fill="white" rx="4" />
+      <line x1="30" y1="45" x2="70" y2="45" stroke="#2D3436" strokeWidth="2" />
+      <line x1="30" y1="60" x2="70" y2="60" stroke="#2D3436" strokeWidth="2" />
+    </svg>
+  ),
+  "Kasa (TP-Link)": (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#E8A900" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="35"
+        fontWeight="bold"
+        fill="white"
+        fontFamily="Arial"
+      >
+        K
+      </text>
+    </svg>
+  ),
+  Meross: (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#FF6B00" />
+      <circle cx="40" cy="45" r="6" fill="white" />
+      <circle cx="60" cy="45" r="6" fill="white" />
+      <path
+        d="M 35 60 L 50 65 L 65 60"
+        stroke="white"
+        strokeWidth="3"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
+  "GE Cync": (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#003B9B" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="40"
+        fontWeight="bold"
+        fill="white"
+        fontFamily="Arial"
+      >
+        G
+      </text>
+    </svg>
+  ),
+  "Eaton Smart Home": (
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#C8102E" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="40"
+        fontWeight="bold"
+        fill="white"
+        fontFamily="Arial"
+      >
+        E
+      </text>
+    </svg>
+  ),
 };
 
 export function VendorLogo({
