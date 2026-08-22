@@ -209,9 +209,9 @@ export function useGoogleOAuthUrl() {
     gcTime: Infinity,
     retry: false,
     throwOnError: false,
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnReconnect: false, // Don't refetch on reconnect
-    refetchOnMount: false, // Don't refetch on component mount
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 
