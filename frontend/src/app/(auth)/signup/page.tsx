@@ -5,7 +5,11 @@ import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useSignup, useGoogleOAuthUrl } from "@/lib/api/hooks/use-auth";
+import {
+  useSignup,
+  useGoogleOAuthUrl,
+  useCheckEmailAvailability,
+} from "@/lib/api/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { isPublicMailDomain, extractOrgNameFromEmail } from "@/lib/utils/email";
 
@@ -40,8 +44,10 @@ function Field({
 function SignupForm() {
   const signup = useSignup();
   const googleOAuthUrl = useGoogleOAuthUrl();
+  const checkEmail = useCheckEmailAvailability();
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [pendingOrgName, setPendingOrgName] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const {
     register,
@@ -55,6 +61,19 @@ function SignupForm() {
   const handleGoogleSignup = async () => {
     if (!email) {
       alert("Please enter your email first");
+      return;
+    }
+
+    // Check email availability first
+    setEmailError("");
+    try {
+      const result = await checkEmail.mutateAsync({ email });
+      if (!result.available) {
+        setEmailError(result.message);
+        return;
+      }
+    } catch {
+      setEmailError("Failed to check email availability");
       return;
     }
 
@@ -103,7 +122,7 @@ function SignupForm() {
         variant="secondary"
         type="button"
         onClick={handleGoogleSignup}
-        disabled={googleOAuthUrl.isPending}
+        disabled={googleOAuthUrl.isPending || checkEmail.isPending}
         className="w-full justify-center gap-2 mb-4"
       >
         <svg
@@ -130,6 +149,12 @@ function SignupForm() {
         </svg>
         Sign up with Google
       </Button>
+
+      {emailError && (
+        <p className="text-[12px] text-red bg-red-bg rounded-[9px] px-3 py-2 m-0 mb-4">
+          {emailError}
+        </p>
+      )}
 
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">

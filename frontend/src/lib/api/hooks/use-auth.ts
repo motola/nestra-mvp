@@ -24,7 +24,30 @@ interface TokenResponse {
   organization_id: string;
 }
 
+interface EmailAvailabilityRequest {
+  email: string;
+}
+
+interface EmailAvailabilityResponse {
+  available: boolean;
+  message: string;
+}
+
 // ─── Signup ───────────────────────────────────────────────────────────────────
+
+export function useCheckEmailAvailability() {
+  return useMutation<
+    EmailAvailabilityResponse,
+    ApiError,
+    EmailAvailabilityRequest
+  >({
+    mutationFn: (payload) =>
+      apiFetch<EmailAvailabilityResponse>("/auth/check-email", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  });
+}
 
 export function useSignup() {
   const { setSession } = useAuth();
@@ -182,8 +205,13 @@ export function useGoogleOAuthUrl() {
         method: "GET",
       }),
     enabled: typeof window !== "undefined",
+    staleTime: Infinity,
+    gcTime: Infinity,
     retry: false,
     throwOnError: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 

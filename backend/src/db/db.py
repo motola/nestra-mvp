@@ -18,7 +18,16 @@ from config import get_settings
 
 def _make_engine() -> AsyncEngine:
     settings = get_settings()
-    return create_async_engine(settings.database_url, echo=settings.debug)
+    return create_async_engine(
+        settings.database_url,
+        echo=settings.debug,
+        pool_size=10,  # Connection pool size
+        max_overflow=20,  # Additional connections above pool_size
+        pool_pre_ping=True,  # Test connections before using them
+        pool_recycle=600,  # Recycle connections after 10 minutes (not 1 hour)
+        pool_timeout=30,  # Wait max 30 seconds for a connection from pool
+        connect_args={"timeout": 10},  # 10 second connection timeout
+    )
 
 
 # Module-level singletons — created once on first import.
