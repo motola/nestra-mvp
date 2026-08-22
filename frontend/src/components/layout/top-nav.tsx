@@ -11,7 +11,7 @@ export function TopNav() {
   const [openNotifications, setOpenNotifications] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { user, organization } = useAuth();
+  const { user, organization, isLoading } = useAuth();
   const logout = useLogout();
 
   const handleLogout = () => {
@@ -20,7 +20,7 @@ export function TopNav() {
 
   const initials =
     user?.full_name
-      .split(" ")
+      ?.split(" ")
       .map((p) => p[0])
       .join("")
       .toUpperCase() || "?";
@@ -87,10 +87,12 @@ export function TopNav() {
             className="flex items-center gap-2 pl-[3px] pr-2 py-[3px] rounded-tag border border-border cursor-pointer hover:border-border-strong transition-colors"
           >
             <div className="w-[26px] h-[26px] rounded-full bg-graphite text-white flex items-center justify-center font-mono text-[10px] font-medium tracking-[0.5px]">
-              {initials}
+              {isLoading ? "…" : initials}
             </div>
             <span className="text-[12px] text-text-2 pr-1">
-              {user?.full_name.split(" ")[0] || "Account"}
+              {isLoading
+                ? "Loading…"
+                : user?.full_name?.split(" ")[0] || "Account"}
             </span>
           </button>
 
