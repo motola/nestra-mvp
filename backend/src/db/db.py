@@ -24,7 +24,9 @@ def _make_engine() -> AsyncEngine:
         pool_size=10,  # Connection pool size
         max_overflow=20,  # Additional connections above pool_size
         pool_pre_ping=True,  # Test connections before using them
-        pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_recycle=600,  # Recycle connections after 10 minutes (not 1 hour)
+        pool_timeout=30,  # Wait max 30 seconds for a connection from pool
+        connect_args={"timeout": 10},  # 10 second connection timeout
     )
 
 
