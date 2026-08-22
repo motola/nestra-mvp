@@ -156,6 +156,12 @@ function VendorCard({ v }: { v: Vendor }) {
 
 function CatalogTab() {
   const [cat, setCat] = useState("All vendors");
+
+  const filteredVendors =
+    cat === "All vendors"
+      ? VENDORS
+      : VENDORS.filter((v) => v.cats.toLowerCase().includes(cat.toLowerCase()));
+
   return (
     <>
       <div className="flex gap-1.5 flex-wrap">
@@ -170,9 +176,18 @@ function CatalogTab() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-3">
-        {VENDORS.map((v) => (
-          <VendorCard key={v.id} v={v} />
-        ))}
+        {filteredVendors.length > 0 ? (
+          filteredVendors.map((v) => <VendorCard key={v.id} v={v} />)
+        ) : (
+          <div className="col-span-3 border border-border rounded-panel p-12 text-center">
+            <p className="text-[16px] text-text font-serif m-0">
+              No vendors in this category
+            </p>
+            <p className="text-[14px] text-text-2 mt-2 m-0">
+              Try selecting a different category or view all vendors.
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
