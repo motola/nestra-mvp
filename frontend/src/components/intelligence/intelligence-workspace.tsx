@@ -97,12 +97,14 @@ function TabsBar({
   onSelect,
   onClose,
   onNew,
+  onHistoryClick,
 }: {
   chats: Chat[];
   activeId: string;
   onSelect: (id: string) => void;
   onClose: (id: string, e: React.MouseEvent) => void;
   onNew: () => void;
+  onHistoryClick: () => void;
 }) {
   return (
     <div className="pl-0 pr-7 pt-3 bg-surface border-b border-border">
@@ -146,7 +148,12 @@ function TabsBar({
         </div>
 
         <div className="flex items-center gap-2 shrink-0 pb-2">
-          <Button variant="secondary" icon={History} size="sm">
+          <Button
+            variant="secondary"
+            icon={History}
+            size="sm"
+            onClick={onHistoryClick}
+          >
             History
           </Button>
           <Button variant="primary" icon={Plus} size="sm" onClick={onNew}>
@@ -317,8 +324,65 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
+function HistoryPanel({
+  chats,
+  activeId,
+  onSelect,
+  onClose,
+}: {
+  chats: Chat[];
+  activeId: string;
+  onSelect: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-start">
+      <div className="w-80 bg-surface h-full shadow-lg border-r border-border flex flex-col">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-text">Chat History</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-surface-2 rounded transition-colors"
+            aria-label="Close history"
+          >
+            <X size={18} className="text-text-2" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {chats.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-[12px] text-text-3">No chat history</p>
+            </div>
+          ) : (
+            <div className="space-y-1 p-2">
+              {chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => {
+                    onSelect(chat.id);
+                    onClose();
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-[8px] text-[13px] truncate transition-colors ${
+                    activeId === chat.id
+                      ? "bg-accent text-white"
+                      : "text-text hover:bg-bg"
+                  }`}
+                >
+                  {chat.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function IntelligenceWorkspace() {
   const chat = useChatManager();
+  const [showHistory, setShowHistory] = useState(false);
 
   const hasMessages = chat.activeChat.messages.length > 0;
 
@@ -330,6 +394,7 @@ export function IntelligenceWorkspace() {
         onSelect={chat.setActiveId}
         onClose={chat.closeTab}
         onNew={chat.newChat}
+        onHistoryClick={() => setShowHistory(true)}
       />
 
       {hasMessages ? (
@@ -339,6 +404,15 @@ export function IntelligenceWorkspace() {
       )}
 
       <ComposerArea onSend={chat.send} />
+
+      {showHistory && (
+        <HistoryPanel
+          chats={chat.chats}
+          activeId={chat.activeId}
+          onSelect={chat.setActiveId}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div>
   );
 }
