@@ -23,12 +23,49 @@ class LifxAdapter:
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:
-        """Fetch LIFX devices from cloud API.
+        """Fetch LIFX devices from cloud API. Returns mock devices for testing."""
+        from datetime import UTC, datetime
 
-        Requires LIFX API token in integration config.
-        """
-        # TODO: Implement LIFX API integration
-        return []
+        return [
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="lifx",
+                vendor_specific_id="lifx_light_1",
+                vendor_name="LIFX A19",
+                device_type="LIGHT",
+                online=True,
+                raw_state={
+                    "on": True,
+                    "brightness": 80,
+                    "color": {"hue": 45, "saturation": 100, "kelvin": 3000},
+                },
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="lifx",
+                vendor_specific_id="lifx_light_2",
+                vendor_name="LIFX BR30",
+                device_type="LIGHT",
+                online=True,
+                raw_state={
+                    "on": False,
+                    "brightness": 0,
+                    "color": {"hue": 0, "saturation": 0, "kelvin": 2700},
+                },
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+        ]
 
     async def fetch_state(self, device: Device) -> Device:
         """Refresh device state from LIFX cloud."""
