@@ -5,7 +5,13 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
-type Role = "admin" | "manager" | "team_member" | "viewer";
+type Role =
+  | "OWNER"
+  | "ORG_ADMIN"
+  | "PORTFOLIO_ADMIN"
+  | "PORTFOLIO_MANAGER"
+  | "PROPERTY_MANAGER"
+  | "CONTRACTOR";
 
 interface InviteMemberFormProps {
   onClose: () => void;
@@ -14,30 +20,37 @@ interface InviteMemberFormProps {
 
 const ROLES: { id: Role; label: string; description: string }[] = [
   {
-    id: "admin",
-    label: "Admin",
-    description: "Full access to all settings and members",
+    id: "ORG_ADMIN",
+    label: "Organization Admin",
+    description:
+      "Full access · billing · all portfolios · audit log · agent settings",
   },
   {
-    id: "manager",
-    label: "Manager",
-    description: "Manage portfolios, properties, and integrations",
+    id: "PORTFOLIO_ADMIN",
+    label: "Portfolio Admin",
+    description:
+      "Manage portfolio · invite members · add properties · automations",
   },
   {
-    id: "team_member",
-    label: "Team Member",
-    description: "Access to assigned portfolios and properties",
+    id: "PORTFOLIO_MANAGER",
+    label: "Portfolio Manager",
+    description: "View portfolio data · manage team members in portfolio",
   },
   {
-    id: "viewer",
-    label: "Viewer",
-    description: "Read-only access to portfolios and properties",
+    id: "PROPERTY_MANAGER",
+    label: "Property Manager",
+    description: "Manage property · approve agent actions · view audit",
+  },
+  {
+    id: "CONTRACTOR",
+    label: "Contractor",
+    description: "Big tap targets · time-bound access · device control only",
   },
 ];
 
 export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("manager");
+  const [role, setRole] = useState<Role>("PORTFOLIO_MANAGER");
   const [error, setError] = useState("");
 
   const validateEmail = (email: string) => {
@@ -60,7 +73,7 @@ export function InviteMemberForm({ onClose, onSubmit }: InviteMemberFormProps) {
 
     onSubmit({ email, role });
     setEmail("");
-    setRole("manager");
+    setRole("PORTFOLIO_MANAGER");
   };
 
   return (

@@ -13,13 +13,18 @@ import { InviteMemberForm } from "@/components/team/invite-member-form";
 
 const ROLES = [
   {
-    role: "Owner / Org Admin",
+    role: "Organization Admin",
     desc: "Full access · billing · all portfolios · audit log · agent settings",
     scope: "Org-wide",
   },
   {
     role: "Portfolio Admin",
     desc: "Manage their portfolio · invite members · add properties · automations",
+    scope: "One portfolio",
+  },
+  {
+    role: "Portfolio Manager",
+    desc: "View portfolio data · manage team members in portfolio",
     scope: "One portfolio",
   },
   {
@@ -66,7 +71,7 @@ export function TeamScreen() {
         <div className="grid grid-cols-4 gap-3">
           <StatCard label="Members" value="0" sub="You're the only one" />
           <StatCard label="Pending invites" value="0" sub="None yet" />
-          <StatCard label="Active roles" value="4" sub="Available for team" />
+          <StatCard label="Active roles" value="5" sub="Available for team" />
         </div>
 
         <div className="border border-border rounded-panel p-12 text-center">
@@ -81,7 +86,7 @@ export function TeamScreen() {
 
         <SectionHead
           title="Role permissions"
-          sub="4 BUILT-IN ROLES · CUSTOM ROLES IN A LATER RELEASE"
+          sub="5 BUILT-IN ROLES · CUSTOM ROLES IN A LATER RELEASE"
         />
         <div className="grid grid-cols-2 gap-3">
           {ROLES.map((r) => (
