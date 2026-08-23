@@ -36,17 +36,19 @@ export function TopNav() {
       </div>
 
       {/* Org switcher */}
-      <div className="ml-2 px-2.5 py-1 rounded-[9px] flex items-center gap-2 bg-bg border border-border cursor-pointer">
-        <Building
-          size={13}
-          strokeWidth={1.5}
-          className="text-text-3 shrink-0"
-        />
-        <span className="text-[12px] text-text-2 font-medium">
-          {organization?.name || "Organization"}
-        </span>
-        <ChevronRight size={12} strokeWidth={1.5} className="text-text-3" />
-      </div>
+      {!isLoading && organization && (
+        <div className="ml-2 px-2.5 py-1 rounded-[9px] flex items-center gap-2 bg-bg border border-border cursor-pointer">
+          <Building
+            size={13}
+            strokeWidth={1.5}
+            className="text-text-3 shrink-0"
+          />
+          <span className="text-[12px] text-text-2 font-medium">
+            {organization.name}
+          </span>
+          <ChevronRight size={12} strokeWidth={1.5} className="text-text-3" />
+        </div>
+      )}
 
       {/* Search */}
       <button
@@ -126,7 +128,7 @@ export function TopNav() {
                   if (e.key === "Escape") setOpenSearch(false);
                 }}
                 placeholder="Search properties, devices, integrations…"
-                className="flex-1 bg-transparent border-0 outline-none text-[14px] text-text placeholder:text-text-3"
+                className="flex-1 bg-transparent border-0 outline-none ring-0 text-[14px] text-text placeholder:text-text-3 focus:outline-none focus:ring-0"
               />
               <button
                 onClick={() => setOpenSearch(false)}
