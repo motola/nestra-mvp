@@ -129,6 +129,40 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
+  const { property } = useProperty();
+
+  const handleConnect = async () => {
+    if (!property) return;
+
+    try {
+      const vendor = v.name.toLowerCase();
+
+      // Trigger OAuth flow - specific to each vendor
+      switch (vendor) {
+        case "lifx":
+          // Redirect to LIFX OAuth
+          window.location.href = `https://api.lifx.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_LIFX_CLIENT_ID}&response_type=code&scope=remote_access:all&redirect_uri=${window.location.origin}/auth/lifx/callback`;
+          break;
+        case "govee":
+          // Redirect to Govee OAuth
+          window.location.href = `https://community.govee.com/login?client_id=${process.env.NEXT_PUBLIC_GOVEE_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/govee/callback`;
+          break;
+        case "meross":
+          // Redirect to Meross OAuth
+          window.location.href = `https://iot.meross.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_MEROSS_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/meross/callback`;
+          break;
+        case "shelly":
+          // Redirect to Shelly OAuth
+          window.location.href = `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`;
+          break;
+        default:
+          console.warn(`No OAuth implementation for ${vendor}`);
+      }
+    } catch (error) {
+      console.error("Connect failed:", error);
+    }
+  };
+
   return (
     <Card hoverable className="p-[18px] flex flex-col gap-3">
       <div className="flex items-center gap-3">
@@ -146,7 +180,11 @@ function VendorCard({ v }: { v: Vendor }) {
       <div className="h-px bg-border" />
       <div className="flex justify-between items-center">
         <MonoLabel>{v.connected ? "manage" : "set up oauth"}</MonoLabel>
-        <Button variant={v.connected ? "secondary" : "primary"} size="sm">
+        <Button
+          variant={v.connected ? "secondary" : "primary"}
+          size="sm"
+          onClick={v.connected ? undefined : handleConnect}
+        >
           {v.connected ? "Manage" : "Connect"}
         </Button>
       </div>
