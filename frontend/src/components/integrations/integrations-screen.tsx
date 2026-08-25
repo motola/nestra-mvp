@@ -155,6 +155,18 @@ function VendorCard({ v }: { v: Vendor }) {
           // Redirect to Shelly OAuth
           window.location.href = `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`;
           break;
+        case "bluetooth":
+          // Bluetooth - local BLE scanning (no OAuth needed)
+          // Would open a modal to start BLE device discovery
+          console.log("Starting Bluetooth device discovery...");
+          // TODO: Implement BLE discovery modal
+          break;
+        case "wifi":
+          // WiFi - local network discovery (no OAuth needed)
+          // Would open a modal to configure WiFi network settings
+          console.log("Starting WiFi network discovery...");
+          // TODO: Implement WiFi discovery modal
+          break;
         default:
           console.warn(`No OAuth implementation for ${vendor}`);
       }
