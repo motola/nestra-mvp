@@ -78,6 +78,18 @@ class DeviceRepository:
         model = result.scalar_one_or_none()
         return self._model_to_domain(model) if model else None
 
+    async def find_by_id(self, device_id: UUID) -> Device | None:
+        """Alias for get_by_id for compatibility."""
+        return await self.get_by_id(device_id)
+
+    async def find_by_property(self, property_id: UUID) -> list[Device]:
+        """Get all devices for a property."""
+        result = await self._session.execute(
+            select(DeviceModel).where(DeviceModel.property_id == property_id)
+        )
+        models = result.scalars().all()
+        return [self._model_to_domain(m) for m in models]
+
     async def _get_by_vendor_key(self, vendor: str, vendor_specific_id: str) -> DeviceModel | None:
         """O(1) lookup by (vendor, vendor_specific_id) index."""
         result = await self._session.execute(
