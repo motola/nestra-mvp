@@ -198,12 +198,8 @@ export function WiFiDiscoveryModal({
                       )}
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <Tag variant="neutral" size="sm">
-                        {network.frequency}
-                      </Tag>
-                      <Tag variant="neutral" size="sm">
-                        {network.security}
-                      </Tag>
+                      <Tag variant="neutral">{network.frequency}</Tag>
+                      <Tag variant="neutral">{network.security}</Tag>
                       <div
                         className={`flex items-center gap-1 text-xs ${getSignalColor(network.rssi)}`}
                       >

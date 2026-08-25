@@ -42,7 +42,13 @@ export function BluetoothDiscoveryModal({
       // Try to use Web Bluetooth API if available
       if ("bluetooth" in navigator) {
         const device = await (
-          navigator as Navigator & { bluetooth: Bluetooth }
+          navigator as unknown as {
+            bluetooth: {
+              requestDevice: (
+                options: object,
+              ) => Promise<{ id: string; name: string; gatt: object }>;
+            };
+          }
         ).bluetooth.requestDevice({
           filters: [{ services: ["generic_access"] }],
           optionalServices: [
@@ -169,13 +175,13 @@ export function BluetoothDiscoveryModal({
                     </p>
                     {device.services.length > 0 && (
                       <div className="flex gap-1 mt-1 flex-wrap">
-                        {device.services.slice(0, 3).map((service) => (
-                          <Tag key={service} variant="neutral" size="sm">
+                        {device.services.slice(0, 3).map((service: string) => (
+                          <Tag key={service} variant="neutral">
                             {service}
                           </Tag>
                         ))}
                         {device.services.length > 3 && (
-                          <Tag variant="neutral" size="sm">
+                          <Tag variant="neutral">
                             +{device.services.length - 3}
                           </Tag>
                         )}
