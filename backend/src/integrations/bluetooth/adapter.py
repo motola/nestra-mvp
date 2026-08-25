@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 
 class BluetoothAdapter:
@@ -30,7 +30,7 @@ class BluetoothAdapter:
                 vendor="bluetooth",
                 vendor_specific_id="ble_sensor_temp_1",
                 vendor_name="BLE Temperature Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"temperature": 21.3, "battery": 85},
                 last_sync=datetime.now(UTC),
@@ -45,7 +45,7 @@ class BluetoothAdapter:
                 vendor="bluetooth",
                 vendor_specific_id="ble_sensor_contact_1",
                 vendor_name="BLE Door Contact Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"state": "closed", "battery": 95},
                 last_sync=datetime.now(UTC),
