@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from db import SessionLocal
@@ -20,6 +20,7 @@ from identity.repository.models import (
     AiConversationModel,
     AiGeneratedReportModel,
     UserConsentModel,
+    UserModel,
 )
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
@@ -117,6 +118,16 @@ async def chat_with_ai(
             select(UserConsentModel).where(UserConsentModel.user_id == user_id)
         )
         consent = consent_result.scalar_one_or_none()
+
+        # Get user's organization
+        user_result = await session.execute(select(UserModel).where(UserModel.id == user_id))
+        db_user = user_result.scalar_one_or_none()
+
+        if not db_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
 
         # For now, return mock response
         # In production, this would call Claude API with Anthropic SDK

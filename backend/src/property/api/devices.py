@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -20,7 +21,7 @@ router = APIRouter()
 class SyncDevicesRequest(BaseModel):
     """Request to sync devices from a vendor."""
 
-    vendor: str
+    credentials: dict[str, str] | None = None
 
 
 class SyncDevicesResponse(BaseModel):
@@ -39,14 +40,15 @@ class DeviceData(BaseModel):
     vendor_name: str
     device_type: str
     online: bool
-    raw_state: dict[str, object]
+    raw_state: dict[str, Any]
 
 
 class ExecuteCommandRequest(BaseModel):
     """Request to execute a command on a device."""
 
     command: str
-    params: dict[str, object]
+    params: dict[str, Any] | None = None
+    credentials: dict[str, str] | None = None
 
 
 class ExecuteCommandResponse(BaseModel):
@@ -61,12 +63,14 @@ async def sync_devices(
     property_id: UUID,
     vendor: str,
     integration_id: UUID,
+    request: SyncDevicesRequest,
     registry: AdapterRegistry,
     repository: DeviceRepository,
 ) -> SyncDevicesResponse:
     """Sync devices from a vendor for a property.
 
     Triggers device discovery via the vendor adapter and persists to DB.
+    Accepts optional credentials for vendor API authentication.
     """
     try:
         service = DeviceSyncService(registry, repository)
@@ -79,6 +83,7 @@ async def sync_devices(
             organization_id=organization_id,
             property_id=property_id,
             integration_id=integration_id,
+            credentials=request.credentials,
         )
 
         logger.info(f"Synced {len(devices)} devices for {vendor}")
@@ -172,12 +177,20 @@ async def execute_device_command(
         # Get the adapter for this device's vendor
         adapter = registry.resolve(device.vendor)
 
-        # Execute the command
-        success = await adapter.execute(device, request.command, request.params)
+        # Execute the command with credentials if provided
+        if request.credentials:
+            success = await adapter.execute(
+                device, request.command, request.params or {}, **request.credentials
+            )
+        else:
+            success = await adapter.execute(device, request.command, request.params or {})
 
         # Refresh device state after command
         if success:
-            device = await adapter.fetch_state(device)
+            if request.credentials:
+                device = await adapter.fetch_state(device, **request.credentials)
+            else:
+                device = await adapter.fetch_state(device)
             await repository.upsert(device)
 
         return ExecuteCommandResponse(
@@ -191,9 +204,16 @@ async def execute_device_command(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+class RefreshStateRequest(BaseModel):
+    """Request to refresh device state."""
+
+    credentials: dict[str, str] | None = None
+
+
 @router.post("/devices/{device_id}/state")
 async def refresh_device_state(
     device_id: UUID,
+    request: RefreshStateRequest,
     repository: DeviceRepository,
     registry: AdapterRegistry,
 ) -> DeviceData:
@@ -208,7 +228,10 @@ async def refresh_device_state(
         adapter = registry.resolve(device.vendor)
 
         # Fetch fresh state from vendor
-        device = await adapter.fetch_state(device)
+        if request.credentials:
+            device = await adapter.fetch_state(device, **request.credentials)
+        else:
+            device = await adapter.fetch_state(device)
 
         # Save updated state
         device = await repository.upsert(device)
