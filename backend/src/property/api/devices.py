@@ -39,14 +39,14 @@ class DeviceData(BaseModel):
     vendor_name: str
     device_type: str
     online: bool
-    raw_state: dict
+    raw_state: dict[str, object]
 
 
 class ExecuteCommandRequest(BaseModel):
     """Request to execute a command on a device."""
 
     command: str
-    params: dict
+    params: dict[str, object]
 
 
 class ExecuteCommandResponse(BaseModel):

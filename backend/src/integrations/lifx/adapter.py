@@ -6,7 +6,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class LifxAdapter:
                 vendor="lifx",
                 vendor_specific_id="lifx_light_1",
                 vendor_name="LIFX A19",
-                device_type="LIGHT",
+                device_type=DeviceType.LIGHT,
                 online=True,
                 raw_state={
                     "on": True,
@@ -54,7 +54,7 @@ class LifxAdapter:
                 vendor="lifx",
                 vendor_specific_id="lifx_light_2",
                 vendor_name="LIFX BR30",
-                device_type="LIGHT",
+                device_type=DeviceType.LIGHT,
                 online=True,
                 raw_state={
                     "on": False,

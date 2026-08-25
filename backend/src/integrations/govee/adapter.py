@@ -6,7 +6,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class GoveeAdapter:
                 vendor="govee",
                 vendor_specific_id="govee_smart_light_1",
                 vendor_name="Govee Smart Light Strip",
-                device_type="LIGHT",
+                device_type=DeviceType.LIGHT,
                 online=True,
                 raw_state={
                     "on": True,
@@ -54,7 +54,7 @@ class GoveeAdapter:
                 vendor="govee",
                 vendor_specific_id="govee_sensor_1",
                 vendor_name="Govee Temperature Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"temperature": 22.5, "humidity": 45},
                 last_sync=datetime.now(UTC),

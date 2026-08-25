@@ -8,7 +8,7 @@ from uuid import UUID
 
 import httpx
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class ShellyAdapter:
                 vendor="shelly",
                 vendor_specific_id="shelly_plug_s_1",
                 vendor_name="Shelly Plug S",
-                device_type="PLUG",
+                device_type=DeviceType.PLUG,
                 online=True,
                 raw_state={"on": True, "power": 45.2, "ip": "192.168.1.100"},
                 last_sync=datetime.now(UTC),
@@ -110,7 +110,7 @@ class ShellyAdapter:
                 vendor="shelly",
                 vendor_specific_id="shelly_1pm_2",
                 vendor_name="Shelly 1PM",
-                device_type="PLUG",
+                device_type=DeviceType.PLUG,
                 online=True,
                 raw_state={"on": False, "power": 0.0, "ip": "192.168.1.101"},
                 last_sync=datetime.now(UTC),

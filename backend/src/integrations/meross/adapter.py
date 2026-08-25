@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 
 class MerossAdapter:
@@ -30,7 +30,7 @@ class MerossAdapter:
                 vendor="meross",
                 vendor_specific_id="meross_smart_plug_1",
                 vendor_name="Meross Smart Plug",
-                device_type="PLUG",
+                device_type=DeviceType.PLUG,
                 online=True,
                 raw_state={"on": True, "power": 12.5, "voltage": 230},
                 last_sync=datetime.now(UTC),
@@ -45,7 +45,7 @@ class MerossAdapter:
                 vendor="meross",
                 vendor_specific_id="meross_switch_1",
                 vendor_name="Meross Smart Switch",
-                device_type="SWITCH",
+                device_type=DeviceType.PLUG,
                 online=True,
                 raw_state={"on": False, "power": 0.0},
                 last_sync=datetime.now(UTC),
