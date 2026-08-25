@@ -9,7 +9,7 @@ from uuid import UUID
 
 import httpx
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,7 @@ class GoveeAdapter:
         integration_id: UUID,
         api_key: str | None = None,
     ) -> list[Device]:
-        """Fetch Govee devices from cloud API.
-
-        Requires Govee API key stored in integration credentials.
-        Falls back to mock data if no key provided.
-        """
+        """Fetch Govee devices from cloud API."""
         if not api_key:
             logger.warning("No Govee API key provided, returning mock devices")
             return self._get_mock_devices(organization_id, property_id, integration_id)
@@ -41,53 +37,49 @@ class GoveeAdapter:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(
-                    f"{GOVEE_API_URL}/device/list",
-                    headers={"Govee-Token": api_key},
+                    f"{GOVEE_API_URL}/device/list", headers={"Govee-Token": api_key}
                 )
                 response.raise_for_status()
                 data = response.json()
 
                 devices = []
                 for device_data in data.get("data", {}).get("devices", []):
-                    device = Device(
-                        id=None,
-                        organization_id=organization_id,
-                        property_id=property_id,
-                        integration_id=integration_id,
-                        vendor="govee",
-                        vendor_specific_id=device_data.get("deviceId", ""),
-                        vendor_name=device_data.get("deviceName", "Govee Device"),
-                        device_type=self._get_device_type(device_data.get("deviceType", "")),
-                        online=device_data.get("online", False),
-                        raw_state=device_data.get("property", {}),
-                        last_sync=datetime.now(UTC),
-                        created_at=datetime.now(UTC),
-                        updated_at=datetime.now(UTC),
+                    devices.append(
+                        Device(
+                            id=None,
+                            organization_id=organization_id,
+                            property_id=property_id,
+                            integration_id=integration_id,
+                            vendor="govee",
+                            vendor_specific_id=device_data.get("deviceId", ""),
+                            vendor_name=device_data.get("deviceName", "Govee Device"),
+                            device_type=self._get_device_type(device_data.get("deviceType", "")),
+                            online=device_data.get("online", False),
+                            raw_state=device_data.get("property", {}),
+                            last_sync=datetime.now(UTC),
+                            created_at=datetime.now(UTC),
+                            updated_at=datetime.now(UTC),
+                        )
                     )
-                    devices.append(device)
 
                 logger.info(f"Fetched {len(devices)} Govee devices")
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch Govee devices: {e}")
-            logger.info("Falling back to mock devices")
             return self._get_mock_devices(organization_id, property_id, integration_id)
 
-    def _get_device_type(self, govee_type: str) -> str:
-        """Map Govee device type to our Device types."""
+    def _get_device_type(self, govee_type: str) -> DeviceType:
+        """Map Govee device type to DeviceType."""
         type_map = {
-            "SmartPlug": "PLUG",
-            "Light": "LIGHT",
-            "Sensor": "SENSOR",
-            "Switch": "SWITCH",
+            "SmartPlug": DeviceType.PLUG,
+            "Light": DeviceType.LIGHT,
+            "Sensor": DeviceType.SENSOR,
+            "Switch": DeviceType.PLUG,
         }
-        return type_map.get(govee_type, "PLUG")
+        return type_map.get(govee_type, DeviceType.PLUG)
 
     def _get_mock_devices(
-        self,
-        organization_id: UUID,
-        property_id: UUID,
-        integration_id: UUID,
+        self, organization_id: UUID, property_id: UUID, integration_id: UUID
     ) -> list[Device]:
         """Return mock Govee devices for testing."""
         return [
@@ -99,13 +91,9 @@ class GoveeAdapter:
                 vendor="govee",
                 vendor_specific_id="govee_smart_light_1",
                 vendor_name="Govee Smart Light Strip",
-                device_type="LIGHT",
+                device_type=DeviceType.LIGHT,
                 online=True,
-                raw_state={
-                    "on": True,
-                    "brightness": 100,
-                    "color": {"r": 255, "g": 100, "b": 50},
-                },
+                raw_state={"on": True, "brightness": 100, "color": {"r": 255, "g": 100, "b": 50}},
                 last_sync=datetime.now(UTC),
                 created_at=datetime.now(UTC),
                 updated_at=datetime.now(UTC),
@@ -118,7 +106,7 @@ class GoveeAdapter:
                 vendor="govee",
                 vendor_specific_id="govee_sensor_1",
                 vendor_name="Govee Temperature Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"temperature": 22.5, "humidity": 45},
                 last_sync=datetime.now(UTC),

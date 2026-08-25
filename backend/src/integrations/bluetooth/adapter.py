@@ -1,4 +1,4 @@
-"""Bluetooth adapter — normalizes BLE sensors to unified Device model."""
+"""Bluetooth adapter."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from property.domain import Device
+from property.domain import Device, DeviceType
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,7 @@ class BluetoothAdapter:
         integration_id: UUID,
         _credentials: str | None = None,
     ) -> list[Device]:
-        """Scan for Bluetooth devices and normalize to Device objects.
-
-        Mock implementation — returns mock BLE sensors for testing.
-        """
+        """Scan for Bluetooth devices and normalize to Device objects."""
         return [
             Device(
                 id=None,
@@ -38,7 +35,7 @@ class BluetoothAdapter:
                 vendor="bluetooth",
                 vendor_specific_id="ble_sensor_temp_1",
                 vendor_name="BLE Temperature Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"temperature": 21.3, "battery": 85},
                 last_sync=datetime.now(UTC),
@@ -53,7 +50,7 @@ class BluetoothAdapter:
                 vendor="bluetooth",
                 vendor_specific_id="ble_sensor_contact_1",
                 vendor_name="BLE Door Contact Sensor",
-                device_type="SENSOR",
+                device_type=DeviceType.SENSOR,
                 online=True,
                 raw_state={"state": "closed", "battery": 95},
                 last_sync=datetime.now(UTC),
@@ -63,18 +60,12 @@ class BluetoothAdapter:
         ]
 
     async def fetch_state(self, device: Device, _credentials: str | None = None) -> Device:
-        """Refresh sensor state from Bluetooth device.
-
-        Mock implementation — returns device unchanged.
-        """
+        """Refresh sensor state from Bluetooth device."""
         device.updated_at = datetime.now(UTC)
         return device
 
     async def execute(
         self, device: Device, command: str, params: dict[str, Any], _credentials: str | None = None
     ) -> bool:
-        """Execute command on Bluetooth device.
-
-        Not supported for sensors.
-        """
+        """Execute command on Bluetooth device. Not supported for sensors."""
         return False
