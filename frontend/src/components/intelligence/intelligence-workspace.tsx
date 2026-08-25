@@ -64,6 +64,8 @@ function useChatManager() {
   function send(text: string) {
     const msg = text.trim();
     if (!msg) return;
+
+    const aiMessageId = uid("m");
     setChats((cs) =>
       cs.map((c) => {
         if (c.id !== activeId) return c;
@@ -79,11 +81,58 @@ function useChatManager() {
           messages: [
             ...c.messages,
             { id: uid("m"), role: "you" as Role, text: msg },
-            { id: uid("m"), role: "ai" as Role, text: "Thinking..." },
+            { id: aiMessageId, role: "ai" as Role, text: "Thinking..." },
           ],
         };
       }),
     );
+
+    // Call backend API
+    (async () => {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(`${apiUrl}/intelligence/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ message: msg }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // Update with AI response
+        setChats((cs) =>
+          cs.map((c) => {
+            if (c.id !== activeId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === aiMessageId
+                  ? { ...m, text: data.response || "No response" }
+                  : m,
+              ),
+            };
+          }),
+        );
+      } catch (error) {
+        console.error("Chat error:", error);
+        setChats((cs) =>
+          cs.map((c) => {
+            if (c.id !== activeId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === aiMessageId
+                  ? { ...m, text: "Error: Could not reach AI service" }
+                  : m,
+              ),
+            };
+          }),
+        );
+      }
+    })();
   }
 
   return { chats, activeId, activeChat, setActiveId, newChat, closeTab, send };
