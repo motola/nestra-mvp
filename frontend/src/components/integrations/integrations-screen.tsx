@@ -129,10 +129,10 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
-  const { property } = useProperty();
+  const { selectedProperty } = useProperty();
 
   const handleConnect = async () => {
-    if (!property) return;
+    if (!selectedProperty) return;
 
     try {
       const vendor = v.name.toLowerCase();
