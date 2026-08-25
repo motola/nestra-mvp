@@ -15,6 +15,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { VendorLogo } from "@/components/integrations/vendor-logos";
 import { useProperty } from "@/lib/property/provider";
+import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
+import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -129,6 +131,9 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
+  const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
+  const [wifiModalOpen, setWifiModalOpen] = useState(false);
+
   const handleConnect = async () => {
     try {
       const vendor = v.name.toLowerCase();
@@ -152,16 +157,10 @@ function VendorCard({ v }: { v: Vendor }) {
           window.location.href = `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`;
           break;
         case "bluetooth":
-          // Bluetooth - local BLE scanning (no OAuth needed)
-          // Would open a modal to start BLE device discovery
-          console.log("Starting Bluetooth device discovery...");
-          // TODO: Implement BLE discovery modal
+          setBluetoothModalOpen(true);
           break;
         case "wifi":
-          // WiFi - local network discovery (no OAuth needed)
-          // Would open a modal to configure WiFi network settings
-          console.log("Starting WiFi network discovery...");
-          // TODO: Implement WiFi discovery modal
+          setWifiModalOpen(true);
           break;
         default:
           console.warn(`No OAuth implementation for ${vendor}`);
@@ -171,32 +170,71 @@ function VendorCard({ v }: { v: Vendor }) {
     }
   };
 
+  const handleBluetoothDevices = async (
+    devices: Array<{
+      id: string;
+      name: string;
+      rssi: number;
+      services: string[];
+    }>,
+  ) => {
+    console.log("Selected Bluetooth devices:", devices);
+    // TODO: Sync devices to backend
+  };
+
+  const handleWifiNetworks = async (
+    networks: Array<{
+      id: string;
+      ssid: string;
+      rssi: number;
+      frequency: string;
+      security: string;
+    }>,
+  ) => {
+    console.log("Selected WiFi networks:", networks);
+    // TODO: Sync networks to backend
+  };
+
   return (
-    <Card hoverable className="p-[18px] flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <VendorLogo name={v.name} size={36} />
-        <div className="flex-1">
-          <p className="text-[14px] font-semibold text-text m-0">{v.name}</p>
-          <p className="text-[12px] text-text-3 mt-0.5 m-0">{v.cats}</p>
+    <>
+      <Card hoverable className="p-[18px] flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <VendorLogo name={v.name} size={36} />
+          <div className="flex-1">
+            <p className="text-[14px] font-semibold text-text m-0">{v.name}</p>
+            <p className="text-[12px] text-text-3 mt-0.5 m-0">{v.cats}</p>
+          </div>
+          {v.connected && (
+            <Tag variant="ok" withDot>
+              connected
+            </Tag>
+          )}
         </div>
-        {v.connected && (
-          <Tag variant="ok" withDot>
-            connected
-          </Tag>
-        )}
-      </div>
-      <div className="h-px bg-border" />
-      <div className="flex justify-between items-center">
-        <MonoLabel>{v.connected ? "manage" : "set up oauth"}</MonoLabel>
-        <Button
-          variant={v.connected ? "secondary" : "primary"}
-          size="sm"
-          onClick={v.connected ? undefined : handleConnect}
-        >
-          {v.connected ? "Manage" : "Connect"}
-        </Button>
-      </div>
-    </Card>
+        <div className="h-px bg-border" />
+        <div className="flex justify-between items-center">
+          <MonoLabel>{v.connected ? "manage" : "set up oauth"}</MonoLabel>
+          <Button
+            variant={v.connected ? "secondary" : "primary"}
+            size="sm"
+            onClick={v.connected ? undefined : handleConnect}
+          >
+            {v.connected ? "Manage" : "Connect"}
+          </Button>
+        </div>
+      </Card>
+
+      <BluetoothDiscoveryModal
+        isOpen={bluetoothModalOpen}
+        onClose={() => setBluetoothModalOpen(false)}
+        onDevicesSelected={handleBluetoothDevices}
+      />
+
+      <WiFiDiscoveryModal
+        isOpen={wifiModalOpen}
+        onClose={() => setWifiModalOpen(false)}
+        onNetworksSelected={handleWifiNetworks}
+      />
+    </>
   );
 }
 
