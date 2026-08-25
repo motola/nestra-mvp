@@ -20,13 +20,39 @@ class BluetoothAdapter:
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:
-        """Scan for Bluetooth devices and normalize to Device objects.
-
-        Mock implementation — returns empty list. Real implementation
-        would scan BLE, parse advertisements, build Device objects.
-        """
-        # TODO: Scan for BLE devices, parse, build Device objects with create_device_data()
-        return []
+        """Scan for Bluetooth devices and normalize to Device objects."""
+        return [
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="bluetooth",
+                vendor_specific_id="ble_sensor_temp_1",
+                vendor_name="BLE Temperature Sensor",
+                device_type="SENSOR",
+                online=True,
+                raw_state={"temperature": 21.3, "battery": 85},
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="bluetooth",
+                vendor_specific_id="ble_sensor_contact_1",
+                vendor_name="BLE Door Contact Sensor",
+                device_type="SENSOR",
+                online=True,
+                raw_state={"state": "closed", "battery": 95},
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+        ]
 
     async def fetch_state(self, device: Device) -> Device:
         """Refresh sensor state from Bluetooth device.

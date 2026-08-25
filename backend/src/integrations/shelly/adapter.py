@@ -83,8 +83,41 @@ class ShellyAdapter:
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:
-        """Fetch Shelly devices. Note: Shelly requires device registry/config."""
-        return []
+        """Fetch Shelly devices. Returns mock devices for testing."""
+        from datetime import UTC, datetime
+
+        return [
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="shelly",
+                vendor_specific_id="shelly_plug_s_1",
+                vendor_name="Shelly Plug S",
+                device_type="PLUG",
+                online=True,
+                raw_state={"on": True, "power": 45.2, "ip": "192.168.1.100"},
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+            Device(
+                id=None,
+                organization_id=organization_id,
+                property_id=property_id,
+                integration_id=integration_id,
+                vendor="shelly",
+                vendor_specific_id="shelly_1pm_2",
+                vendor_name="Shelly 1PM",
+                device_type="PLUG",
+                online=True,
+                raw_state={"on": False, "power": 0.0, "ip": "192.168.1.101"},
+                last_sync=datetime.now(UTC),
+                created_at=datetime.now(UTC),
+                updated_at=datetime.now(UTC),
+            ),
+        ]
 
     async def fetch_state(self, device: Device) -> Device:
         """Refresh device state from Shelly."""
