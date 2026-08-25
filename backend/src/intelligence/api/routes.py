@@ -29,7 +29,7 @@ router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 @router.post("/consent", response_model=UserConsentResponse)
 async def set_user_consent(
     body: UserConsentRequest,
-    user: UserDep,
+    user_id: UserDep,
 ) -> UserConsentResponse:
     """Set user consent for AI data access."""
     now = datetime.now(tz=UTC)
@@ -37,7 +37,7 @@ async def set_user_consent(
     async with SessionLocal() as session:
         # Check if consent already exists
         result = await session.execute(
-            select(UserConsentModel).where(UserConsentModel.user_id == user.id)
+            select(UserConsentModel).where(UserConsentModel.user_id == user_id)
         )
         consent = result.scalar_one_or_none()
 
@@ -50,7 +50,7 @@ async def set_user_consent(
         else:
             # Create new consent
             consent = UserConsentModel(
-                user_id=user.id,
+                user_id=user_id,
                 portfolio_access=body.portfolio_access,
                 device_access=body.device_access,
                 historical_data_access=body.historical_data_access,
@@ -70,12 +70,12 @@ async def set_user_consent(
 
 @router.get("/consent", response_model=UserConsentResponse)
 async def get_user_consent(
-    user: UserDep,
+    user_id: UserDep,
 ) -> UserConsentResponse:
     """Get user consent status for AI data access."""
     async with SessionLocal() as session:
         result = await session.execute(
-            select(UserConsentModel).where(UserConsentModel.user_id == user.id)
+            select(UserConsentModel).where(UserConsentModel.user_id == user_id)
         )
         consent = result.scalar_one_or_none()
 
@@ -97,7 +97,7 @@ async def get_user_consent(
 @router.post("/chat", response_model=AiChatResponse)
 async def chat_with_ai(
     body: AiChatRequest,
-    user: UserDep,
+    user_id: UserDep,
 ) -> AiChatResponse:
     """Chat with Claude AI.
 
@@ -115,12 +115,12 @@ async def chat_with_ai(
     async with SessionLocal() as session:
         # Check user consent
         consent_result = await session.execute(
-            select(UserConsentModel).where(UserConsentModel.user_id == user.id)
+            select(UserConsentModel).where(UserConsentModel.user_id == user_id)
         )
         consent = consent_result.scalar_one_or_none()
 
         # Get user's organization
-        user_result = await session.execute(select(UserModel).where(UserModel.id == user.id))
+        user_result = await session.execute(select(UserModel).where(UserModel.id == user_id))
         db_user = user_result.scalar_one_or_none()
 
         if not db_user:
@@ -151,7 +151,7 @@ async def chat_with_ai(
 
                 # Log the action
                 action_log = AiActionLogModel(
-                    user_id=user.id,
+                    user_id=user_id,
                     action_type="create_report",
                     action_status="pending",
                     details="Portfolio analysis report requested",
@@ -175,7 +175,7 @@ async def chat_with_ai(
 
             # Log the action
             action_log = AiActionLogModel(
-                user_id=user.id,
+                user_id=user_id,
                 action_type="send_notification",
                 action_status="pending",
                 details="Notification action triggered",
@@ -185,8 +185,8 @@ async def chat_with_ai(
 
         # Store conversation
         conversation = AiConversationModel(
-            user_id=user.id,
-            organization_id=db_user.id,  # Using user_id as placeholder for org_id
+            user_id=user_id,
+            organization_id=user_id,  # Using user_id as placeholder for org_id
             user_message=body.message,
             ai_response=ai_response,
             created_at=now,
@@ -203,13 +203,13 @@ async def chat_with_ai(
 
 @router.get("/reports", response_model=list[AiReportResponse])
 async def get_ai_reports(
-    user: UserDep,
+    user_id: UserDep,
 ) -> list[AiReportResponse]:
     """Get all AI-generated reports for the user."""
     async with SessionLocal() as session:
         result = await session.execute(
             select(AiGeneratedReportModel)
-            .where(AiGeneratedReportModel.user_id == user.id)
+            .where(AiGeneratedReportModel.user_id == user_id)
             .order_by(AiGeneratedReportModel.created_at.desc())
         )
         reports = result.scalars().all()
