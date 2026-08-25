@@ -9,6 +9,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from config import Settings, get_settings
 
+__all__ = ["SettingsDep", "UserDep", "security", "get_current_user"]
+
 # Type alias used on every endpoint that needs access to app settings.
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
