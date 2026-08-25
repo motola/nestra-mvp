@@ -17,6 +17,7 @@ import { VendorLogo } from "@/components/integrations/vendor-logos";
 import { useProperty } from "@/lib/property/provider";
 import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
 import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
+import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -133,41 +134,53 @@ const CATALOG_CATS = [
 function VendorCard({ v }: { v: Vendor }) {
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
+  const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
 
   const handleConnect = async () => {
-    try {
-      const vendor = v.name.toLowerCase();
+    const vendor = v.name.toLowerCase();
 
-      // Trigger OAuth flow - specific to each vendor
-      switch (vendor) {
-        case "lifx":
-          // Redirect to LIFX OAuth
-          window.location.href = `https://api.lifx.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_LIFX_CLIENT_ID}&response_type=code&scope=remote_access:all&redirect_uri=${window.location.origin}/auth/lifx/callback`;
-          break;
-        case "govee":
-          // Redirect to Govee OAuth
-          window.location.href = `https://community.govee.com/login?client_id=${process.env.NEXT_PUBLIC_GOVEE_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/govee/callback`;
-          break;
-        case "meross":
-          // Redirect to Meross OAuth
-          window.location.href = `https://iot.meross.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_MEROSS_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/meross/callback`;
-          break;
-        case "shelly":
-          // Redirect to Shelly OAuth
-          window.location.href = `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`;
-          break;
-        case "bluetooth":
-          setBluetoothModalOpen(true);
-          break;
-        case "wifi":
-          setWifiModalOpen(true);
-          break;
-        default:
-          console.warn(`No OAuth implementation for ${vendor}`);
-      }
-    } catch (error) {
-      console.error("Connect failed:", error);
+    // For OAuth vendors, show the OAuth/Token selection modal
+    if (["lifx", "govee", "meross", "shelly"].includes(vendor)) {
+      setOauthTokenModalOpen(true);
+      return;
     }
+
+    // For local discovery vendors
+    if (vendor === "bluetooth") {
+      setBluetoothModalOpen(true);
+      return;
+    }
+
+    if (vendor === "wifi") {
+      setWifiModalOpen(true);
+      return;
+    }
+
+    console.warn(`No implementation for ${vendor}`);
+  };
+
+  const handleOAuthClick = () => {
+    const vendor = v.name.toLowerCase();
+    const oauthUrls: Record<string, string> = {
+      lifx: `https://api.lifx.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_LIFX_CLIENT_ID}&response_type=code&scope=remote_access:all&redirect_uri=${window.location.origin}/auth/lifx/callback`,
+      govee: `https://community.govee.com/login?client_id=${process.env.NEXT_PUBLIC_GOVEE_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/govee/callback`,
+      meross: `https://iot.meross.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_MEROSS_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/meross/callback`,
+      shelly: `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`,
+    };
+
+    if (oauthUrls[vendor]) {
+      window.location.href = oauthUrls[vendor];
+    }
+  };
+
+  const handleTokenSubmit = async (token: string) => {
+    const vendor = v.name.toLowerCase();
+    console.log(
+      `Using API token for ${vendor}:`,
+      token.substring(0, 10) + "...",
+    );
+    // TODO: Call sync endpoint with token as credential
+    setOauthTokenModalOpen(false);
   };
 
   const handleBluetoothDevices = async (
@@ -222,6 +235,14 @@ function VendorCard({ v }: { v: Vendor }) {
           </Button>
         </div>
       </Card>
+
+      <OAuthTokenModal
+        isOpen={oauthTokenModalOpen}
+        vendor={v.name}
+        onClose={() => setOauthTokenModalOpen(false)}
+        onOAuth={handleOAuthClick}
+        onTokenSubmit={handleTokenSubmit}
+      />
 
       <BluetoothDiscoveryModal
         isOpen={bluetoothModalOpen}
