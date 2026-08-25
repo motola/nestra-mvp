@@ -112,3 +112,38 @@ class EmailAvailabilityRequest(BaseModel):
 class EmailAvailabilityResponse(BaseModel):
     available: bool
     message: str
+
+
+class UserConsentRequest(BaseModel):
+    portfolio_access: bool
+    device_access: bool
+    historical_data_access: bool
+
+
+class UserConsentResponse(BaseModel):
+    portfolio_access: bool
+    device_access: bool
+    historical_data_access: bool
+
+
+class AiChatRequest(BaseModel):
+    message: str
+
+
+class AiActionResponse(BaseModel):
+    action_type: str
+    status: str
+    details: str
+
+
+class AiChatResponse(BaseModel):
+    response: str
+    actions: list[AiActionResponse] = []
+
+
+class AiReportResponse(BaseModel):
+    id: UUID
+    title: str
+    content: str
+    report_type: str
+    created_at: str
