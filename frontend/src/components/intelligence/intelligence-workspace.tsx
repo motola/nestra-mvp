@@ -88,6 +88,7 @@ function useChatManager() {
     );
 
     // Call backend API
+    const controller = new AbortController();
     (async () => {
       try {
         const apiUrl =
@@ -96,6 +97,7 @@ function useChatManager() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          signal: controller.signal,
           body: JSON.stringify({ message: msg }),
         });
 
@@ -117,6 +119,8 @@ function useChatManager() {
           }),
         );
       } catch (error) {
+        // Ignore abort errors (component unmounted)
+        if (error instanceof Error && error.name === "AbortError") return;
         console.error("Chat error:", error);
         setChats((cs) =>
           cs.map((c) => {
