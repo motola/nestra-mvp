@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import cast
 from uuid import UUID
 
 from integrations.registry import AdapterRegistry
@@ -52,7 +53,7 @@ class DeviceSyncService:
             "integration_id": integration_id,
         }
         if credentials:
-            fetch_kwargs.update(credentials)
+            fetch_kwargs.update(cast(dict[str, object], credentials))
 
         devices = await adapter.fetch_devices(**fetch_kwargs)
         logger.info("Fetched %d devices from %s", len(devices), vendor)
