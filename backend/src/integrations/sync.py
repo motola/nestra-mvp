@@ -46,7 +46,7 @@ class DeviceSyncService:
         # Pass vendor-specific credential to adapter
         # Each vendor adapter expects different credential names:
         # lifx: api_token, govee: api_key, meross: access_token, shelly: auth_token
-        fetch_kwargs = {
+        fetch_kwargs: dict[str, object] = {
             "organization_id": organization_id,
             "property_id": property_id,
             "integration_id": integration_id,
@@ -54,7 +54,7 @@ class DeviceSyncService:
         if credentials:
             fetch_kwargs.update(credentials)
 
-        devices = await adapter.fetch_devices(**fetch_kwargs)
+        devices = await adapter.fetch_devices(**fetch_kwargs)  # type: ignore[arg-type]
         logger.info("Fetched %d devices from %s", len(devices), vendor)
 
         persisted: list[Device] = []

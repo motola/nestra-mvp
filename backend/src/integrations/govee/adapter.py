@@ -168,7 +168,7 @@ class GoveeAdapter:
                 )
                 response.raise_for_status()
                 data = response.json()
-                return data.get("code") == 200
+                return bool(data.get("code") == 200)
         except Exception as e:
             logger.error(f"Failed to execute Govee command: {e}")
             return False
