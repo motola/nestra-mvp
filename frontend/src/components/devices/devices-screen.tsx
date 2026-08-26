@@ -291,8 +291,36 @@ function DeviceDrawer({
   device: Device;
   onClose: () => void;
 }) {
+  const [isControlling, setIsControlling] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const DevIcon = categoryIcon(d.category);
   const events = deviceActivity(d);
+
+  const sendCommand = async (command: string) => {
+    setIsControlling(true);
+    setFeedback(null);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/devices/${d.id}/control`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ command }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await response.json();
+
+      setFeedback(`✓ ${command.replace(/_/g, " ")}`);
+      setTimeout(() => setFeedback(null), 2000);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Command failed";
+      setFeedback(`✗ Error: ${errMsg}`);
+    } finally {
+      setIsControlling(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
@@ -374,6 +402,75 @@ function DeviceDrawer({
               ))}
             </div>
           </div>
+
+          {/* Device controls */}
+          {d.reachable && (
+            <div>
+              <MonoLabel className="mb-2 block">controls</MonoLabel>
+              <div className="flex gap-2 flex-wrap">
+                {["PLUG", "SWITCH", "LIGHT"].includes(d.category) && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("turn_on")}
+                    >
+                      Turn on
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("turn_off")}
+                    >
+                      Turn off
+                    </Button>
+                  </>
+                )}
+                {d.category === "LIGHT" && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={isControlling}
+                    onClick={() => sendCommand("set_brightness")}
+                  >
+                    Set brightness
+                  </Button>
+                )}
+                {d.category === "LOCK" && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("lock")}
+                    >
+                      Lock
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("unlock")}
+                    >
+                      Unlock
+                    </Button>
+                  </>
+                )}
+              </div>
+              {feedback && (
+                <p
+                  className={cn(
+                    "text-sm mt-2 font-medium",
+                    feedback.startsWith("✓") ? "text-green" : "text-red",
+                  )}
+                >
+                  {feedback}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Quick controls */}
           <div className="flex gap-2 flex-wrap">
