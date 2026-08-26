@@ -68,6 +68,8 @@ export function BluetoothDiscoveryModal({
             0x180a, // Device Information
             0x181a, // Environmental Sensing
             0x1809, // Health Thermometer
+            0x180d, // Heart Rate
+            0x181e, // Body Composition
           ],
         });
 
