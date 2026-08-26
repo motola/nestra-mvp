@@ -7,10 +7,10 @@ import { Card, SectionHead } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
 
 interface WiFiNetwork {
-  id: string;
   ssid: string;
-  rssi: number;
-  frequency: string;
+  bssid: string;
+  signal_strength: number;
+  channel: number;
   security: string;
 }
 
@@ -38,106 +38,56 @@ export function WiFiDiscoveryModal({
     setNetworks([]);
 
     try {
-      // Try to use NetworkInformation API if available
-      if ("connection" in navigator || "mozConnection" in navigator) {
-        // WiFi networks can be accessed through some APIs, but most browsers block this for privacy
-        // We'll show mock data for now
-        throw new Error("WiFi scanning requires native app access");
-      } else {
-        // Fallback: Mock WiFi networks for testing
-        setNetworks([
-          {
-            id: "network_1",
-            ssid: "HomeNetwork",
-            rssi: -45,
-            frequency: "2.4GHz",
-            security: "WPA2",
-          },
-          {
-            id: "network_2",
-            ssid: "GuestWiFi",
-            rssi: -62,
-            frequency: "2.4GHz",
-            security: "Open",
-          },
-          {
-            id: "network_3",
-            ssid: "NeighborNet",
-            rssi: -78,
-            frequency: "5GHz",
-            security: "WPA3",
-          },
-          {
-            id: "network_4",
-            ssid: "IoT-Devices",
-            rssi: -55,
-            frequency: "2.4GHz",
-            security: "WPA2",
-          },
-        ]);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/wifi/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Scan failed: HTTP ${response.status}`);
       }
+
+      const data = await response.json();
+      setNetworks(data);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to scan networks";
       setError(message);
       console.error("WiFi scan error:", err);
-
-      // Still show mock data for demo purposes
-      setNetworks([
-        {
-          id: "network_1",
-          ssid: "HomeNetwork",
-          rssi: -45,
-          frequency: "2.4GHz",
-          security: "WPA2",
-        },
-        {
-          id: "network_2",
-          ssid: "GuestWiFi",
-          rssi: -62,
-          frequency: "2.4GHz",
-          security: "Open",
-        },
-        {
-          id: "network_3",
-          ssid: "NeighborNet",
-          rssi: -78,
-          frequency: "5GHz",
-          security: "WPA3",
-        },
-      ]);
     } finally {
       setIsScanning(false);
     }
   };
 
-  const toggleNetworkSelection = (networkId: string) => {
+  const toggleNetworkSelection = (networkBssid: string) => {
     const newSelected = new Set(selectedNetworks);
-    if (newSelected.has(networkId)) {
-      newSelected.delete(networkId);
+    if (newSelected.has(networkBssid)) {
+      newSelected.delete(networkBssid);
     } else {
-      newSelected.add(networkId);
+      newSelected.add(networkBssid);
     }
     setSelectedNetworks(newSelected);
   };
 
   const handleAddNetworks = () => {
-    const selected = networks.filter((n) => selectedNetworks.has(n.id));
+    const selected = networks.filter((n) => selectedNetworks.has(n.bssid));
     onNetworksSelected(selected);
     onClose();
   };
 
-  const getSignalStrength = (rssi: number) => {
-    if (rssi > -50) return "Excellent";
-    if (rssi > -60) return "Good";
-    if (rssi > -70) return "Fair";
+  const getSignalStrength = (signal: number) => {
+    if (signal > -50) return "Excellent";
+    if (signal > -60) return "Good";
+    if (signal > -70) return "Fair";
     return "Poor";
   };
 
-  const getSignalColor = (rssi: number) => {
-    if (rssi > -50) return "text-green-600";
-    if (rssi > -60) return "text-blue-600";
-    if (rssi > -70) return "text-yellow-600";
+  const getSignalColor = (signal: number) => {
+    if (signal > -50) return "text-green-600";
+    if (signal > -60) return "text-blue-600";
+    if (signal > -70) return "text-yellow-600";
     return "text-red-600";
   };
 
@@ -181,30 +131,31 @@ export function WiFiDiscoveryModal({
             <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
               {networks.map((network) => (
                 <label
-                  key={network.id}
+                  key={network.bssid}
                   className="flex items-center p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
                 >
                   <input
                     type="checkbox"
-                    checked={selectedNetworks.has(network.id)}
-                    onChange={() => toggleNetworkSelection(network.id)}
+                    checked={selectedNetworks.has(network.bssid)}
+                    onChange={() => toggleNetworkSelection(network.bssid)}
                     className="mr-3"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-sm">{network.ssid}</p>
-                      {network.security !== "Open" && (
+                      {network.security !== "open" && (
                         <Lock size={14} className="text-gray-400" />
                       )}
                     </div>
                     <div className="flex gap-2 mt-1">
-                      <Tag variant="neutral">{network.frequency}</Tag>
+                      <Tag variant="neutral">Channel {network.channel}</Tag>
                       <Tag variant="neutral">{network.security}</Tag>
                       <div
-                        className={`flex items-center gap-1 text-xs ${getSignalColor(network.rssi)}`}
+                        className={`flex items-center gap-1 text-xs ${getSignalColor(network.signal_strength)}`}
                       >
                         <Signal size={12} />
-                        {getSignalStrength(network.rssi)} ({network.rssi}dBm)
+                        {getSignalStrength(network.signal_strength)} (
+                        {network.signal_strength}dBm)
                       </div>
                     </div>
                   </div>
