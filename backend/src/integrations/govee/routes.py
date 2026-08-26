@@ -3,14 +3,36 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated, cast
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from dependencies import get_current_organization, get_db
 from integrations.govee.adapter import GoveeAdapter
 from integrations.govee.schemas import GoveeDeviceIn, GoveeDeviceOut
+from property.persistence.device_repository import DeviceRepository
 
 router = APIRouter(prefix="/integrations/govee", tags=["govee"])
+
+
+class GoveeSyncRequest(BaseModel):
+    """Request to sync Govee devices."""
+
+    property_id: UUID
+    api_key: str
+
+
+class DeviceResponse(BaseModel):
+    """Device response."""
+
+    id: UUID
+    vendor_name: str
+    device_type: str
+    online: bool
+
 
 # Mock storage for devices - replace with DB later
 _devices: dict[UUID, GoveeDeviceOut] = {
@@ -81,3 +103,41 @@ async def turn_off_device(device_id: UUID) -> dict[str, str]:
     if device_id not in _devices:
         return {"error": "Device not found"}
     return {"status": "turned_off"}
+
+
+@router.post("/sync", response_model=list[DeviceResponse])
+async def sync_govee_devices(
+    request: GoveeSyncRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    org_id: Annotated[UUID, Depends(get_current_organization)],
+) -> list[DeviceResponse]:
+    """Sync Govee devices from cloud API and create device entries."""
+    adapter = GoveeAdapter()
+    repository = DeviceRepository(db)
+
+    try:
+        # Fetch devices from Govee cloud API
+        devices = await adapter.fetch_devices(
+            organization_id=org_id,
+            property_id=request.property_id,
+            integration_id=uuid4(),
+            api_key=request.api_key,
+        )
+
+        # Store devices in database
+        created_devices = []
+        for device in devices:
+            stored_device = await repository.upsert(device)
+            created_devices.append(
+                DeviceResponse(
+                    id=cast(UUID, stored_device.id),
+                    vendor_name=cast(str, stored_device.vendor_name),
+                    device_type=stored_device.device_type.value,
+                    online=stored_device.online,
+                )
+            )
+
+        return created_devices
+    except Exception as e:
+        msg = f"Failed to sync Govee devices: {str(e)}"
+        raise HTTPException(status_code=500, detail=msg) from e

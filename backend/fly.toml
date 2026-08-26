@@ -31,5 +31,12 @@ soft_limit = 20
   soft_limit = 20
 
   [[services.tcp_checks]]
-  interval = "15s"
-  timeout = "10s"
+  interval = "10s"
+  timeout = "5s"
+  grace_period = "60s"
+
+  [[services.http_checks]]
+  interval = "10s"
+  timeout = "5s"
+  grace_period = "60s"
+  path = "/health"
