@@ -132,7 +132,7 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
-  const { property } = useProperty();
+  const { selectedProperty } = useProperty();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
@@ -167,7 +167,7 @@ function VendorCard({ v }: { v: Vendor }) {
       lifx: `https://api.lifx.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_LIFX_CLIENT_ID}&response_type=code&scope=remote_access:all&redirect_uri=${window.location.origin}/auth/lifx/callback`,
       govee: `https://community.govee.com/login?client_id=${process.env.NEXT_PUBLIC_GOVEE_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/govee/callback`,
       meross: `https://iot.meross.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_MEROSS_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/meross/callback`,
-      shelly: `https://auth.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`,
+      shelly: `https://my.shelly.cloud/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHELLY_CLIENT_ID}&response_type=code&redirect_uri=${window.location.origin}/auth/shelly/callback`,
     };
 
     if (oauthUrls[vendor]) {
@@ -175,10 +175,10 @@ function VendorCard({ v }: { v: Vendor }) {
     }
   };
 
-  const handleTokenSubmit = async () => {
+  const handleTokenSubmit = async (token: string) => {
     const vendor = v.name.toLowerCase();
 
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -193,7 +193,7 @@ function VendorCard({ v }: { v: Vendor }) {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            property_id: property.id,
+            property_id: selectedProperty.id,
             name: `${vendor} Device`,
             device_id: "shelly_device",
             ip_address: "0.0.0.0", // Would come from device discovery
@@ -204,6 +204,25 @@ function VendorCard({ v }: { v: Vendor }) {
         await response.json();
 
         setMessage(`Connected to ${vendor} - Device ready to control`);
+        setOauthTokenModalOpen(false);
+        setTimeout(() => setMessage(null), 3000);
+      } else if (vendor === "govee") {
+        // For Govee, sync devices from their cloud API
+        const response = await fetch(`${apiUrl}/integrations/govee/sync`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            property_id: selectedProperty.id,
+            api_key: token,
+          }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const deviceCount = Array.isArray(data) ? data.length : 1;
+
+        setMessage(`Synced ${deviceCount} Govee device(s) - Ready to control`);
         setOauthTokenModalOpen(false);
         setTimeout(() => setMessage(null), 3000);
       }
@@ -222,7 +241,7 @@ function VendorCard({ v }: { v: Vendor }) {
       services: string[];
     }>,
   ) => {
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -237,7 +256,7 @@ function VendorCard({ v }: { v: Vendor }) {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
-              property_id: property.id,
+              property_id: selectedProperty.id,
               name: device.name,
               mac_address: device.id,
             }),
@@ -274,7 +293,7 @@ function VendorCard({ v }: { v: Vendor }) {
       security: string;
     }>,
   ) => {
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -286,7 +305,7 @@ function VendorCard({ v }: { v: Vendor }) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          property_id: property.id,
+          property_id: selectedProperty.id,
           networks,
         }),
       });
