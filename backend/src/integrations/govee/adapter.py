@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 import httpx
@@ -168,7 +168,7 @@ class GoveeAdapter:
                 )
                 response.raise_for_status()
                 data = response.json()
-                return bool(data.get("code") == 200)
+                return cast(bool, data.get("code") == 200)
         except Exception as e:
             logger.error(f"Failed to execute Govee command: {e}")
             return False
