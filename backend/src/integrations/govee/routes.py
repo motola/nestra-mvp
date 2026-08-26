@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID, uuid4
 
 from core.dependencies import get_current_organization, get_db
@@ -120,7 +120,7 @@ async def sync_govee_devices(
         devices = await adapter.fetch_devices(
             organization_id=org_id,
             property_id=request.property_id,
-            integration_id=None,
+            integration_id=uuid4(),
             api_key=request.api_key,
         )
 
@@ -130,8 +130,8 @@ async def sync_govee_devices(
             stored_device = await repository.upsert(device)
             created_devices.append(
                 DeviceResponse(
-                    id=stored_device.id,
-                    vendor_name=stored_device.vendor_name,
+                    id=cast(UUID, stored_device.id),
+                    vendor_name=cast(str, stored_device.vendor_name),
                     device_type=stored_device.device_type.value,
                     online=stored_device.online,
                 )
