@@ -3,14 +3,36 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter
+from core.dependencies import get_current_organization, get_db
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from integrations.shelly.adapter import ShellyAdapter
 from integrations.shelly.schemas import ShellyDeviceIn, ShellyDeviceOut
+from property.persistence.device_repository import DeviceRepository
 
 router = APIRouter(prefix="/integrations/shelly", tags=["shelly"])
+
+
+class ShellySyncRequest(BaseModel):
+    """Request to sync Shelly devices."""
+
+    property_id: UUID
+    auth_token: str
+
+
+class DeviceResponse(BaseModel):
+    """Device response."""
+
+    id: UUID
+    vendor_name: str
+    device_type: str
+    online: bool
+
 
 # Mock storage for devices - replace with DB later
 _devices: dict[UUID, ShellyDeviceOut] = {
@@ -83,3 +105,41 @@ async def turn_off_device(device_id: UUID) -> dict[str, str]:
         return {"error": "Device not found"}
     # TODO: Call adapter to turn off device
     return {"status": "turned_off"}
+
+
+@router.post("/sync", response_model=list[DeviceResponse])
+async def sync_shelly_devices(
+    request: ShellySyncRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    org_id: Annotated[UUID, Depends(get_current_organization)],
+) -> list[DeviceResponse]:
+    """Sync Shelly devices from cloud API and create device entries."""
+    adapter = ShellyAdapter()
+    repository = DeviceRepository(db)
+
+    try:
+        # Fetch devices from Shelly cloud API
+        devices = await adapter.fetch_devices(
+            organization_id=org_id,
+            property_id=request.property_id,
+            integration_id=None,
+            auth_token=request.auth_token,
+        )
+
+        # Store devices in database
+        created_devices = []
+        for device in devices:
+            stored_device = await repository.upsert(device)
+            created_devices.append(
+                DeviceResponse(
+                    id=stored_device.id,
+                    vendor_name=stored_device.vendor_name,
+                    device_type=stored_device.device_type.value,
+                    online=stored_device.online,
+                )
+            )
+
+        return created_devices
+    except Exception as e:
+        msg = f"Failed to sync Shelly devices: {str(e)}"
+        raise HTTPException(status_code=500, detail=msg) from e
