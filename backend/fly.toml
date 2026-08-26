@@ -33,3 +33,12 @@ soft_limit = 20
   [[services.tcp_checks]]
   interval = "15s"
   timeout = "10s"
+  grace_period = "30s"
+
+  [[services.http_checks]]
+  interval = "10s"
+  timeout = "5s"
+  grace_period = "30s"
+  path = "/health"
+  protocol = "http"
+  method = "GET"
