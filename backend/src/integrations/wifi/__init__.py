@@ -1,3 +1,6 @@
-"""WiFi integration."""
+"""WiFi scanning integration."""
 
-__all__ = []
+from .routes import WiFiNetworkResponse, router
+from .scanner import WiFiNetwork, WiFiScanner
+
+__all__ = ["WiFiScanner", "WiFiNetwork", "router", "WiFiNetworkResponse"]
