@@ -62,12 +62,14 @@ export function BluetoothDiscoveryModal({
             };
           }
         ).bluetooth.requestDevice({
-          filters: [{ services: [0x180a] }], // Device Information service
+          acceptAllDevices: true,
           optionalServices: [
-            0x180f, // Battery Service
             0x180a, // Device Information
+            0x180f, // Battery Service
             0x181a, // Environmental Sensing
             0x1809, // Health Thermometer
+            0x180d, // Heart Rate
+            0x181e, // Body Composition
           ],
         });
 

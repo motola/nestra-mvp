@@ -132,7 +132,7 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
-  const { property } = useProperty();
+  const { selectedProperty } = useProperty();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
@@ -178,7 +178,7 @@ function VendorCard({ v }: { v: Vendor }) {
   const handleTokenSubmit = async (token: string) => {
     const vendor = v.name.toLowerCase();
 
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -193,7 +193,7 @@ function VendorCard({ v }: { v: Vendor }) {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            property_id: property.id,
+            property_id: selectedProperty.id,
             name: `${vendor} Device`,
             device_id: "shelly_device",
             ip_address: "0.0.0.0", // Would come from device discovery
@@ -213,7 +213,7 @@ function VendorCard({ v }: { v: Vendor }) {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            property_id: property.id,
+            property_id: selectedProperty.id,
             api_key: token,
           }),
         });
@@ -241,7 +241,7 @@ function VendorCard({ v }: { v: Vendor }) {
       services: string[];
     }>,
   ) => {
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -256,7 +256,7 @@ function VendorCard({ v }: { v: Vendor }) {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
-              property_id: property.id,
+              property_id: selectedProperty.id,
               name: device.name,
               mac_address: device.id,
             }),
@@ -293,7 +293,7 @@ function VendorCard({ v }: { v: Vendor }) {
       security: string;
     }>,
   ) => {
-    if (!property?.id) {
+    if (!selectedProperty?.id) {
       setMessage("Error: No property selected");
       return;
     }
@@ -305,7 +305,7 @@ function VendorCard({ v }: { v: Vendor }) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          property_id: property.id,
+          property_id: selectedProperty.id,
           networks,
         }),
       });
