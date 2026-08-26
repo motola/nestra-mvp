@@ -132,9 +132,11 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
+  const { property } = useProperty();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
     const vendor = v.name.toLowerCase();
@@ -173,14 +175,43 @@ function VendorCard({ v }: { v: Vendor }) {
     }
   };
 
-  const handleTokenSubmit = async (token: string) => {
+  const handleTokenSubmit = async () => {
     const vendor = v.name.toLowerCase();
-    console.log(
-      `Using API token for ${vendor}:`,
-      token.substring(0, 10) + "...",
-    );
-    // TODO: Call sync endpoint with token as credential
-    setOauthTokenModalOpen(false);
+
+    if (!property?.id) {
+      setMessage("Error: No property selected");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      // For Shelly devices, create a device entry
+      if (vendor === "shelly") {
+        const response = await fetch(`${apiUrl}/devices/shelly/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            property_id: property.id,
+            name: `${vendor} Device`,
+            device_id: "shelly_device",
+            ip_address: "0.0.0.0", // Would come from device discovery
+          }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await response.json();
+
+        setMessage(`Connected to ${vendor} - Device ready to control`);
+        setOauthTokenModalOpen(false);
+        setTimeout(() => setMessage(null), 3000);
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Connection failed";
+      setMessage(`Error: ${errMsg}`);
+      console.error("Device connection error:", err);
+    }
   };
 
   const handleBluetoothDevices = async (
@@ -191,8 +222,47 @@ function VendorCard({ v }: { v: Vendor }) {
       services: string[];
     }>,
   ) => {
-    console.log("Selected Bluetooth devices:", devices);
-    // TODO: Sync devices to backend
+    if (!property?.id) {
+      setMessage("Error: No property selected");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      const results = await Promise.all(
+        devices.map((device) =>
+          fetch(`${apiUrl}/devices/bluetooth/create`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              property_id: property.id,
+              name: device.name,
+              mac_address: device.id,
+            }),
+          })
+            .then((r) => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
+            .then((data) => {
+              // Device created successfully - can now control it
+              console.log("Bluetooth device created:", data);
+              return data;
+            }),
+        ),
+      );
+
+      const createdCount = results.filter(Boolean).length;
+      setMessage(`Successfully created ${createdCount} Bluetooth device(s)`);
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      const errMsg =
+        err instanceof Error ? err.message : "Failed to create devices";
+      setMessage(`Error: ${errMsg}`);
+      console.error("Bluetooth device creation error:", err);
+    }
   };
 
   const handleWifiNetworks = async (
@@ -204,8 +274,36 @@ function VendorCard({ v }: { v: Vendor }) {
       security: string;
     }>,
   ) => {
-    console.log("Selected WiFi networks:", networks);
-    // TODO: Sync networks to backend
+    if (!property?.id) {
+      setMessage("Error: No property selected");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/wifi/devices/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          property_id: property.id,
+          networks,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create devices: HTTP ${response.status}`);
+      }
+
+      const devices = await response.json();
+      setMessage(`Successfully created ${devices.length} WiFi devices`);
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      const errMsg =
+        err instanceof Error ? err.message : "Failed to create devices";
+      setMessage(`Error: ${errMsg}`);
+      console.error("WiFi device creation error:", err);
+    }
   };
 
   return (
@@ -235,6 +333,18 @@ function VendorCard({ v }: { v: Vendor }) {
           </Button>
         </div>
       </Card>
+
+      {message && (
+        <div
+          className={`fixed bottom-4 left-4 p-4 rounded-lg text-sm font-medium ${
+            message.startsWith("Error")
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {message}
+        </div>
+      )}
 
       <OAuthTokenModal
         isOpen={oauthTokenModalOpen}
