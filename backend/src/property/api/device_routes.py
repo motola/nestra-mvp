@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -37,7 +38,7 @@ class DeviceControlRequest(BaseModel):
     """Request to control a device."""
 
     command: str  # e.g., "turn_on", "turn_off", "set_brightness"
-    params: dict = {}
+    params: dict[str, object] = {}
 
 
 class DeviceResponse(BaseModel):
@@ -58,6 +59,7 @@ async def create_bluetooth_devices(
     """Create a Bluetooth device entry."""
     repository = DeviceRepository(db)
 
+    now = datetime.utcnow()
     device = Device(
         id=None,
         organization_id=org_id,
@@ -72,14 +74,17 @@ async def create_bluetooth_devices(
             "mac_address": request.mac_address,
             "name": request.name,
         },
+        last_sync=now,
+        created_at=now,
+        updated_at=now,
     )
 
     stored_device = await repository.upsert(device)
 
     return [
         DeviceResponse(
-            id=stored_device.id,
-            vendor_name=stored_device.vendor_name,
+            id=stored_device.id or UUID(int=0),
+            vendor_name=stored_device.vendor_name or "",
             device_type=stored_device.device_type.value,
             online=stored_device.online,
         )
@@ -95,6 +100,7 @@ async def create_shelly_devices(
     """Create a Shelly device entry."""
     repository = DeviceRepository(db)
 
+    now = datetime.utcnow()
     device = Device(
         id=None,
         organization_id=org_id,
@@ -110,27 +116,30 @@ async def create_shelly_devices(
             "ip_address": request.ip_address,
             "name": request.name,
         },
+        last_sync=now,
+        created_at=now,
+        updated_at=now,
     )
 
     stored_device = await repository.upsert(device)
 
     return [
         DeviceResponse(
-            id=stored_device.id,
-            vendor_name=stored_device.vendor_name,
+            id=stored_device.id or UUID(int=0),
+            vendor_name=stored_device.vendor_name or "",
             device_type=stored_device.device_type.value,
             online=stored_device.online,
         )
     ]
 
 
-@router.post("/{device_id}/control", response_model=dict)
+@router.post("/{device_id}/control", response_model=dict[str, object])
 async def control_device(
     device_id: UUID,
     request: DeviceControlRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
     org_id: Annotated[UUID, Depends(get_current_organization)],
-) -> dict:
+) -> dict[str, object]:
     """Send control command to a device.
 
     Commands vary by device type:
@@ -144,6 +153,9 @@ async def control_device(
         device = await repository.get_by_id(device_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail="Device not found") from e
+
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
 
     # Verify device belongs to user's organization
     if device.organization_id != org_id:
@@ -163,7 +175,9 @@ async def control_device(
         raise HTTPException(status_code=500, detail=msg) from e
 
 
-async def execute_device_command(device: Device, command: str, params: dict) -> dict:
+async def execute_device_command(
+    device: Device, command: str, params: dict[str, object]
+) -> dict[str, object]:
     """Execute a command on a device based on its vendor."""
     if device.vendor == "shelly":
         return await execute_shelly_command(device, command, params)
@@ -173,7 +187,9 @@ async def execute_device_command(device: Device, command: str, params: dict) -> 
         raise ValueError(f"Unsupported vendor: {device.vendor}")
 
 
-async def execute_shelly_command(device: Device, command: str, params: dict) -> dict:
+async def execute_shelly_command(
+    device: Device, command: str, params: dict[str, object]
+) -> dict[str, object]:
     """Execute command on Shelly device."""
     ip_address = device.raw_state.get("ip_address")
     if not ip_address:
@@ -191,7 +207,9 @@ async def execute_shelly_command(device: Device, command: str, params: dict) -> 
         raise ValueError(f"Unsupported command for Shelly: {command}")
 
 
-async def execute_bluetooth_command(device: Device, command: str, params: dict) -> dict:
+async def execute_bluetooth_command(
+    device: Device, command: str, params: dict[str, object]
+) -> dict[str, object]:
     """Execute command on Bluetooth device."""
     mac_address = device.raw_state.get("mac_address")
     if not mac_address:
