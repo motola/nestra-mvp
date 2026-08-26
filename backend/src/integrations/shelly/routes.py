@@ -12,6 +12,7 @@ from integrations.shelly.schemas import ShellyDeviceIn, ShellyDeviceOut
 
 router = APIRouter(prefix="/integrations/shelly", tags=["shelly"])
 
+
 # Mock storage for devices - replace with DB later
 _devices: dict[UUID, ShellyDeviceOut] = {
     UUID("11111111-1111-1111-1111-111111111111"): ShellyDeviceOut(
