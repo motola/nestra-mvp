@@ -34,7 +34,6 @@ export function BluetoothDiscoveryModal({
   const startScanning = async () => {
     setIsScanning(true);
     setError(null);
-    setDevices([]);
 
     try {
       const bluetoothDevices: BluetoothDevice[] = [];
@@ -70,20 +69,31 @@ export function BluetoothDiscoveryModal({
             0x1809, // Health Thermometer
             0x180d, // Heart Rate
             0x181e, // Body Composition
+            0x1800, // Generic Access
+            0x1801, // Generic Attribute
+            0x180d, // Heart Rate Service
+            0x181c, // User Data
           ],
         });
 
-        const gatt = await device.gatt.connect();
-        const services = await gatt.getPrimaryServices();
+        let services: string[] = [];
+        try {
+          const gatt = await device.gatt.connect();
+          const primaryServices = await gatt.getPrimaryServices();
+          services = primaryServices.map((s: { uuid: string }) => s.uuid);
+        } catch {
+          // Services not available - device can still be added
+          services = [];
+        }
 
         bluetoothDevices.push({
           id: device.id,
           name: device.name || "Unknown Device",
           rssi: 0,
-          services: services.map((s: { uuid: string }) => s.uuid),
+          services,
         });
 
-        setDevices(bluetoothDevices);
+        setDevices([...devices, ...bluetoothDevices]);
       } else {
         // Fallback: Mock BLE devices for testing
         setDevices([
@@ -109,7 +119,7 @@ export function BluetoothDiscoveryModal({
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to scan for devices";
+        err instanceof Error ? err.message : "Failed to pair device";
       setError(message);
       console.error("Bluetooth scan error:", err);
     } finally {
