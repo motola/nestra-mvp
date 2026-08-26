@@ -64,10 +64,10 @@ export function BluetoothDiscoveryModal({
         ).bluetooth.requestDevice({
           filters: [{ services: ["generic_access"] }],
           optionalServices: [
-            "temperature",
-            "humidity",
-            "battery",
-            "device_information",
+            "battery", // Battery Service (0x180F)
+            "device_information", // Device Information (0x180A)
+            "environmental_sensing", // Environmental Sensing (0x181A)
+            "health_thermometer", // Health Thermometer (0x1809)
           ],
         });
 
@@ -223,8 +223,9 @@ export function BluetoothDiscoveryModal({
               disabled={selectedDevices.size === 0}
               variant="primary"
             >
-              Add {selectedDevices.size > 0 ? `(${selectedDevices.size})` : ""}
-              {selectedDevices.size === 0 ? "Devices" : "Selected"}
+              {selectedDevices.size === 0
+                ? "Add Devices"
+                : `Add Selected (${selectedDevices.size})`}
             </Button>
           </div>
         </div>
