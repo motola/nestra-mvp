@@ -6,11 +6,11 @@ from datetime import datetime
 from typing import Annotated, cast
 from uuid import UUID, uuid4
 
-from core.dependencies import get_current_organization, get_db
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from dependencies import get_current_organization, get_db
 from integrations.shelly.adapter import ShellyAdapter
 from integrations.shelly.schemas import ShellyDeviceIn, ShellyDeviceOut
 from property.persistence.device_repository import DeviceRepository
