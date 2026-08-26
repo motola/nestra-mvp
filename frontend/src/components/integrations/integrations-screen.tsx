@@ -132,9 +132,11 @@ const CATALOG_CATS = [
 ];
 
 function VendorCard({ v }: { v: Vendor }) {
+  const { property } = useProperty();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
     const vendor = v.name.toLowerCase();
@@ -204,8 +206,36 @@ function VendorCard({ v }: { v: Vendor }) {
       security: string;
     }>,
   ) => {
-    console.log("Selected WiFi networks:", networks);
-    // TODO: Sync networks to backend
+    if (!property?.id) {
+      setMessage("Error: No property selected");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/wifi/devices/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          property_id: property.id,
+          networks,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create devices: HTTP ${response.status}`);
+      }
+
+      const devices = await response.json();
+      setMessage(`Successfully created ${devices.length} WiFi devices`);
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      const errMsg =
+        err instanceof Error ? err.message : "Failed to create devices";
+      setMessage(`Error: ${errMsg}`);
+      console.error("WiFi device creation error:", err);
+    }
   };
 
   return (
@@ -235,6 +265,18 @@ function VendorCard({ v }: { v: Vendor }) {
           </Button>
         </div>
       </Card>
+
+      {message && (
+        <div
+          className={`fixed bottom-4 left-4 p-4 rounded-lg text-sm font-medium ${
+            message.startsWith("Error")
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {message}
+        </div>
+      )}
 
       <OAuthTokenModal
         isOpen={oauthTokenModalOpen}
