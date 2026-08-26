@@ -197,10 +197,10 @@ function VendorCard({ v }: { v: Vendor }) {
 
   const handleWifiNetworks = async (
     networks: Array<{
-      id: string;
       ssid: string;
-      rssi: number;
-      frequency: string;
+      bssid: string;
+      signal_strength: number;
+      channel: number;
       security: string;
     }>,
   ) => {
