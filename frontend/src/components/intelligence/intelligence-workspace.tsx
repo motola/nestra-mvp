@@ -1,6 +1,6 @@
 "use client"; // Client: chat tabs, messages, composer, quick-actions tray, activity slide-over
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Plus, Sparkles, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,13 @@ function useChatManager() {
   };
   const [chats, setChats] = useState<Chat[]>([empty]);
   const [activeId, setActiveId] = useState<string>("new0");
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const activeChat = chats.find((c) => c.id === activeId) ?? chats[0];
 
@@ -95,12 +102,14 @@ function useChatManager() {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-        // Get auth token and prepare headers
+        // Get auth token from cookie
         const token = getToken();
+
         const headers: Record<string, string> = {
           "Content-Type": "application/json",
         };
 
+        // Add Authorization header with JWT token
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
         }
@@ -115,23 +124,26 @@ function useChatManager() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
-        // Update with AI response
-        setChats((cs) =>
-          cs.map((c) => {
-            if (c.id !== activeId) return c;
-            return {
-              ...c,
-              messages: c.messages.map((m) =>
-                m.id === aiMessageId
-                  ? { ...m, text: data.response || "No response" }
-                  : m,
-              ),
-            };
-          }),
-        );
+        // Update with AI response only if mounted
+        if (mountedRef.current) {
+          setChats((cs) =>
+            cs.map((c) => {
+              if (c.id !== activeId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === aiMessageId
+                    ? { ...m, text: data.response || "No response" }
+                    : m,
+                ),
+              };
+            }),
+          );
+        }
       } catch (error) {
         // Ignore abort errors (component unmounted)
         if (error instanceof Error && error.name === "AbortError") return;
+        if (!mountedRef.current) return;
         console.error("Chat error:", error);
         setChats((cs) =>
           cs.map((c) => {
