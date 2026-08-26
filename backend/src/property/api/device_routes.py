@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from core.dependencies import get_current_organization, get_db
 from fastapi import APIRouter, Depends, HTTPException
@@ -64,7 +64,7 @@ async def create_bluetooth_devices(
         id=None,
         organization_id=org_id,
         property_id=request.property_id,
-        integration_id=None,
+        integration_id=uuid4(),
         vendor="bluetooth",
         vendor_specific_id=request.mac_address,
         vendor_name=request.name,
@@ -105,7 +105,7 @@ async def create_shelly_devices(
         id=None,
         organization_id=org_id,
         property_id=request.property_id,
-        integration_id=None,
+        integration_id=uuid4(),
         vendor="shelly",
         vendor_specific_id=request.device_id,
         vendor_name=request.name,
