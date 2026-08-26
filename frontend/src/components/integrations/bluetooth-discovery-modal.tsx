@@ -41,12 +41,24 @@ export function BluetoothDiscoveryModal({
 
       // Try to use Web Bluetooth API if available
       if ("bluetooth" in navigator) {
+        type BluetoothGATT = {
+          connect: () => Promise<{
+            getPrimaryServices: () => Promise<Array<{ uuid: string }>>;
+          }>;
+        };
+
+        type BluetoothRequestDevice = {
+          id: string;
+          name: string;
+          gatt: BluetoothGATT;
+        };
+
         const device = await (
           navigator as unknown as {
             bluetooth: {
               requestDevice: (
                 options: object,
-              ) => Promise<{ id: string; name: string; gatt: object }>;
+              ) => Promise<BluetoothRequestDevice>;
             };
           }
         ).bluetooth.requestDevice({
@@ -66,7 +78,7 @@ export function BluetoothDiscoveryModal({
           id: device.id,
           name: device.name || "Unknown Device",
           rssi: 0,
-          services: services.map((s) => s.uuid),
+          services: services.map((s: { uuid: string }) => s.uuid),
         });
 
         setDevices(bluetoothDevices);
