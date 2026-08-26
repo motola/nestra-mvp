@@ -10,6 +10,7 @@ from identity.api.routes import router as identity_router
 from integrations.api.oauth import router as oauth_router
 from integrations.wifi.routes import router as wifi_router
 from intelligence.api.routes import router as intelligence_router
+from property.api.device_routes import router as device_router
 from property.api.routes import router as property_router
 
 _settings = get_settings()
@@ -61,4 +62,5 @@ app.include_router(identity_router)
 app.include_router(intelligence_router)
 app.include_router(oauth_router)
 app.include_router(property_router)
+app.include_router(device_router)
 app.include_router(wifi_router)
