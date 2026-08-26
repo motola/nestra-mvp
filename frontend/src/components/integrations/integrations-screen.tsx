@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { VendorLogo } from "@/components/integrations/vendor-logos";
 import { useProperty } from "@/lib/property/provider";
+import { PROPERTIES } from "@/lib/fixtures";
 import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
 import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
 import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
@@ -593,7 +594,7 @@ function ErrorsTab() {
 
 export function IntegrationsScreen() {
   const [tab, setTab] = useState("connected");
-  const { selectedProperty } = useProperty();
+  const { selectedProperty, selectProperty } = useProperty();
 
   // Use all integrations if no property selected (for demo), or filter by property
   const propertyIntegrations = selectedProperty
@@ -622,6 +623,29 @@ export function IntegrationsScreen() {
           </Button>
         }
       />
+
+      <div className="px-7 py-4 bg-surface border-b border-border">
+        <label className="flex items-center gap-3">
+          <span className="text-sm font-medium text-text">
+            Select property:
+          </span>
+          <select
+            value={selectedProperty?.id || ""}
+            onChange={(e) => {
+              const prop = PROPERTIES.find((p) => p.id === e.target.value);
+              if (prop) selectProperty(prop);
+            }}
+            className="px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+          >
+            <option value="">-- Select a property --</option>
+            {PROPERTIES.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="px-7 border-b border-border bg-surface">
         <Tabs
