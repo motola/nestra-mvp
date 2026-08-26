@@ -175,7 +175,7 @@ function VendorCard({ v }: { v: Vendor }) {
     }
   };
 
-  const handleTokenSubmit = async () => {
+  const handleTokenSubmit = async (token: string) => {
     const vendor = v.name.toLowerCase();
 
     if (!selectedProperty?.id) {
