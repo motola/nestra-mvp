@@ -6,6 +6,7 @@ import logging
 import platform
 import subprocess
 from dataclasses import dataclass
+from typing import cast
 
 logger = logging.getLogger(__name__)
 
@@ -156,10 +157,10 @@ class WiFiScanner:
                         current_network["signal"] = signal_percent
                         networks.append(
                             WiFiNetwork(
-                                ssid=current_network["ssid"],
-                                bssid=current_network.get("bssid", ""),
+                                ssid=cast(str, current_network["ssid"]),
+                                bssid=cast(str, current_network.get("bssid", "")),
                                 signal_strength=signal_percent,
-                                channel=current_network.get("channel", 0),
+                                channel=cast(int, current_network.get("channel", 0)),
                                 security="WPA2",  # Default to WPA2 for Windows
                             )
                         )
