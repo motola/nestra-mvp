@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Plus, Sparkles, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
+import { getToken } from "@/lib/auth/session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -93,10 +94,22 @@ function useChatManager() {
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+        // Get auth token from cookie
+        const token = getToken();
+
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        // Add Authorization header with JWT token
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${apiUrl}/intelligence/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers,
           signal: controller.signal,
           body: JSON.stringify({ message: msg }),
         });
