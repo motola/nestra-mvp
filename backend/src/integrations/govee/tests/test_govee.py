@@ -23,7 +23,7 @@ class TestGoveeAdapter:
         assert adapter._get_device_type("Switch") == DeviceType.PLUG
         assert adapter._get_device_type("Unknown") == DeviceType.PLUG
 
-    @pytest.mark.asyncio  # type: ignore[misc]
+    @pytest.mark.asyncio  # type: ignore[untyped-decorator]
     async def test_fetch_devices_without_api_key(self) -> None:
         """Test fetch_devices returns mock devices when no API key provided."""
         adapter = GoveeAdapter()
@@ -43,7 +43,7 @@ class TestGoveeAdapter:
         assert all(d.organization_id == org_id for d in devices)
         assert all(d.property_id == prop_id for d in devices)
 
-    @pytest.mark.asyncio  # type: ignore[misc]
+    @pytest.mark.asyncio  # type: ignore[untyped-decorator]
     async def test_fetch_devices_preserves_organization_id(self) -> None:
         """Test that fetch_devices preserves organization_id in devices."""
         adapter = GoveeAdapter()
@@ -62,7 +62,7 @@ class TestGoveeAdapter:
             assert device.property_id == prop_id
             assert device.integration_id == int_id
 
-    @pytest.mark.asyncio  # type: ignore[misc]
+    @pytest.mark.asyncio  # type: ignore[untyped-decorator]
     async def test_fetch_devices_mock_returns_valid_devices(self) -> None:
         """Test that mock devices have all required fields."""
         adapter = GoveeAdapter()
