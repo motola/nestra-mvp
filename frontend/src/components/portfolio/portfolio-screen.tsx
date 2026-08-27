@@ -20,6 +20,7 @@ import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { useProperty } from "@/lib/property/provider";
+import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
 
 // ─── Table columns for list view ─────────────────────────────────────────────
@@ -362,6 +363,7 @@ export function PortfolioScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const router = useRouter();
   const { selectProperty } = useProperty();
+  const { organization } = useAuth();
   const totalUnits = PROPERTIES.reduce((s, p) => s + p.units, 0);
   const totalDevices = PROPERTIES.reduce((s, p) => s + p.devices, 0);
 
@@ -370,14 +372,28 @@ export function PortfolioScreen() {
     router.push(`/properties/${property.id}`);
   }
 
-  function handleAddPortfolio(data: {
+  async function handleAddPortfolio(data: {
     name: string;
     region: string;
     manager: string;
   }) {
-    // TODO: Call backend API to create portfolio
-    console.log("Adding portfolio:", data);
-    setShowAddForm(false);
+    try {
+      const { createPortfolio } = await import("@/lib/api/portfolios");
+      if (!organization?.id) {
+        console.error("Organization not loaded");
+        return;
+      }
+
+      await createPortfolio({
+        organization_id: organization.id,
+        name: data.name,
+        description: data.region,
+      });
+
+      setShowAddForm(false);
+    } catch (error) {
+      console.error("Failed to create portfolio:", error);
+    }
   }
 
   if (selectedPortfolioId) {
