@@ -14,6 +14,7 @@ review.md
 /backend/dist/
 node_modules/
 /.env
+DATABASE_CONNECTION_FIX.md
 /backend/SKILL.md
 /frontend/SKILL.md
 # Claude config — only commit hooks and docs, ignore local settings/worktrees
