@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, cast
+from typing import cast
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from dependencies import get_current_organization, get_db
+from db import SessionLocal
 from integrations.shelly.adapter import ShellyAdapter
 from integrations.shelly.schemas import ShellyDeviceIn, ShellyDeviceOut
 from property.persistence.device_repository import DeviceRepository
@@ -21,6 +20,7 @@ router = APIRouter(prefix="/integrations/shelly", tags=["shelly"])
 class ShellySyncRequest(BaseModel):
     """Request to sync Shelly devices."""
 
+    organization_id: UUID
     property_id: UUID
     auth_token: str
 
@@ -108,36 +108,33 @@ async def turn_off_device(device_id: UUID) -> dict[str, str]:
 
 
 @router.post("/sync", response_model=list[DeviceResponse])
-async def sync_shelly_devices(
-    request: ShellySyncRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    org_id: Annotated[UUID, Depends(get_current_organization)],
-) -> list[DeviceResponse]:
+async def sync_shelly_devices(request: ShellySyncRequest) -> list[DeviceResponse]:
     """Sync Shelly devices from cloud API and create device entries."""
-    adapter = ShellyAdapter()
-    repository = DeviceRepository(db)
-
     try:
+        adapter = ShellyAdapter()
+
         # Fetch devices from Shelly cloud API
         devices = await adapter.fetch_devices(
-            organization_id=org_id,
+            organization_id=request.organization_id,
             property_id=request.property_id,
             integration_id=uuid4(),
             auth_token=request.auth_token,
         )
 
         # Store devices in database
-        created_devices = []
-        for device in devices:
-            stored_device = await repository.upsert(device)
-            created_devices.append(
-                DeviceResponse(
-                    id=cast(UUID, stored_device.id),
-                    vendor_name=cast(str, stored_device.vendor_name),
-                    device_type=stored_device.device_type.value,
-                    online=stored_device.online,
+        async with SessionLocal() as db:
+            repository = DeviceRepository(db)
+            created_devices = []
+            for device in devices:
+                stored_device = await repository.upsert(device)
+                created_devices.append(
+                    DeviceResponse(
+                        id=cast(UUID, stored_device.id),
+                        vendor_name=cast(str, stored_device.vendor_name),
+                        device_type=stored_device.device_type.value,
+                        online=stored_device.online,
+                    )
                 )
-            )
 
         return created_devices
     except Exception as e:
