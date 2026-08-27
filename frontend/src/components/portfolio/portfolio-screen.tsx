@@ -370,14 +370,36 @@ export function PortfolioScreen() {
     router.push(`/properties/${property.id}`);
   }
 
-  function handleAddPortfolio(data: {
+  async function handleAddPortfolio(data: {
     name: string;
     region: string;
     manager: string;
   }) {
-    // TODO: Call backend API to create portfolio
-    console.log("Adding portfolio:", data);
-    setShowAddForm(false);
+    try {
+      const { createPortfolio } = await import("@/lib/api/portfolios");
+      const orgId = "org-id-placeholder"; // TODO: Get from auth context
+
+      const portfolio = await createPortfolio({
+        organization_id: orgId,
+        name: data.name,
+        description: data.region,
+      });
+
+      // Add to UI state
+      setNewPortfolios([
+        ...newPortfolios,
+        {
+          id: portfolio.id,
+          name: portfolio.name,
+          region: data.region,
+          manager: data.manager,
+        },
+      ]);
+
+      setShowAddForm(false);
+    } catch (error) {
+      console.error("Failed to create portfolio:", error);
+    }
   }
 
   if (selectedPortfolioId) {
