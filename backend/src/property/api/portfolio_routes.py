@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from db import SessionLocal
+from db import SessionLocal, org_scope
 from identity.repository.models import PortfolioModel
 from property.repository.models import PropertyModel
 
@@ -63,7 +63,7 @@ class PropertyResponse(BaseModel):
 @router.post("", response_model=PortfolioResponse)
 async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse:
     """Create a new portfolio."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, request.organization_id):
         now = datetime.now(UTC)
 
         portfolio = PortfolioModel(
@@ -98,13 +98,14 @@ async def get_portfolio(portfolio_id: UUID) -> PortfolioResponse:
         if not portfolio:
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
-        return PortfolioResponse(
-            id=portfolio.id,
-            name=portfolio.name,
-            description=portfolio.description,
-            organization_id=portfolio.organization_id,
-            created_at=portfolio.created_at,
-        )
+        async with org_scope(db, portfolio.organization_id):
+            return PortfolioResponse(
+                id=portfolio.id,
+                name=portfolio.name,
+                description=portfolio.description,
+                organization_id=portfolio.organization_id,
+                created_at=portfolio.created_at,
+            )
 
 
 @router.post("/{portfolio_id}/properties", response_model=PropertyResponse)
@@ -113,7 +114,7 @@ async def create_property(portfolio_id: UUID, request: PropertyCreateRequest) ->
     if request.portfolio_id != portfolio_id:
         raise HTTPException(status_code=400, detail="Portfolio ID mismatch")
 
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, request.organization_id):
         # Verify portfolio exists
         stmt = select(PortfolioModel).where(PortfolioModel.id == portfolio_id)
         result = await db.execute(stmt)
@@ -161,16 +162,24 @@ async def list_properties(portfolio_id: UUID) -> list[PropertyResponse]:
         result = await db.execute(stmt)
         properties = result.scalars().all()
 
-        return [
-            PropertyResponse(
-                id=prop.id,
-                portfolio_id=prop.portfolio_id,
-                name=prop.name,
-                address=prop.address,
-                property_type=prop.property_type,
-                units=prop.units,
-                timezone=prop.timezone,
-                created_at=prop.created_at,
-            )
-            for prop in properties
-        ]
+        if not properties:
+            return []
+
+        # Use first property's org_id for RLS context
+        first_org_id = properties[0].organization_id if properties else None
+        if first_org_id:
+            async with org_scope(db, first_org_id):
+                return [
+                    PropertyResponse(
+                        id=prop.id,
+                        portfolio_id=prop.portfolio_id,
+                        name=prop.name,
+                        address=prop.address,
+                        property_type=prop.property_type,
+                        units=prop.units,
+                        timezone=prop.timezone,
+                        created_at=prop.created_at,
+                    )
+                    for prop in properties
+                ]
+        return []
