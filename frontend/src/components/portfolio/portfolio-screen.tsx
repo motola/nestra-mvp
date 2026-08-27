@@ -384,22 +384,11 @@ export function PortfolioScreen() {
         return;
       }
 
-      const portfolio = await createPortfolio({
+      await createPortfolio({
         organization_id: organization.id,
         name: data.name,
         description: data.region,
       });
-
-      // Add to UI state
-      setNewPortfolios([
-        ...newPortfolios,
-        {
-          id: portfolio.id,
-          name: portfolio.name,
-          region: data.region,
-          manager: data.manager,
-        },
-      ]);
 
       setShowAddForm(false);
     } catch (error) {
