@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated
 from uuid import UUID, uuid4
 
-from core.dependencies import get_current_organization, get_db
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from db import SessionLocal
 from property.domain import Device, DeviceType
 from property.persistence.device_repository import DeviceRepository
 
@@ -20,6 +18,7 @@ router = APIRouter(prefix="/devices", tags=["devices"])
 class BluetoothDeviceRequest(BaseModel):
     """Request to create Bluetooth device."""
 
+    organization_id: UUID
     property_id: UUID
     name: str
     mac_address: str
@@ -28,6 +27,7 @@ class BluetoothDeviceRequest(BaseModel):
 class ShellyDeviceRequest(BaseModel):
     """Request to create Shelly device."""
 
+    organization_id: UUID
     property_id: UUID
     name: str
     device_id: str
@@ -37,6 +37,7 @@ class ShellyDeviceRequest(BaseModel):
 class DeviceControlRequest(BaseModel):
     """Request to control a device."""
 
+    organization_id: UUID
     command: str  # e.g., "turn_on", "turn_off", "set_brightness"
     params: dict[str, object] = {}
 
@@ -51,94 +52,86 @@ class DeviceResponse(BaseModel):
 
 
 @router.post("/bluetooth/create", response_model=list[DeviceResponse])
-async def create_bluetooth_devices(
-    request: BluetoothDeviceRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    org_id: Annotated[UUID, Depends(get_current_organization)],
-) -> list[DeviceResponse]:
+async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[DeviceResponse]:
     """Create a Bluetooth device entry."""
-    repository = DeviceRepository(db)
+    async with SessionLocal() as db:
+        repository = DeviceRepository(db)
 
-    now = datetime.utcnow()
-    device = Device(
-        id=None,
-        organization_id=org_id,
-        property_id=request.property_id,
-        integration_id=uuid4(),
-        vendor="bluetooth",
-        vendor_specific_id=request.mac_address,
-        vendor_name=request.name,
-        device_type=DeviceType.SENSOR,
-        online=True,
-        raw_state={
-            "mac_address": request.mac_address,
-            "name": request.name,
-        },
-        last_sync=now,
-        created_at=now,
-        updated_at=now,
-    )
-
-    stored_device = await repository.upsert(device)
-
-    return [
-        DeviceResponse(
-            id=stored_device.id or UUID(int=0),
-            vendor_name=stored_device.vendor_name or "",
-            device_type=stored_device.device_type.value,
-            online=stored_device.online,
+        now = datetime.utcnow()
+        device = Device(
+            id=None,
+            organization_id=request.organization_id,
+            property_id=request.property_id,
+            integration_id=uuid4(),
+            vendor="bluetooth",
+            vendor_specific_id=request.mac_address,
+            vendor_name=request.name,
+            device_type=DeviceType.SENSOR,
+            online=True,
+            raw_state={
+                "mac_address": request.mac_address,
+                "name": request.name,
+            },
+            last_sync=now,
+            created_at=now,
+            updated_at=now,
         )
-    ]
+
+        stored_device = await repository.upsert(device)
+
+        return [
+            DeviceResponse(
+                id=stored_device.id or UUID(int=0),
+                vendor_name=stored_device.vendor_name or "",
+                device_type=stored_device.device_type.value,
+                online=stored_device.online,
+            )
+        ]
 
 
 @router.post("/shelly/create", response_model=list[DeviceResponse])
-async def create_shelly_devices(
-    request: ShellyDeviceRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    org_id: Annotated[UUID, Depends(get_current_organization)],
-) -> list[DeviceResponse]:
+async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResponse]:
     """Create a Shelly device entry."""
-    repository = DeviceRepository(db)
+    async with SessionLocal() as db:
+        repository = DeviceRepository(db)
 
-    now = datetime.utcnow()
-    device = Device(
-        id=None,
-        organization_id=org_id,
-        property_id=request.property_id,
-        integration_id=uuid4(),
-        vendor="shelly",
-        vendor_specific_id=request.device_id,
-        vendor_name=request.name,
-        device_type=DeviceType.PLUG,
-        online=True,
-        raw_state={
-            "device_id": request.device_id,
-            "ip_address": request.ip_address,
-            "name": request.name,
-        },
-        last_sync=now,
-        created_at=now,
-        updated_at=now,
-    )
-
-    stored_device = await repository.upsert(device)
-
-    return [
-        DeviceResponse(
-            id=stored_device.id or UUID(int=0),
-            vendor_name=stored_device.vendor_name or "",
-            device_type=stored_device.device_type.value,
-            online=stored_device.online,
+        now = datetime.utcnow()
+        device = Device(
+            id=None,
+            organization_id=request.organization_id,
+            property_id=request.property_id,
+            integration_id=uuid4(),
+            vendor="shelly",
+            vendor_specific_id=request.device_id,
+            vendor_name=request.name,
+            device_type=DeviceType.PLUG,
+            online=True,
+            raw_state={
+                "device_id": request.device_id,
+                "ip_address": request.ip_address,
+                "name": request.name,
+            },
+            last_sync=now,
+            created_at=now,
+            updated_at=now,
         )
-    ]
+
+        stored_device = await repository.upsert(device)
+
+        return [
+            DeviceResponse(
+                id=stored_device.id or UUID(int=0),
+                vendor_name=stored_device.vendor_name or "",
+                device_type=stored_device.device_type.value,
+                online=stored_device.online,
+            )
+        ]
 
 
 @router.post("/{device_id}/control", response_model=dict[str, object])
 async def control_device(
     device_id: UUID,
     request: DeviceControlRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    org_id: Annotated[UUID, Depends(get_current_organization)],
 ) -> dict[str, object]:
     """Send control command to a device.
 
@@ -147,19 +140,20 @@ async def control_device(
     - Lights: turn_on, turn_off, set_brightness
     - Sensors: read_state
     """
-    repository = DeviceRepository(db)
+    async with SessionLocal() as db:
+        repository = DeviceRepository(db)
 
-    try:
-        device = await repository.get_by_id(device_id)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Device not found") from e
+        try:
+            device = await repository.get_by_id(device_id)
+        except Exception as e:
+            raise HTTPException(status_code=404, detail="Device not found") from e
 
-    if device is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+        if device is None:
+            raise HTTPException(status_code=404, detail="Device not found")
 
-    # Verify device belongs to user's organization
-    if device.organization_id != org_id:
-        raise HTTPException(status_code=403, detail="Not authorized to control this device")
+        # Verify device belongs to user's organization
+        if device.organization_id != request.organization_id:
+            raise HTTPException(status_code=403, detail="Not authorized to control this device")
 
     # Execute command based on vendor and device type
     try:
