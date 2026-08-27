@@ -39,7 +39,7 @@ repos:
         name: Review Checklist Reminder
         language: system
         entry: bash -c 'echo "💡 Remember to check review.md before merging!"'
-        stages: [commit]
+        stages: [pre-commit]
         always_run: true
 
   # ── Markdown format (Prettier) ────────────────────────────────────────────
