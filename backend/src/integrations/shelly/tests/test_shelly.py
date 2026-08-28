@@ -1,11 +1,9 @@
 """Unit tests for Shelly integration."""
 
-from uuid import UUID
 from __future__ import annotations
 
-from uuid import uuid4
-
 import pytest
+from uuid import UUID, uuid4
 
 from integrations.shelly.adapter import ShellyAdapter
 from property.domain import DeviceType
