@@ -36,7 +36,7 @@ class IntegrationAdapter(Protocol):
         """Refresh a device's current state from vendor.
 
         Returns the same device with updated online/raw_state/last_sync.
-        Preserves id, display_name, created_at, organization_id.
+        Preserves id, created_at, organization_id, portfolio_id, property_id, integration_id.
         """
         ...
 

@@ -27,6 +27,22 @@ def upgrade() -> None:
         "devices",
         sa.Column("portfolio_id", sa.UUID(), nullable=True),
     )
+
+    # Backfill existing devices: assign to first portfolio per organization
+    # This assumes each organization has at least one portfolio
+    op.execute(
+        """
+        UPDATE devices d
+        SET portfolio_id = (
+            SELECT id FROM portfolios
+            WHERE organization_id = d.organization_id
+            ORDER BY created_at ASC
+            LIMIT 1
+        )
+        WHERE d.portfolio_id IS NULL
+        """
+    )
+
     op.create_foreign_key(
         "fk_devices_portfolio_id",
         "devices",
@@ -35,6 +51,15 @@ def upgrade() -> None:
         ["id"],
     )
     op.create_index("ix_devices_portfolio_id", "devices", ["portfolio_id"])
+
+    # Make portfolio_id NOT NULL after backfill
+    op.alter_column(
+        "devices",
+        "portfolio_id",
+        existing_type=sa.UUID(),
+        nullable=False,
+        existing_nullable=True,
+    )
 
     op.alter_column(
         "devices",

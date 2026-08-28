@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db import Base
+from integrations.models import IntegrationModel  # noqa: F401
 from property.domain import DeviceType
 
 
