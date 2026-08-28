@@ -35,11 +35,11 @@ class AdapterRegistry:
 
 def create_registry() -> AdapterRegistry:
     """Factory function to create and initialize the adapter registry with all vendors."""
-    adapters: dict[str, IntegrationAdapter] = {  # type: ignore[assignment]
+    adapters = {
         "august": AugustAdapter(),
         "bluetooth": BluetoothAdapter(),
         "ecobee": EcobeeAdapter(),
         "hikvision": HikvisionAdapter(),
         "tplink": TPLinkAdapter(),
     }
-    return AdapterRegistry(adapters)
+    return AdapterRegistry(adapters)  # type: ignore[arg-type]
