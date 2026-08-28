@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from db import SessionLocal
 from property.domain import Device, DeviceType
 from property.persistence.device_repository import DeviceRepository
+from property.persistence.property_repository import PropertyRepository
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 
@@ -19,7 +20,6 @@ class BluetoothDeviceRequest(BaseModel):
     """Request to create Bluetooth device."""
 
     organization_id: UUID
-    portfolio_id: UUID
     property_id: UUID
     integration_id: UUID
     name: str
@@ -30,7 +30,6 @@ class ShellyDeviceRequest(BaseModel):
     """Request to create Shelly device."""
 
     organization_id: UUID
-    portfolio_id: UUID
     property_id: UUID
     integration_id: UUID
     name: str
@@ -59,13 +58,18 @@ class DeviceResponse(BaseModel):
 async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[DeviceResponse]:
     """Create a Bluetooth device entry."""
     async with SessionLocal() as db:
-        repository = DeviceRepository(db)
+        property_repo = PropertyRepository(db)
+        device_repo = DeviceRepository(db)
+
+        property_obj = await property_repo.get_by_id(request.property_id)
+        if not property_obj:
+            raise HTTPException(status_code=404, detail="Property not found")
 
         now = datetime.utcnow()
         device = Device(
             id=None,
             organization_id=request.organization_id,
-            portfolio_id=request.portfolio_id,
+            portfolio_id=property_obj.portfolio_id,
             property_id=request.property_id,
             integration_id=request.integration_id,
             vendor="bluetooth",
@@ -82,7 +86,7 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
             updated_at=now,
         )
 
-        stored_device = await repository.upsert(device)
+        stored_device = await device_repo.upsert(device)
 
         return [
             DeviceResponse(
@@ -98,13 +102,18 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
 async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResponse]:
     """Create a Shelly device entry."""
     async with SessionLocal() as db:
-        repository = DeviceRepository(db)
+        property_repo = PropertyRepository(db)
+        device_repo = DeviceRepository(db)
+
+        property_obj = await property_repo.get_by_id(request.property_id)
+        if not property_obj:
+            raise HTTPException(status_code=404, detail="Property not found")
 
         now = datetime.utcnow()
         device = Device(
             id=None,
             organization_id=request.organization_id,
-            portfolio_id=request.portfolio_id,
+            portfolio_id=property_obj.portfolio_id,
             property_id=request.property_id,
             integration_id=request.integration_id,
             vendor="shelly",
@@ -122,7 +131,7 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
             updated_at=now,
         )
 
-        stored_device = await repository.upsert(device)
+        stored_device = await device_repo.upsert(device)
 
         return [
             DeviceResponse(
