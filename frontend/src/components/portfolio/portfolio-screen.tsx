@@ -33,6 +33,7 @@ import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
 import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
 import { PropertyForm } from "@/components/portfolio/property-form";
+import { logger } from "@/lib/logger";
 
 // ─── API → display adapter ────────────────────────────────────────────────────
 
@@ -424,7 +425,7 @@ function PortfolioDetailView({
           onClose={() => setShowEditPortfolio(false)}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              console.error("Organization not loaded");
+              logger.error("Organization not loaded");
               return;
             }
             await updatePortfolio(portfolio.id, organization.id, data);
@@ -443,7 +444,7 @@ function PortfolioDetailView({
           }}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              console.error("Organization not loaded");
+              logger.error("Organization not loaded");
               return;
             }
 
@@ -505,7 +506,7 @@ export function PortfolioScreen() {
       setPortfolios(data);
       setProperties(perPortfolio.flat().map(toDisplayProperty));
     } catch (error) {
-      console.error("Failed to load portfolios:", error);
+      logger.error("Failed to load portfolios:", error);
     } finally {
       setLoading(false);
     }
@@ -528,7 +529,7 @@ export function PortfolioScreen() {
     manager: string;
   }) {
     if (!organization?.id) {
-      console.error("Organization not loaded");
+      logger.error("Organization not loaded");
       return;
     }
 
@@ -542,7 +543,7 @@ export function PortfolioScreen() {
       setShowAddForm(false);
       await loadPortfolios();
     } catch (error) {
-      console.error("Failed to create portfolio:", error);
+      logger.error("Failed to create portfolio:", error);
     }
   }
 

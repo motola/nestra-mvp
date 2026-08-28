@@ -5,6 +5,7 @@ import { X, Plus, Sparkles, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { getToken } from "@/lib/auth/session";
+import { logger } from "@/lib/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ function useChatManager() {
         // Ignore abort errors (component unmounted)
         if (error instanceof Error && error.name === "AbortError") return;
         if (!mountedRef.current) return;
-        console.error("Chat error:", error);
+        logger.error("Chat error:", error);
         setChats((cs) =>
           cs.map((c) => {
             if (c.id !== activeId) return c;
