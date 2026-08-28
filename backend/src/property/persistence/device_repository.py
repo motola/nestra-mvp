@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import ProgrammingError  # noqa: F401
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from property.domain import Device
 from property.repository.models import DeviceModel
+
+logger = logging.getLogger(__name__)
 
 
 class DeviceRepository:
@@ -45,7 +49,11 @@ class DeviceRepository:
                 updated_at=incoming.updated_at,
             )
             self._session.add(model)
-            await self._session.flush()
+            try:
+                await self._session.flush()
+            except ProgrammingError as e:
+                logger.error(f"Failed to persist device - table may not exist: {e}")
+                raise
             return incoming
 
         existing.vendor_name = incoming.vendor_name
@@ -92,13 +100,17 @@ class DeviceRepository:
 
     async def _get_by_vendor_key(self, vendor: str, vendor_specific_id: str) -> DeviceModel | None:
         """O(1) lookup by (vendor, vendor_specific_id) index."""
-        result = await self._session.execute(
-            select(DeviceModel).where(
-                DeviceModel.vendor == vendor,
-                DeviceModel.vendor_specific_id == vendor_specific_id,
+        try:
+            result = await self._session.execute(
+                select(DeviceModel).where(
+                    DeviceModel.vendor == vendor,
+                    DeviceModel.vendor_specific_id == vendor_specific_id,
+                )
             )
-        )
-        return result.scalar_one_or_none()
+            return result.scalar_one_or_none()
+        except ProgrammingError as e:
+            logger.warning(f"Devices table not ready: {e} - treating as new device")
+            return None
 
     @staticmethod
     def _model_to_domain(model: DeviceModel) -> Device:
