@@ -44,6 +44,25 @@ export async function createPortfolio(data: {
   return response.json();
 }
 
+export async function listPortfolios(
+  organizationId: string,
+): Promise<Portfolio[]> {
+  const response = await fetch(
+    `${API_BASE}/portfolios?organization_id=${organizationId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch portfolios: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export async function getPortfolio(portfolioId: string): Promise<Portfolio> {
   const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
     headers: {
@@ -90,9 +109,12 @@ export async function createProperty(
   return response.json();
 }
 
-export async function listProperties(portfolioId: string): Promise<Property[]> {
+export async function listProperties(
+  portfolioId: string,
+  organizationId: string,
+): Promise<Property[]> {
   const response = await fetch(
-    `${API_BASE}/portfolios/${portfolioId}/properties`,
+    `${API_BASE}/portfolios/${portfolioId}/properties?organization_id=${organizationId}`,
     {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
