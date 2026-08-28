@@ -120,6 +120,7 @@ class DeviceRepository:
         return Device(
             id=model.id,
             organization_id=model.organization_id,
+            portfolio_id=model.portfolio_id,
             property_id=model.property_id,
             integration_id=model.integration_id,
             vendor=model.vendor,
