@@ -1,7 +1,6 @@
 "use client"; // Client: portfolio selection, property browsing
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Plus,
   Download,
@@ -30,7 +29,6 @@ import { PropertyCard } from "@/components/ui/property-card";
 import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { useProperty } from "@/lib/property/provider";
 import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
 import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
@@ -309,14 +307,12 @@ function PortfolioDetailView({
   portfolio,
   properties: props,
   onBack,
-  onPropertyClick,
   onPortfolioUpdate,
   onPropertyCreate,
 }: {
   portfolio: ApiPortfolio;
   properties: Property[];
   onBack: () => void;
-  onPropertyClick: (property: Property) => void;
   onPortfolioUpdate: () => Promise<void>;
   onPropertyCreate: () => Promise<void>;
 }) {
@@ -413,19 +409,11 @@ function PortfolioDetailView({
             }}
           >
             {filtered.map((p) => (
-              <PropertyCard
-                key={p.id}
-                {...p}
-                onClick={() => onPropertyClick(p)}
-              />
+              <PropertyCard key={p.id} {...p} />
             ))}
           </div>
         ) : (
-          <DataTable
-            columns={TABLE_COLUMNS}
-            rows={filtered}
-            onRowClick={(p) => onPropertyClick(p)}
-          />
+          <DataTable columns={TABLE_COLUMNS} rows={filtered} />
         )}
       </div>
 
@@ -500,8 +488,6 @@ export function PortfolioScreen() {
   const [portfolios, setPortfolios] = useState<ApiPortfolio[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const { selectProperty } = useProperty();
   const { organization, isLoading: authLoading } = useAuth();
   const totalUnits = properties.reduce((s, p) => s + p.units, 0);
   const totalDevices = properties.reduce((s, p) => s + p.devices, 0);
@@ -535,11 +521,6 @@ export function PortfolioScreen() {
     }
     loadPortfolios();
   }, [authLoading, organization?.id, loadPortfolios]);
-
-  function handlePropertyClick(property: Property) {
-    selectProperty(property);
-    router.push(`/properties/${property.id}`);
-  }
 
   async function handleAddPortfolio(data: {
     name: string;
@@ -576,7 +557,6 @@ export function PortfolioScreen() {
           (p) => p.portfolio === selectedPortfolio.id,
         )}
         onBack={() => setSelectedPortfolioId(null)}
-        onPropertyClick={handlePropertyClick}
         onPortfolioUpdate={loadPortfolios}
         onPropertyCreate={loadPortfolios}
       />

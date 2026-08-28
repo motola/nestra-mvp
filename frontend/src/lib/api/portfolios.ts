@@ -137,17 +137,17 @@ export async function updatePortfolio(
     description?: string;
   },
 ): Promise<Portfolio> {
-  const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+  const response = await fetch(
+    `${API_BASE}/portfolios/${portfolioId}?organization_id=${organizationId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify({
-      ...data,
-      organization_id: organizationId,
-    }),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to update portfolio: ${response.statusText}`);
@@ -170,17 +170,14 @@ export async function updateProperty(
   },
 ): Promise<Property> {
   const response = await fetch(
-    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}`,
+    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}?organization_id=${organizationId}`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
       },
-      body: JSON.stringify({
-        ...data,
-        organization_id: organizationId,
-      }),
+      body: JSON.stringify(data),
     },
   );
 
