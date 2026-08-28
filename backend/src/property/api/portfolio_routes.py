@@ -60,6 +60,26 @@ class PropertyResponse(BaseModel):
     created_at: datetime
 
 
+@router.get("", response_model=list[PortfolioResponse])
+async def list_portfolios(organization_id: UUID) -> list[PortfolioResponse]:
+    """List all portfolios for an organization."""
+    async with SessionLocal() as db, org_scope(db, organization_id):
+        stmt = select(PortfolioModel).where(PortfolioModel.organization_id == organization_id)
+        result = await db.execute(stmt)
+        portfolios = result.scalars().all()
+
+        return [
+            PortfolioResponse(
+                id=portfolio.id,
+                name=portfolio.name,
+                description=portfolio.description,
+                organization_id=portfolio.organization_id,
+                created_at=portfolio.created_at,
+            )
+            for portfolio in portfolios
+        ]
+
+
 @router.post("", response_model=PortfolioResponse)
 async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse:
     """Create a new portfolio."""
@@ -155,31 +175,23 @@ async def create_property(portfolio_id: UUID, request: PropertyCreateRequest) ->
 
 
 @router.get("/{portfolio_id}/properties", response_model=list[PropertyResponse])
-async def list_properties(portfolio_id: UUID) -> list[PropertyResponse]:
+async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[PropertyResponse]:
     """List all properties in a portfolio."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         stmt = select(PropertyModel).where(PropertyModel.portfolio_id == portfolio_id)
         result = await db.execute(stmt)
         properties = result.scalars().all()
 
-        if not properties:
-            return []
-
-        # Use first property's org_id for RLS context
-        first_org_id = properties[0].organization_id if properties else None
-        if first_org_id:
-            async with org_scope(db, first_org_id):
-                return [
-                    PropertyResponse(
-                        id=prop.id,
-                        portfolio_id=prop.portfolio_id,
-                        name=prop.name,
-                        address=prop.address,
-                        property_type=prop.property_type,
-                        units=prop.units,
-                        timezone=prop.timezone,
-                        created_at=prop.created_at,
-                    )
-                    for prop in properties
-                ]
-        return []
+        return [
+            PropertyResponse(
+                id=prop.id,
+                portfolio_id=prop.portfolio_id,
+                name=prop.name,
+                address=prop.address,
+                property_type=prop.property_type,
+                units=prop.units,
+                timezone=prop.timezone,
+                created_at=prop.created_at,
+            )
+            for prop in properties
+        ]

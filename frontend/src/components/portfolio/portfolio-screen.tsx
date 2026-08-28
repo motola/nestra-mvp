@@ -1,6 +1,6 @@
 "use client"; // Client: portfolio selection, property browsing
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -11,8 +11,16 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { PORTFOLIOS, PROPERTIES } from "@/lib/fixtures";
-import type { Property } from "@/lib/fixtures";
+import type { Property, PropertyType } from "@/lib/fixtures";
+import {
+  createPortfolio,
+  listPortfolios,
+  listProperties,
+} from "@/lib/api/portfolios";
+import type {
+  Portfolio as ApiPortfolio,
+  Property as ApiProperty,
+} from "@/lib/api/portfolios";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { PropertyCard } from "@/components/ui/property-card";
@@ -22,6 +30,40 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useProperty } from "@/lib/property/provider";
 import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
+
+// ─── API → display adapter ────────────────────────────────────────────────────
+
+const PROPERTY_TYPES: PropertyType[] = [
+  "MIXED_USE",
+  "SHORT_TERM_RENTAL",
+  "LONG_TERM_RENTAL",
+  "OWNER_OCCUPIED",
+  "COMMERCIAL",
+];
+
+/**
+ * Map an API property onto the shape the cards, table and property provider
+ * expect. Occupancy, device and alert counts come from subsystems that are not
+ * exposed by the API yet, so they read as zero until those land.
+ */
+function toDisplayProperty(p: ApiProperty): Property {
+  return {
+    id: p.id,
+    portfolio: p.portfolio_id,
+    name: p.name,
+    address: p.address,
+    type: PROPERTY_TYPES.includes(p.property_type as PropertyType)
+      ? (p.property_type as PropertyType)
+      : "MIXED_USE",
+    tz: p.timezone,
+    units: p.units,
+    occupied: 0,
+    alerts: 0,
+    status: "ok",
+    devices: 0,
+    integrations: 0,
+  };
+}
 
 // ─── Table columns for list view ─────────────────────────────────────────────
 
@@ -127,9 +169,11 @@ const FILTERS: { id: StatusFilter; label: string }[] = [
 ];
 
 function FilterChips({
+  properties,
   active,
   onChange,
 }: {
+  properties: Property[];
   active: StatusFilter;
   onChange: (f: StatusFilter) => void;
 }) {
@@ -139,8 +183,8 @@ function FilterChips({
         const on = active === id;
         const count =
           id === "all"
-            ? PROPERTIES.length
-            : PROPERTIES.filter((p) => p.status === id).length;
+            ? properties.length
+            : properties.filter((p) => p.status === id).length;
         return (
           <button
             key={id}
@@ -165,8 +209,12 @@ function FilterChips({
 // ─── Portfolio list view ──────────────────────────────────────────────────────
 
 function PortfolioListView({
+  portfolios,
+  properties,
   onPortfolioClick,
 }: {
+  portfolios: ApiPortfolio[];
+  properties: Property[];
   onPortfolioClick: (portfolioId: string) => void;
 }) {
   return (
@@ -176,8 +224,8 @@ function PortfolioListView({
         gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
       }}
     >
-      {PORTFOLIOS.map((pf) => {
-        const props = PROPERTIES.filter((p) => p.portfolio === pf.id);
+      {portfolios.map((pf) => {
+        const props = properties.filter((p) => p.portfolio === pf.id);
         const units = props.reduce((s, p) => s + p.units, 0);
         const occ = props.reduce((s, p) => s + p.occupied, 0);
         const alerts = props.reduce((s, p) => s + p.alerts, 0);
@@ -197,7 +245,7 @@ function PortfolioListView({
                   {pf.name}
                 </p>
                 <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-text-3 mt-0.5 m-0">
-                  {pf.region} · {pf.manager}
+                  {pf.description || "Portfolio"}
                 </p>
               </div>
             </div>
@@ -253,27 +301,25 @@ function PortfolioListView({
 // ─── Portfolio detail view ────────────────────────────────────────────────────
 
 function PortfolioDetailView({
-  portfolioId,
+  portfolio,
+  properties: props,
   onBack,
   onPropertyClick,
 }: {
-  portfolioId: string;
+  portfolio: ApiPortfolio;
+  properties: Property[];
   onBack: () => void;
   onPropertyClick: (property: Property) => void;
 }) {
-  const portfolio = PORTFOLIOS.find((p) => p.id === portfolioId);
-  const props = PROPERTIES.filter((p) => p.portfolio === portfolioId);
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const filtered =
     filter === "all" ? props : props.filter((p) => p.status === filter);
 
-  if (!portfolio) return null;
-
   return (
     <>
       <PageHeader
-        eyebrow={portfolio.region.toUpperCase()}
+        eyebrow={portfolio.description?.toUpperCase() || "PORTFOLIO"}
         title={portfolio.name}
         sub={`${props.length} properties · ${props.reduce((s, p) => s + p.units, 0)} units · ${props.reduce((s, p) => s + p.devices, 0)} devices`}
         primary={
@@ -299,7 +345,11 @@ function PortfolioDetailView({
           </button>
 
           <div className="flex items-center justify-between flex-wrap gap-3 flex-1 justify-end">
-            <FilterChips active={filter} onChange={setFilter} />
+            <FilterChips
+              properties={props}
+              active={filter}
+              onChange={setFilter}
+            />
 
             {/* Grid / list toggle */}
             <div className="flex gap-1.5 p-[3px] bg-surface border border-border rounded-[9px]">
@@ -361,11 +411,44 @@ export function PortfolioScreen() {
     null,
   );
   const [showAddForm, setShowAddForm] = useState(false);
+  const [portfolios, setPortfolios] = useState<ApiPortfolio[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { selectProperty } = useProperty();
-  const { organization } = useAuth();
-  const totalUnits = PROPERTIES.reduce((s, p) => s + p.units, 0);
-  const totalDevices = PROPERTIES.reduce((s, p) => s + p.devices, 0);
+  const { organization, isLoading: authLoading } = useAuth();
+  const totalUnits = properties.reduce((s, p) => s + p.units, 0);
+  const totalDevices = properties.reduce((s, p) => s + p.devices, 0);
+
+  const loadPortfolios = useCallback(async () => {
+    const organizationId = organization?.id;
+    if (!organizationId) return;
+
+    setLoading(true);
+    try {
+      const data = await listPortfolios(organizationId);
+      const perPortfolio = await Promise.all(
+        data.map((pf) => listProperties(pf.id, organizationId)),
+      );
+      setPortfolios(data);
+      setProperties(perPortfolio.flat().map(toDisplayProperty));
+    } catch (error) {
+      console.error("Failed to load portfolios:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [organization?.id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!organization?.id) {
+      setPortfolios([]);
+      setProperties([]);
+      setLoading(false);
+      return;
+    }
+    loadPortfolios();
+  }, [authLoading, organization?.id, loadPortfolios]);
 
   function handlePropertyClick(property: Property) {
     selectProperty(property);
@@ -377,13 +460,12 @@ export function PortfolioScreen() {
     region: string;
     manager: string;
   }) {
-    try {
-      const { createPortfolio } = await import("@/lib/api/portfolios");
-      if (!organization?.id) {
-        console.error("Organization not loaded");
-        return;
-      }
+    if (!organization?.id) {
+      console.error("Organization not loaded");
+      return;
+    }
 
+    try {
       await createPortfolio({
         organization_id: organization.id,
         name: data.name,
@@ -391,15 +473,22 @@ export function PortfolioScreen() {
       });
 
       setShowAddForm(false);
+      await loadPortfolios();
     } catch (error) {
       console.error("Failed to create portfolio:", error);
     }
   }
 
-  if (selectedPortfolioId) {
+  const selectedPortfolio =
+    portfolios.find((p) => p.id === selectedPortfolioId) ?? null;
+
+  if (selectedPortfolio) {
     return (
       <PortfolioDetailView
-        portfolioId={selectedPortfolioId}
+        portfolio={selectedPortfolio}
+        properties={properties.filter(
+          (p) => p.portfolio === selectedPortfolio.id,
+        )}
         onBack={() => setSelectedPortfolioId(null)}
         onPropertyClick={handlePropertyClick}
       />
@@ -411,7 +500,7 @@ export function PortfolioScreen() {
       <PageHeader
         eyebrow="WORKSPACE"
         title="Portfolios"
-        sub={`${PORTFOLIOS.length} portfolios · ${PROPERTIES.length} properties · ${totalUnits} units · ${totalDevices} devices`}
+        sub={`${portfolios.length} portfolios · ${properties.length} properties · ${totalUnits} units · ${totalDevices} devices`}
         primary={
           <Button
             variant="primary"
@@ -429,7 +518,22 @@ export function PortfolioScreen() {
       />
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        {PORTFOLIOS.length === 0 ? (
+        {loading ? (
+          <div
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                aria-hidden
+                className="bg-surface-2 border border-border rounded-panel h-[208px] animate-pulse"
+              />
+            ))}
+          </div>
+        ) : portfolios.length === 0 ? (
           <div className="border border-border rounded-panel p-12 text-center">
             <p className="text-[16px] text-text font-serif m-0">
               No portfolios yet
@@ -440,7 +544,11 @@ export function PortfolioScreen() {
             </p>
           </div>
         ) : (
-          <PortfolioListView onPortfolioClick={setSelectedPortfolioId} />
+          <PortfolioListView
+            portfolios={portfolios}
+            properties={properties}
+            onPortfolioClick={setSelectedPortfolioId}
+          />
         )}
       </div>
 
