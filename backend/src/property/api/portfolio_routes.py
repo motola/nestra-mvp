@@ -52,11 +52,13 @@ class PropertyResponse(BaseModel):
 
     id: UUID
     portfolio_id: UUID
+    organization_id: UUID
     name: str
     address: str
     property_type: str
     units: int
     timezone: str
+    description: str | None
     created_at: datetime
 
 

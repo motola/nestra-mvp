@@ -22,6 +22,7 @@ class IntegrationAdapter(Protocol):
         self,
         *,
         organization_id: UUID,
+        portfolio_id: UUID,
         property_id: UUID,
         integration_id: UUID,
     ) -> list[Device]:

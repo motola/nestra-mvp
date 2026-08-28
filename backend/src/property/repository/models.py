@@ -43,6 +43,9 @@ class DeviceModel(Base):
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    portfolio_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("portfolios.id"), nullable=False
+    )
     property_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=False
     )
