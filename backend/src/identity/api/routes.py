@@ -1040,3 +1040,50 @@ async def microsoft_oauth_callback_endpoint(
             token_type="bearer",
             organization_id=user_membership.organization_id,
         )
+
+
+# ─── Organization endpoints ───────────────────────────────────────────────────
+
+org_router = APIRouter(prefix="/organizations", tags=["organizations"])
+
+
+class OrganizationUpdateRequest:
+    """Request to update organization settings."""
+
+    def __init__(self, name: str, slug: str, timezone: str = "UTC"):
+        self.name = name
+        self.slug = slug
+        self.timezone = timezone
+
+
+@org_router.put("/{organization_id}")
+async def update_organization(
+    organization_id: UUID, name: str, slug: str, timezone: str = "UTC"
+) -> OrganizationOut:
+    """Update organization settings."""
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(OrganizationModel).where(OrganizationModel.id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        org.name = name
+        org.slug = slug
+
+        await session.commit()
+        await session.refresh(org)
+
+        return OrganizationOut(
+            id=org.id,
+            name=org.name,
+            slug=org.slug,
+            status=org.status,
+            subscription_tier=org.subscription_tier,
+            created_at=org.created_at,
+        )
+
+
+router.include_router(org_router)
