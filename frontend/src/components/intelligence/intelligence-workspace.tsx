@@ -1,9 +1,10 @@
 "use client"; // Client: chat tabs, messages, composer, quick-actions tray, activity slide-over
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Plus, Sparkles, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
+import { getToken } from "@/lib/auth/session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,13 @@ function useChatManager() {
   };
   const [chats, setChats] = useState<Chat[]>([empty]);
   const [activeId, setActiveId] = useState<string>("new0");
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const activeChat = chats.find((c) => c.id === activeId) ?? chats[0];
 
@@ -64,6 +72,8 @@ function useChatManager() {
   function send(text: string) {
     const msg = text.trim();
     if (!msg) return;
+
+    const aiMessageId = uid("m");
     setChats((cs) =>
       cs.map((c) => {
         if (c.id !== activeId) return c;
@@ -79,11 +89,77 @@ function useChatManager() {
           messages: [
             ...c.messages,
             { id: uid("m"), role: "you" as Role, text: msg },
-            { id: uid("m"), role: "ai" as Role, text: "Thinking..." },
+            { id: aiMessageId, role: "ai" as Role, text: "Thinking..." },
           ],
         };
       }),
     );
+
+    // Call backend API
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+        // Get auth token from cookie
+        const token = getToken();
+
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+
+        // Add Authorization header with JWT token
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${apiUrl}/intelligence/chat`, {
+          method: "POST",
+          headers,
+          signal: controller.signal,
+          body: JSON.stringify({ message: msg }),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        // Update with AI response only if mounted
+        if (mountedRef.current) {
+          setChats((cs) =>
+            cs.map((c) => {
+              if (c.id !== activeId) return c;
+              return {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === aiMessageId
+                    ? { ...m, text: data.response || "No response" }
+                    : m,
+                ),
+              };
+            }),
+          );
+        }
+      } catch (error) {
+        // Ignore abort errors (component unmounted)
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (!mountedRef.current) return;
+        console.error("Chat error:", error);
+        setChats((cs) =>
+          cs.map((c) => {
+            if (c.id !== activeId) return c;
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === aiMessageId
+                  ? { ...m, text: "Error: Could not reach AI service" }
+                  : m,
+              ),
+            };
+          }),
+        );
+      }
+    })();
   }
 
   return { chats, activeId, activeChat, setActiveId, newChat, closeTab, send };
@@ -97,12 +173,14 @@ function TabsBar({
   onSelect,
   onClose,
   onNew,
+  onHistoryClick,
 }: {
   chats: Chat[];
   activeId: string;
   onSelect: (id: string) => void;
   onClose: (id: string, e: React.MouseEvent) => void;
   onNew: () => void;
+  onHistoryClick: () => void;
 }) {
   return (
     <div className="pl-0 pr-7 pt-3 bg-surface border-b border-border">
@@ -146,7 +224,12 @@ function TabsBar({
         </div>
 
         <div className="flex items-center gap-2 shrink-0 pb-2">
-          <Button variant="secondary" icon={History} size="sm">
+          <Button
+            variant="secondary"
+            icon={History}
+            size="sm"
+            onClick={onHistoryClick}
+          >
             History
           </Button>
           <Button variant="primary" icon={Plus} size="sm" onClick={onNew}>
@@ -171,7 +254,7 @@ function EmptyState() {
         >
           Start a conversation
         </h1>
-        <p className="text-[11px] text-text-2 mt-2.5 leading-[1.6] m-0">
+        <p className="text-[15px] text-text-2 mt-2.5 leading-[1.6] m-0">
           Ask questions about your data, get insights, or request actions.
           I&apos;ll confirm before making changes.
         </p>
@@ -317,23 +400,77 @@ function ComposerArea({ onSend }: { onSend: (text: string) => void }) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
+function HistoryPanel({
+  chats,
+  activeId,
+  onSelect,
+  onClose,
+}: {
+  chats: Chat[];
+  activeId: string;
+  onSelect: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-start">
+      <div className="w-80 bg-surface h-full shadow-lg border-r border-border flex flex-col">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-text">Chat History</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-surface-2 rounded transition-colors"
+            aria-label="Close history"
+          >
+            <X size={18} className="text-text-2" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {chats.length === 0 ? (
+            <div className="px-4 py-6 text-center">
+              <p className="text-[12px] text-text-3">No chat history</p>
+            </div>
+          ) : (
+            <div className="space-y-1 p-2">
+              {chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => {
+                    onSelect(chat.id);
+                    onClose();
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-[8px] text-[13px] truncate transition-colors ${
+                    activeId === chat.id
+                      ? "bg-accent text-white"
+                      : "text-text hover:bg-bg"
+                  }`}
+                >
+                  {chat.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function IntelligenceWorkspace() {
   const chat = useChatManager();
+  const [showHistory, setShowHistory] = useState(false);
 
   const hasMessages = chat.activeChat.messages.length > 0;
 
   return (
     <div className="min-h-full flex flex-col">
-      <div className="px-7 py-3 border-b border-border bg-surface">
-        <h2 className="text-[13px] font-semibold text-text">Intelligence</h2>
-      </div>
-
       <TabsBar
         chats={chat.chats}
         activeId={chat.activeId}
         onSelect={chat.setActiveId}
         onClose={chat.closeTab}
         onNew={chat.newChat}
+        onHistoryClick={() => setShowHistory(true)}
       />
 
       {hasMessages ? (
@@ -343,6 +480,15 @@ export function IntelligenceWorkspace() {
       )}
 
       <ComposerArea onSend={chat.send} />
+
+      {showHistory && (
+        <HistoryPanel
+          chats={chat.chats}
+          activeId={chat.activeId}
+          onSelect={chat.setActiveId}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div>
   );
 }

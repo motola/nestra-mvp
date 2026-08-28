@@ -69,6 +69,8 @@ class GoogleOAuthUrlResponse(BaseModel):
 
 class GoogleOAuthCallbackRequest(BaseModel):
     code: str
+    org_name: str | None = None  # Optional: provided by frontend for new signups
+    signup_email: str | None = None  # Optional: email from signup form instead of provider's
 
 
 class GoogleOAuthToken(BaseModel):
@@ -93,9 +95,55 @@ class MicrosoftOAuthUrlResponse(BaseModel):
 
 class MicrosoftOAuthCallbackRequest(BaseModel):
     code: str
+    org_name: str | None = None  # Optional: provided by frontend for new signups
+    signup_email: str | None = None  # Optional: email from signup form instead of provider's
 
 
 class MicrosoftOAuthUserInfo(BaseModel):
     id: str
     userPrincipalName: str
     displayName: str
+
+
+class EmailAvailabilityRequest(BaseModel):
+    email: EmailStr
+
+
+class EmailAvailabilityResponse(BaseModel):
+    available: bool
+    message: str
+
+
+class UserConsentRequest(BaseModel):
+    portfolio_access: bool
+    device_access: bool
+    historical_data_access: bool
+
+
+class UserConsentResponse(BaseModel):
+    portfolio_access: bool
+    device_access: bool
+    historical_data_access: bool
+
+
+class AiChatRequest(BaseModel):
+    message: str
+
+
+class AiActionResponse(BaseModel):
+    action_type: str
+    status: str
+    details: str
+
+
+class AiChatResponse(BaseModel):
+    response: str
+    actions: list[AiActionResponse] = []
+
+
+class AiReportResponse(BaseModel):
+    id: UUID
+    title: str
+    content: str
+    report_type: str
+    created_at: str

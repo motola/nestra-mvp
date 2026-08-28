@@ -35,6 +35,12 @@ repos:
         language: system
         entry: python3 .github/scripts/validate_commit_msg.py
         stages: [commit-msg]
+      - id: review-checklist
+        name: Review Checklist Reminder
+        language: system
+        entry: bash -c 'echo "💡 Remember to check review.md before merging!"'
+        stages: [pre-commit]
+        always_run: true
 
   # ── Markdown format (Prettier) ────────────────────────────────────────────
   - repo: https://github.com/pre-commit/mirrors-prettier

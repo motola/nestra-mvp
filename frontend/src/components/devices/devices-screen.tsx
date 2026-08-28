@@ -1,6 +1,7 @@
 "use client"; // Client: device filter, drawer open/close state
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   Plus,
@@ -21,7 +22,6 @@ import { cn } from "@/lib/cn";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
 import { useDevices } from "@/lib/use-devices";
 import { Button } from "@/components/ui/button";
-import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -291,8 +291,36 @@ function DeviceDrawer({
   device: Device;
   onClose: () => void;
 }) {
+  const [isControlling, setIsControlling] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const DevIcon = categoryIcon(d.category);
   const events = deviceActivity(d);
+
+  const sendCommand = async (command: string) => {
+    setIsControlling(true);
+    setFeedback(null);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/devices/${d.id}/control`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ command }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await response.json();
+
+      setFeedback(`✓ ${command.replace(/_/g, " ")}`);
+      setTimeout(() => setFeedback(null), 2000);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Command failed";
+      setFeedback(`✗ Error: ${errMsg}`);
+    } finally {
+      setIsControlling(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
@@ -374,6 +402,75 @@ function DeviceDrawer({
               ))}
             </div>
           </div>
+
+          {/* Device controls */}
+          {d.reachable && (
+            <div>
+              <MonoLabel className="mb-2 block">controls</MonoLabel>
+              <div className="flex gap-2 flex-wrap">
+                {["PLUG", "SWITCH", "LIGHT"].includes(d.category) && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("turn_on")}
+                    >
+                      Turn on
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("turn_off")}
+                    >
+                      Turn off
+                    </Button>
+                  </>
+                )}
+                {d.category === "LIGHT" && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={isControlling}
+                    onClick={() => sendCommand("set_brightness")}
+                  >
+                    Set brightness
+                  </Button>
+                )}
+                {d.category === "LOCK" && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("lock")}
+                    >
+                      Lock
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isControlling}
+                      onClick={() => sendCommand("unlock")}
+                    >
+                      Unlock
+                    </Button>
+                  </>
+                )}
+              </div>
+              {feedback && (
+                <p
+                  className={cn(
+                    "text-sm mt-2 font-medium",
+                    feedback.startsWith("✓") ? "text-green" : "text-red",
+                  )}
+                >
+                  {feedback}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Quick controls */}
           <div className="flex gap-2 flex-wrap">
@@ -590,16 +687,15 @@ function DeviceList({
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function DevicesScreen() {
+  const router = useRouter();
   const [selected, setSelected] = useState<Device | null>(null);
-  const { devices, loading, error } = useDevices(
-    "b4e3df93-f5e0-4e8f-beaa-33e2aead82ba",
-  );
+  const { devices, error } = useDevices();
 
   const total = devices.length;
   const online = devices.filter((d) => d.reachable).length;
   const unreachable = devices.filter((d) => !d.reachable).length;
 
-  if (loading || error) {
+  if (error) {
     return (
       <>
         <PageHeader
@@ -611,11 +707,34 @@ export function DevicesScreen() {
               Pair device
             </Button>
           }
+          secondary={
+            <Button variant="secondary" icon={RefreshCw}>
+              Re-sync
+            </Button>
+          }
         />
-        <EmptyDataState
-          title="No devices connected"
-          description="Connect your first smart home integration to start monitoring devices."
-        />
+
+        <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
+          <div className="grid grid-cols-4 gap-3">
+            <StatCard label="Total devices" value={0} sub="Connected devices" />
+            <StatCard label="Online" value={0} sub="Reporting normally" />
+            <StatCard
+              label="Categories"
+              value={0}
+              sub="Thermostats, lights, locks, sensors…"
+            />
+            <StatCard
+              label="Unreachable"
+              value={0}
+              variant="amber"
+              sub="Check connections"
+            />
+          </div>
+
+          <div className="border border-border rounded-panel p-8 text-center">
+            <p className="text-[14px] text-text-2 m-0">No devices to display</p>
+          </div>
+        </div>
       </>
     );
   }
@@ -687,10 +806,18 @@ export function DevicesScreen() {
               cloud.
             </p>
             <div className="flex gap-2 mt-3">
-              <Button variant="tagSec" size="sm">
+              <Button
+                variant="tagSec"
+                size="sm"
+                onClick={() => router.push("/integrations")}
+              >
                 Manage integrations
               </Button>
-              <Button variant="tagSec" size="sm">
+              <Button
+                variant="tagSec"
+                size="sm"
+                onClick={() => router.push("/integrations?tab=webhooks")}
+              >
                 View sync log
               </Button>
             </div>

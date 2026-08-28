@@ -1,6 +1,7 @@
 "use client"; // Client: react-hook-form + mutation
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,7 +19,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const login = useLogin();
   const googleOAuthUrl = useGoogleOAuthUrl();
   const microsoftOAuthUrl = useMicrosoftOAuthUrl();
@@ -54,7 +55,11 @@ export default function LoginPage() {
         Welcome back to your portfolio console.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-4"
+        noValidate
+      >
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-text">
             Email address
@@ -127,59 +132,51 @@ export default function LoginPage() {
           variant="secondary"
           type="button"
           onClick={handleGoogleLogin}
-          disabled={googleOAuthUrl.isPending}
+          disabled={googleOAuthUrl.isPending || googleOAuthUrl.isError}
           className="w-12 h-12 p-0 justify-center items-center"
           title="Sign in with Google"
         >
-          {googleOAuthUrl.isPending ? (
-            "…"
-          ) : (
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-          )}
+          <svg
+            className="w-6 h-6"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
         </Button>
         <Button
           variant="secondary"
           type="button"
           onClick={handleMicrosoftLogin}
-          disabled={microsoftOAuthUrl.isPending}
-          className="w-12 h-12 p-0 justify-center items-center"
-          title="Sign in with Microsoft"
+          disabled={microsoftOAuthUrl.isPending || microsoftOAuthUrl.isError}
+          className="w-12 h-12 p-0 justify-center items-center opacity-50 cursor-not-allowed"
+          title="Microsoft sign in not configured"
         >
-          {microsoftOAuthUrl.isPending ? (
-            "…"
-          ) : (
-            <svg
-              className="w-6 h-6"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect x="1" y="1" width="9" height="9" fill="#F25022" />
-              <rect x="12" y="1" width="9" height="9" fill="#7FBA00" />
-              <rect x="1" y="12" width="9" height="9" fill="#00A4EF" />
-              <rect x="12" y="12" width="9" height="9" fill="#FFB900" />
-            </svg>
-          )}
+          <svg
+            className="w-6 h-6"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+            <rect x="12" y="1" width="9" height="9" fill="#7FBA00" />
+            <rect x="1" y="12" width="9" height="9" fill="#00A4EF" />
+            <rect x="12" y="12" width="9" height="9" fill="#FFB900" />
+          </svg>
         </Button>
       </div>
 
@@ -193,5 +190,22 @@ export default function LoginPage() {
         </Link>
       </p>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="max-w-[420px] w-full bg-surface border border-border rounded-card p-8">
+            <div className="h-20 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="h-10 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -24,7 +24,30 @@ interface TokenResponse {
   organization_id: string;
 }
 
+interface EmailAvailabilityRequest {
+  email: string;
+}
+
+interface EmailAvailabilityResponse {
+  available: boolean;
+  message: string;
+}
+
 // ─── Signup ───────────────────────────────────────────────────────────────────
+
+export function useCheckEmailAvailability() {
+  return useMutation<
+    EmailAvailabilityResponse,
+    ApiError,
+    EmailAvailabilityRequest
+  >({
+    mutationFn: (payload) =>
+      apiFetch<EmailAvailabilityResponse>("/auth/check-email", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  });
+}
 
 export function useSignup() {
   const { setSession } = useAuth();
@@ -181,7 +204,14 @@ export function useGoogleOAuthUrl() {
       apiFetch<GoogleOAuthUrlResponse>("/auth/google/url", {
         method: "GET",
       }),
-    enabled: true,
+    enabled: typeof window !== "undefined",
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
+    throwOnError: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 }
 
@@ -190,14 +220,29 @@ export function useGoogleOAuthCallback() {
   const router = useRouter();
 
   return useMutation<TokenResponse, ApiError, GoogleOAuthCallbackPayload>({
-    mutationFn: (payload) =>
-      apiFetch<TokenResponse>("/auth/google/callback", {
+    mutationFn: (payload) => {
+      // Include signup email and org_name from sessionStorage if available
+      const signupEmail = sessionStorage.getItem("signup_email");
+      const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_email");
+      sessionStorage.removeItem("signup_org_name");
+      return apiFetch<TokenResponse>("/auth/google/callback", {
         method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    onSuccess: ({ access_token }) => {
+        body: JSON.stringify({
+          ...payload,
+          ...(signupEmail && { signup_email: signupEmail }),
+          ...(orgName && { org_name: orgName }),
+        }),
+      });
+    },
+    onSuccess: async ({ access_token }) => {
       setSession(access_token);
+      // Wait a brief moment for session to be stored
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.push("/intelligence");
+    },
+    onError: (error) => {
+      console.error("Google OAuth callback error:", error);
     },
   });
 }
@@ -219,7 +264,8 @@ export function useMicrosoftOAuthUrl() {
       apiFetch<MicrosoftOAuthUrlResponse>("/auth/microsoft/url", {
         method: "GET",
       }),
-    enabled: true,
+    enabled: false,
+    retry: false,
   });
 }
 
@@ -228,14 +274,29 @@ export function useMicrosoftOAuthCallback() {
   const router = useRouter();
 
   return useMutation<TokenResponse, ApiError, MicrosoftOAuthCallbackPayload>({
-    mutationFn: (payload) =>
-      apiFetch<TokenResponse>("/auth/microsoft/callback", {
+    mutationFn: (payload) => {
+      // Include signup email and org_name from sessionStorage if available
+      const signupEmail = sessionStorage.getItem("signup_email");
+      const orgName = sessionStorage.getItem("signup_org_name");
+      sessionStorage.removeItem("signup_email");
+      sessionStorage.removeItem("signup_org_name");
+      return apiFetch<TokenResponse>("/auth/microsoft/callback", {
         method: "POST",
-        body: JSON.stringify(payload),
-      }),
-    onSuccess: ({ access_token }) => {
+        body: JSON.stringify({
+          ...payload,
+          ...(signupEmail && { signup_email: signupEmail }),
+          ...(orgName && { org_name: orgName }),
+        }),
+      });
+    },
+    onSuccess: async ({ access_token }) => {
       setSession(access_token);
+      // Wait a brief moment for session to be stored
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.push("/intelligence");
+    },
+    onError: (error) => {
+      console.error("Microsoft OAuth callback error:", error);
     },
   });
 }

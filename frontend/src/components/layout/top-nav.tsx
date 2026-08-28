@@ -1,14 +1,17 @@
 "use client"; // Client: account menu
 
 import { useState } from "react";
-import { Bell, Building, ChevronRight, LogOut, Search } from "lucide-react";
+import { Bell, Building, ChevronRight, LogOut, Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/provider";
 import { useLogout } from "@/lib/api/hooks/use-auth";
 import { LogoMark } from "@/components/ui/logo";
 
 export function TopNav() {
-  const [open, setOpen] = useState(false);
-  const { user, organization } = useAuth();
+  const [openAccount, setOpenAccount] = useState(false);
+  const [openNotifications, setOpenNotifications] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user, organization, isLoading } = useAuth();
   const logout = useLogout();
 
   const handleLogout = () => {
@@ -17,7 +20,7 @@ export function TopNav() {
 
   const initials =
     user?.full_name
-      .split(" ")
+      ?.split(" ")
       .map((p) => p[0])
       .join("")
       .toUpperCase() || "?";
@@ -33,24 +36,24 @@ export function TopNav() {
       </div>
 
       {/* Org switcher */}
-      <div className="ml-2 px-2.5 py-1 rounded-[9px] flex items-center gap-2 bg-bg border border-border cursor-pointer">
-        <Building
-          size={13}
-          strokeWidth={1.5}
-          className="text-text-3 shrink-0"
-        />
-        <span className="text-[12px] text-text-2 font-medium">
-          {organization?.name || "Organization"}
-        </span>
-        <ChevronRight size={12} strokeWidth={1.5} className="text-text-3" />
-      </div>
+      {!isLoading && organization && (
+        <div className="ml-2 px-2.5 py-1 rounded-[9px] flex items-center gap-2 bg-bg border border-border cursor-pointer">
+          <Building
+            size={13}
+            strokeWidth={1.5}
+            className="text-text-3 shrink-0"
+          />
+          <span className="text-[12px] text-text-2 font-medium">
+            {organization.name}
+          </span>
+          <ChevronRight size={12} strokeWidth={1.5} className="text-text-3" />
+        </div>
+      )}
 
       {/* Search */}
       <button
-        onClick={() => {
-          // TODO: Open search modal/command palette
-        }}
-        className="ml-2 w-56 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors duration-[120ms]"
+        onClick={() => setOpenSearch(true)}
+        className="ml-2 w-72 bg-bg border border-border rounded-[8px] px-2.5 py-1.5 flex items-center gap-2 cursor-text overflow-hidden hover:border-border-strong transition-colors transition-colors duration-[120ms]"
       >
         <Search size={13} strokeWidth={1.5} className="text-text-3 shrink-0" />
         <span className="text-[12px] text-text-2 truncate flex-1 select-none">
@@ -63,25 +66,39 @@ export function TopNav() {
 
       {/* Bell + account */}
       <div className="ml-auto flex items-center gap-3.5">
-        <button className="bg-transparent border-0 cursor-pointer p-1.5 relative hover:text-text transition-colors">
-          <Bell size={18} strokeWidth={1.5} className="text-text-2" />
-          {/* TODO: Show badge only when there are actual notifications */}
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setOpenNotifications(!openNotifications)}
+            className="bg-transparent border-0 cursor-pointer p-1.5 relative hover:text-text transition-colors"
+          >
+            <Bell size={18} strokeWidth={1.5} className="text-text-2" />
+          </button>
+
+          {openNotifications && (
+            <div className="absolute top-full right-0 mt-1 bg-surface border border-border rounded-card shadow-md py-2 z-50 min-w-[240px]">
+              <div className="px-3 py-2 text-[12px] text-text-2 text-center">
+                No alerts or notifications
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="relative">
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => setOpenAccount(!openAccount)}
             className="flex items-center gap-2 pl-[3px] pr-2 py-[3px] rounded-tag border border-border cursor-pointer hover:border-border-strong transition-colors"
           >
             <div className="w-[26px] h-[26px] rounded-full bg-graphite text-white flex items-center justify-center font-mono text-[10px] font-medium tracking-[0.5px]">
-              {initials}
+              {isLoading ? "…" : initials}
             </div>
             <span className="text-[12px] text-text-2 pr-1">
-              {user?.full_name.split(" ")[0] || "Account"}
+              {isLoading
+                ? "Loading…"
+                : user?.full_name?.split(" ")[0] || "Account"}
             </span>
           </button>
 
-          {open && (
+          {openAccount && (
             <div className="absolute top-full right-0 mt-1 bg-surface border border-border rounded-card shadow-md py-1 z-50 min-w-[180px]">
               <button
                 onClick={handleLogout}
@@ -94,6 +111,54 @@ export function TopNav() {
           )}
         </div>
       </div>
+
+      {/* Search Modal */}
+      {openSearch && (
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-20 z-[100]">
+          <div className="bg-surface rounded-card border border-border shadow-lg w-full max-w-2xl">
+            {/* Search Input */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+              <Search size={18} strokeWidth={1.5} className="text-text-3" />
+              <input
+                autoFocus
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setOpenSearch(false);
+                }}
+                placeholder="Search properties, devices, integrations…"
+                className="flex-1 bg-transparent border-0 outline-none ring-0 text-[14px] text-text placeholder:text-text-3 focus:outline-none focus:ring-0"
+              />
+              <button
+                onClick={() => setOpenSearch(false)}
+                className="p-1 hover:bg-surface-2 rounded transition-colors"
+              >
+                <X size={18} className="text-text-2" />
+              </button>
+            </div>
+
+            {/* Search Results */}
+            <div className="px-4 py-6 text-center">
+              {searchQuery ? (
+                <p className="text-[14px] text-text-2">
+                  Searching for &quot;{searchQuery}&quot;…
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[14px] text-text-2">
+                    Start typing to search
+                  </p>
+                  <p className="text-[12px] text-text-3">
+                    Search across properties, devices, integrations, and team
+                    members
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

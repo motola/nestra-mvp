@@ -18,7 +18,16 @@ from config import get_settings
 
 def _make_engine() -> AsyncEngine:
     settings = get_settings()
-    return create_async_engine(settings.database_url, echo=settings.debug)
+    return create_async_engine(
+        settings.database_url,
+        echo=settings.debug,
+        pool_size=10,  # Connection pool size
+        max_overflow=20,  # Additional connections above pool_size
+        pool_pre_ping=True,  # Test connections before using them
+        pool_recycle=600,  # Recycle connections after 10 minutes (not 1 hour)
+        pool_timeout=30,  # Wait max 30 seconds for a connection from pool
+        connect_args={"timeout": 10},  # 10 second connection timeout
+    )
 
 
 # Module-level singletons — created once on first import.
@@ -41,16 +50,18 @@ async def org_scope(
 ) -> AsyncIterator[None]:
     """Set Postgres session variables required by RLS policies.
 
-    Must wrap every query on tenant-scoped tables. Uses SET LOCAL so the
-    variables are automatically cleared at the end of the transaction.
+    Must wrap every query on tenant-scoped tables. Uses set_config with
+    is_local=true, which has SET LOCAL semantics: the variables are cleared at
+    the end of the transaction. SET LOCAL itself cannot be used here because
+    Postgres does not accept bind parameters in a SET statement.
     """
     await session.execute(
-        text("SET LOCAL app.current_organization_id = :org_id"),
+        text("SELECT set_config('app.current_organization_id', :org_id, true)"),
         {"org_id": str(organization_id)},
     )
     if user_id is not None:
         await session.execute(
-            text("SET LOCAL app.current_user_id = :user_id"),
+            text("SELECT set_config('app.current_user_id', :user_id, true)"),
             {"user_id": str(user_id)},
         )
     yield

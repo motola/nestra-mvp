@@ -18,6 +18,8 @@ from config import get_settings
 from db import SessionLocal
 from dependencies import SettingsDep
 from identity.api.schemas import (
+    EmailAvailabilityRequest,
+    EmailAvailabilityResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     GoogleOAuthCallbackRequest,
@@ -84,6 +86,25 @@ async def _is_token_revoked(jti: str) -> bool:
             select(RevokedTokenModel).where(RevokedTokenModel.token_jti == jti)
         )
         return result.scalar_one_or_none() is not None
+
+
+@router.post("/check-email", response_model=EmailAvailabilityResponse)
+async def check_email_availability(
+    body: EmailAvailabilityRequest,
+) -> EmailAvailabilityResponse:
+    """Check if an email is available for signup."""
+    async with SessionLocal() as session:
+        result = await session.execute(select(UserModel).where(UserModel.email == body.email))
+        user = result.scalar_one_or_none()
+        if user:
+            return EmailAvailabilityResponse(
+                available=False,
+                message="Email already in use",
+            )
+        return EmailAvailabilityResponse(
+            available=True,
+            message="Email is available",
+        )
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -687,7 +708,8 @@ async def google_oauth_callback_endpoint(
 
         user_info = user_response.json()
         google_id = user_info.get("id")
-        email = user_info.get("email")
+        # Use signup email if provided (from signup form), otherwise use Google's email
+        email = body.signup_email or user_info.get("email")
         name = user_info.get("name", "Google User")
 
     if not google_id or not email:
@@ -713,20 +735,21 @@ async def google_oauth_callback_endpoint(
             email_user = email_result.scalar_one_or_none()
 
             if email_user:
-                # Link Google ID to existing user
-                email_user.google_id = google_id
-                email_user.auth_method = AuthMethod.GOOGLE_SSO
-                email_user.last_login_at = now
-                email_user.email_verified = True
-                user = email_user
-                await session.commit()
+                # Email already exists - reject to prevent account confusion
+                # User should use regular login or password reset instead
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already in use. Please log in with your existing account.",
+                )
             else:
                 # Create new user with Google OAuth
                 try:
                     # Create organization for new user
                     slug = email.split("@")[0].lower()
+                    # Use provided org_name or auto-generate from name
+                    org_display_name = body.org_name or f"{name}'s Portfolio"
                     org = OrganizationModel(
-                        name=f"{name}'s Portfolio",
+                        name=org_display_name,
                         slug=slug,
                         legal_name=name,
                         status=OrgStatus.ACTIVE,
@@ -744,7 +767,7 @@ async def google_oauth_callback_endpoint(
                         password_hash=None,
                         auth_method=AuthMethod.GOOGLE_SSO,
                         is_active=True,
-                        email_verified=True,
+                        email_verified=False,
                         last_login_at=now,
                     )
                     session.add(user)
@@ -769,7 +792,27 @@ async def google_oauth_callback_endpoint(
                     )
                     session.add(membership)
 
+                    # Create email verification token
+                    verify_token = secrets.token_urlsafe(32)
+                    verify_expires = now + timedelta(hours=24)
+                    verification_token = VerificationTokenModel(
+                        user_id=user.id,
+                        token=verify_token,
+                        token_type=TokenType.EMAIL_VERIFICATION,
+                        expires_at=verify_expires,
+                        created_at=now,
+                    )
+                    session.add(verification_token)
+
                     await session.commit()
+
+                    # Send verification email asynchronously
+                    email_service = get_email_service()
+                    asyncio.create_task(
+                        email_service.send_verification_email(
+                            user.email, user.full_name, verify_token
+                        )
+                    )
                 except IntegrityError as e:
                     await session.rollback()
                     raise HTTPException(
@@ -865,7 +908,8 @@ async def microsoft_oauth_callback_endpoint(
 
         user_info = user_response.json()
         microsoft_id = user_info.get("id")
-        email = user_info.get("userPrincipalName")
+        # Use signup email if provided (from signup form), otherwise use Microsoft's email
+        email = body.signup_email or user_info.get("userPrincipalName")
         name = user_info.get("displayName", "Microsoft User")
 
     if not microsoft_id or not email:
@@ -893,20 +937,21 @@ async def microsoft_oauth_callback_endpoint(
             email_user = email_result.scalar_one_or_none()
 
             if email_user:
-                # Link Microsoft ID to existing user
-                email_user.microsoft_id = microsoft_id
-                email_user.auth_method = AuthMethod.MICROSOFT_SSO
-                email_user.last_login_at = now
-                email_user.email_verified = True
-                user = email_user
-                await session.commit()
+                # Email already exists - reject to prevent account confusion
+                # User should use regular login or password reset instead
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already in use. Please log in with your existing account.",
+                )
             else:
                 # Create new user with Microsoft OAuth
                 try:
                     # Create organization for new user
                     slug = email.split("@")[0].lower()
+                    # Use provided org_name or auto-generate from name
+                    org_display_name = body.org_name or f"{name}'s Portfolio"
                     org = OrganizationModel(
-                        name=f"{name}'s Portfolio",
+                        name=org_display_name,
                         slug=slug,
                         legal_name=name,
                         status=OrgStatus.ACTIVE,
@@ -924,7 +969,7 @@ async def microsoft_oauth_callback_endpoint(
                         password_hash=None,
                         auth_method=AuthMethod.MICROSOFT_SSO,
                         is_active=True,
-                        email_verified=True,
+                        email_verified=False,
                         last_login_at=now,
                     )
                     session.add(user)
@@ -949,7 +994,27 @@ async def microsoft_oauth_callback_endpoint(
                     )
                     session.add(membership)
 
+                    # Create email verification token
+                    verify_token = secrets.token_urlsafe(32)
+                    verify_expires = now + timedelta(hours=24)
+                    verification_token = VerificationTokenModel(
+                        user_id=user.id,
+                        token=verify_token,
+                        token_type=TokenType.EMAIL_VERIFICATION,
+                        expires_at=verify_expires,
+                        created_at=now,
+                    )
+                    session.add(verification_token)
+
                     await session.commit()
+
+                    # Send verification email asynchronously
+                    email_service = get_email_service()
+                    asyncio.create_task(
+                        email_service.send_verification_email(
+                            user.email, user.full_name, verify_token
+                        )
+                    )
                 except IntegrityError as e:
                     await session.rollback()
                     raise HTTPException(
@@ -975,3 +1040,47 @@ async def microsoft_oauth_callback_endpoint(
             token_type="bearer",
             organization_id=user_membership.organization_id,
         )
+
+
+# ─── Organization endpoints ───────────────────────────────────────────────────
+
+org_router = APIRouter(prefix="/organizations", tags=["organizations"])
+
+
+class OrganizationUpdateRequest:
+    """Request to update organization settings."""
+
+    def __init__(self, name: str, slug: str, timezone: str = "UTC"):
+        self.name = name
+        self.slug = slug
+        self.timezone = timezone
+
+
+@org_router.put("/{organization_id}")
+async def update_organization(
+    organization_id: UUID, name: str, slug: str, timezone: str = "UTC"
+) -> OrganizationOut:
+    """Update organization settings."""
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(OrganizationModel).where(OrganizationModel.id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        org.name = name
+        org.slug = slug
+
+        await session.commit()
+        await session.refresh(org)
+
+        return OrganizationOut(
+            id=org.id,
+            name=org.name,
+            slug=org.slug,
+        )
+
+
+router.include_router(org_router)

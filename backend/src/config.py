@@ -17,8 +17,16 @@ class Settings(BaseSettings):
     debug: bool = False
 
     lifx_api_token: str = ""
+    lifx_client_id: str = ""
+    lifx_client_secret: str = ""
     govee_api_key: str = ""
     govee_ble_address: str = ""
+    govee_client_id: str = ""
+    govee_client_secret: str = ""
+    meross_client_id: str = ""
+    meross_client_secret: str = ""
+    shelly_client_id: str = ""
+    shelly_client_secret: str = ""
     anthropic_api_key: str = ""
     sendgrid_api_key: str = ""
     google_oauth_client_id: str = ""

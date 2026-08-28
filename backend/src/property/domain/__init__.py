@@ -18,6 +18,7 @@ class DeviceType(StrEnum):
     PLUG = "plug"
     SENSOR = "sensor"
     SPEAKER = "speaker"
+    LIGHT = "light"
 
 
 class Device(BaseModel):
