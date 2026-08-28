@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from uuid import UUID, uuid4
+
+import pytest
 
 from integrations.shelly.adapter import ShellyAdapter
 from property.domain import DeviceType

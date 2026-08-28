@@ -35,7 +35,9 @@ class MerossAdapter:
         """Fetch Meross devices from cloud API."""
         if not access_token:
             logger.warning("No Meross access token provided, returning mock devices")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -69,7 +71,9 @@ class MerossAdapter:
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch Meross devices: {e}")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
     def _get_device_type(self, meross_type: str) -> DeviceType:
         """Map Meross device type."""

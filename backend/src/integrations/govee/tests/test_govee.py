@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
 from uuid import UUID, uuid4
+
+import pytest
 
 from integrations.govee.adapter import GoveeAdapter
 from property.domain import DeviceType
