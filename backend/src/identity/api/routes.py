@@ -1080,9 +1080,6 @@ async def update_organization(
             id=org.id,
             name=org.name,
             slug=org.slug,
-            status=org.status,
-            subscription_tier=org.subscription_tier,
-            created_at=org.created_at,
         )
 
 
