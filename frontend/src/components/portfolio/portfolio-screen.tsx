@@ -16,6 +16,9 @@ import {
   createPortfolio,
   listPortfolios,
   listProperties,
+  updatePortfolio,
+  createProperty,
+  updateProperty,
 } from "@/lib/api/portfolios";
 import type {
   Portfolio as ApiPortfolio,
@@ -30,6 +33,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useProperty } from "@/lib/property/provider";
 import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
+import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
+import { PropertyForm } from "@/components/portfolio/property-form";
 
 // ─── API → display adapter ────────────────────────────────────────────────────
 
@@ -305,14 +310,22 @@ function PortfolioDetailView({
   properties: props,
   onBack,
   onPropertyClick,
+  onPortfolioUpdate,
+  onPropertyCreate,
 }: {
   portfolio: ApiPortfolio;
   properties: Property[];
   onBack: () => void;
   onPropertyClick: (property: Property) => void;
+  onPortfolioUpdate: () => Promise<void>;
+  onPropertyCreate: () => Promise<void>;
 }) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [showEditPortfolio, setShowEditPortfolio] = useState(false);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const { organization } = useAuth();
   const filtered =
     filter === "all" ? props : props.filter((p) => p.status === filter);
 
@@ -323,14 +336,29 @@ function PortfolioDetailView({
         title={portfolio.name}
         sub={`${props.length} properties · ${props.reduce((s, p) => s + p.units, 0)} units · ${props.reduce((s, p) => s + p.devices, 0)} devices`}
         primary={
-          <Button variant="primary" icon={Plus}>
+          <Button
+            variant="primary"
+            icon={Plus}
+            onClick={() => {
+              setEditingProperty(null);
+              setShowPropertyForm(true);
+            }}
+          >
             Add property
           </Button>
         }
         secondary={
-          <Button variant="secondary" icon={Download}>
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowEditPortfolio(true)}
+            >
+              Edit
+            </Button>
+            <Button variant="secondary" icon={Download}>
+              Export CSV
+            </Button>
+          </div>
         }
       />
 
@@ -400,6 +428,64 @@ function PortfolioDetailView({
           />
         )}
       </div>
+
+      {showEditPortfolio && (
+        <EditPortfolioForm
+          initialName={portfolio.name}
+          initialDescription={portfolio.description}
+          onClose={() => setShowEditPortfolio(false)}
+          onSubmit={async (data) => {
+            if (!organization?.id) {
+              console.error("Organization not loaded");
+              return;
+            }
+            await updatePortfolio(portfolio.id, organization.id, data);
+            await onPortfolioUpdate();
+          }}
+        />
+      )}
+
+      {showPropertyForm && (
+        <PropertyForm
+          mode={editingProperty ? "edit" : "create"}
+          initialData={editingProperty}
+          onClose={() => {
+            setShowPropertyForm(false);
+            setEditingProperty(null);
+          }}
+          onSubmit={async (data) => {
+            if (!organization?.id) {
+              console.error("Organization not loaded");
+              return;
+            }
+
+            if (editingProperty) {
+              await updateProperty(
+                portfolio.id,
+                editingProperty.id,
+                organization.id,
+                {
+                  name: data.name,
+                  address: data.address,
+                  property_type: data.type,
+                  units: data.units,
+                },
+              );
+            } else {
+              await createProperty(portfolio.id, {
+                organization_id: organization.id,
+                portfolio_id: portfolio.id,
+                name: data.name,
+                address: data.address,
+                property_type: data.type,
+                units: data.units,
+              });
+            }
+
+            await onPropertyCreate();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -491,6 +577,8 @@ export function PortfolioScreen() {
         )}
         onBack={() => setSelectedPortfolioId(null)}
         onPropertyClick={handlePropertyClick}
+        onPortfolioUpdate={loadPortfolios}
+        onPropertyCreate={loadPortfolios}
       />
     );
   }

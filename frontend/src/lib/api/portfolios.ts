@@ -128,3 +128,65 @@ export async function listProperties(
 
   return response.json();
 }
+
+export async function updatePortfolio(
+  portfolioId: string,
+  organizationId: string,
+  data: {
+    name: string;
+    description?: string;
+  },
+): Promise<Portfolio> {
+  const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+    },
+    body: JSON.stringify({
+      ...data,
+      organization_id: organizationId,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update portfolio: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function updateProperty(
+  portfolioId: string,
+  propertyId: string,
+  organizationId: string,
+  data: {
+    name: string;
+    address: string;
+    property_type: string;
+    units?: number;
+    timezone?: string;
+    description?: string;
+  },
+): Promise<Property> {
+  const response = await fetch(
+    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+      body: JSON.stringify({
+        ...data,
+        organization_id: organizationId,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update property: ${response.statusText}`);
+  }
+
+  return response.json();
+}
