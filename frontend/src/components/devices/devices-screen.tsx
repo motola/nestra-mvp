@@ -816,7 +816,7 @@ export function DevicesScreen() {
               <Button
                 variant="tagSec"
                 size="sm"
-                onClick={() => router.push("/webhooks")}
+                onClick={() => router.push("/integrations?tab=webhooks")}
               >
                 View sync log
               </Button>

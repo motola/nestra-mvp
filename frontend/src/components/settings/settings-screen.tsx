@@ -1,10 +1,9 @@
 "use client"; // Client: tab switching
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
-import { Card, SectionHead } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/lib/auth/provider";
 import { cn } from "@/lib/cn";
@@ -206,39 +205,6 @@ function OrgTab({
           </Field>
         </div>
       </SettingsCard>
-
-      <SettingsCard
-        title="Danger zone"
-        sub="Permanently delete this organization and all data."
-        footer={
-          <Button variant="destructive" size="sm">
-            Delete organization
-          </Button>
-        }
-      />
-    </>
-  );
-}
-
-// ─── Portfolios tab ───────────────────────────────────────────────────────────
-
-function PortfoliosTab() {
-  return (
-    <>
-      <SectionHead
-        title="Portfolios"
-        sub="LEVEL 2 · GROUPS PROPERTIES UNDER A REGIONAL TEAM"
-        right={
-          <Button variant="primary" size="sm" icon={Plus}>
-            New portfolio
-          </Button>
-        }
-      />
-      <div className="text-center py-12 text-text-3">
-        <p className="text-[13px]">
-          No portfolios yet. Create your first portfolio to get started.
-        </p>
-      </div>
     </>
   );
 }
@@ -318,7 +284,6 @@ function AgentTab() {
 
 const TABS = [
   { id: "organization", label: "Organization" },
-  { id: "portfolios", label: "Portfolios" },
   { id: "billing", label: "Billing" },
   { id: "security", label: "Security" },
   { id: "audit", label: "Audit log" },
@@ -357,7 +322,6 @@ export function SettingsScreen() {
             organizationId={organization?.id || ""}
           />
         )}
-        {tab === "portfolios" && <PortfoliosTab />}
         {tab === "billing" && <BillingTab />}
         {tab === "security" && <SecurityTab />}
         {tab === "audit" && <AuditTab />}

@@ -1,6 +1,7 @@
 "use client"; // Client: tab switching
 
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
@@ -137,6 +138,7 @@ const CATALOG_CATS = [
 
 function VendorCard({ v }: { v: Vendor }) {
   const { selectedProperty } = useProperty();
+  const { organization } = useAuth();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
@@ -260,6 +262,7 @@ function VendorCard({ v }: { v: Vendor }) {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
+              organization_id: organization?.id,
               property_id: selectedProperty.id,
               name: device.name,
               mac_address: device.id,
@@ -309,6 +312,7 @@ function VendorCard({ v }: { v: Vendor }) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          organization_id: organization?.id,
           property_id: selectedProperty.id,
           networks,
         }),
@@ -596,7 +600,8 @@ function ErrorsTab() {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function IntegrationsScreen() {
-  const [tab, setTab] = useState("connected");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get("tab") || "connected");
   const { selectedProperty, selectProperty } = useProperty();
   const { organization } = useAuth();
   const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
