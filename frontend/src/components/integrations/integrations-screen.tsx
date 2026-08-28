@@ -259,8 +259,10 @@ function VendorCard({ v }: { v: Vendor }) {
         devices.map((device) =>
           fetch(`${apiUrl}/devices/bluetooth/create`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
             body: JSON.stringify({
               organization_id: organization?.id,
               property_id: selectedProperty.id,
