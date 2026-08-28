@@ -1,7 +1,7 @@
 """add portfolio_id to devices and make integration_id required
 
 Revision ID: c520e2a2989a
-Revises: 7b7a45b8d4cc
+Revises: f5g6h7i8j9k0
 Create Date: 2026-08-28 20:46:32.421012
 
 """

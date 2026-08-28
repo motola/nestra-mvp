@@ -1,7 +1,7 @@
 """Add properties table.
 
 Revision ID: e4f5a6b7c8d9
-Revises: d3e4f5a6b7c8
+Revises: None
 Create Date: 2026-08-28
 
 """
