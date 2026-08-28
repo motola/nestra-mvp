@@ -744,8 +744,8 @@ export function IntegrationsScreen() {
               count: propertyIntegrations.length,
             },
             { id: "catalog", label: "Catalog", count: VENDORS.length },
-            { id: "webhooks", label: "Webhooks", count: 18 },
-            { id: "errors", label: "Errors", count: 1 },
+            { id: "webhooks", label: "Webhooks", count: WEBHOOK_ROWS.length },
+            { id: "errors", label: "Errors", count: ERROR_ROWS.length },
           ]}
         />
       </div>
