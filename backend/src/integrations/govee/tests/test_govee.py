@@ -1,5 +1,6 @@
 """Unit tests for Govee integration."""
 
+from uuid import UUID
 from __future__ import annotations
 
 from uuid import UUID, uuid4
