@@ -1,6 +1,6 @@
 "use client"; // Client: tab switching
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus, BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
@@ -15,10 +15,13 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { VendorLogo } from "@/components/integrations/vendor-logos";
 import { useProperty } from "@/lib/property/provider";
-import { PROPERTIES } from "@/lib/fixtures";
+import type { PropertyType } from "@/lib/fixtures";
 import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
 import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
 import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
+import { listPortfolios, listProperties } from "@/lib/api/portfolios";
+import type { Property as ApiProperty } from "@/lib/api/portfolios";
+import { useAuth } from "@/lib/auth/provider";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -595,11 +598,56 @@ function ErrorsTab() {
 export function IntegrationsScreen() {
   const [tab, setTab] = useState("connected");
   const { selectedProperty, selectProperty } = useProperty();
+  const { organization } = useAuth();
+  const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
+  const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
+  const [loading, setLoading] = useState(false);
+
+  const loadProperties = useCallback(async () => {
+    const organizationId = organization?.id;
+    if (!organizationId) return;
+
+    setLoading(true);
+    try {
+      const portfolios = await listPortfolios(organizationId);
+      const allProperties = await Promise.all(
+        portfolios.map((pf) => listProperties(pf.id, organizationId)),
+      );
+      setApiProperties(allProperties.flat());
+
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${apiUrl}/integrations?organization_id=${organizationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
+          },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setIntegrations(data.length > 0 ? data : INTEGRATIONS);
+        }
+      } catch (error) {
+        console.warn("Failed to load integrations, using fixtures:", error);
+      }
+    } catch (error) {
+      console.error("Failed to load properties:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [organization?.id]);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
 
   // Use all integrations if no property selected (for demo), or filter by property
   const propertyIntegrations = selectedProperty
-    ? INTEGRATIONS.filter((i) => i.ownerName === selectedProperty.name)
-    : INTEGRATIONS;
+    ? integrations.filter((i) => i.ownerName === selectedProperty.name)
+    : integrations;
 
   const active = propertyIntegrations.filter(
     (i) => i.status === "ACTIVE",
@@ -632,13 +680,46 @@ export function IntegrationsScreen() {
           <select
             value={selectedProperty?.id || ""}
             onChange={(e) => {
-              const prop = PROPERTIES.find((p) => p.id === e.target.value);
-              if (prop) selectProperty(prop);
+              const apiProp = apiProperties.find(
+                (p) => p.id === e.target.value,
+              );
+              if (apiProp) {
+                const PROPERTY_TYPES: PropertyType[] = [
+                  "MIXED_USE",
+                  "SHORT_TERM_RENTAL",
+                  "LONG_TERM_RENTAL",
+                  "OWNER_OCCUPIED",
+                  "COMMERCIAL",
+                ];
+                const propertyType = PROPERTY_TYPES.includes(
+                  apiProp.property_type as PropertyType,
+                )
+                  ? (apiProp.property_type as PropertyType)
+                  : "MIXED_USE";
+
+                selectProperty({
+                  id: apiProp.id,
+                  portfolio: apiProp.portfolio_id,
+                  name: apiProp.name,
+                  address: apiProp.address,
+                  type: propertyType,
+                  tz: apiProp.timezone,
+                  units: apiProp.units,
+                  occupied: 0,
+                  alerts: 0,
+                  status: "ok",
+                  devices: 0,
+                  integrations: 0,
+                });
+              }
             }}
             className="px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+            disabled={loading}
           >
-            <option value="">-- Select a property --</option>
-            {PROPERTIES.map((p) => (
+            <option value="">
+              {loading ? "Loading..." : "-- Select a property --"}
+            </option>
+            {apiProperties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>

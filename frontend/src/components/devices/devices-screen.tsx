@@ -1,6 +1,7 @@
 "use client"; // Client: device filter, drawer open/close state
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   Plus,
@@ -686,6 +687,7 @@ function DeviceList({
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function DevicesScreen() {
+  const router = useRouter();
   const [selected, setSelected] = useState<Device | null>(null);
   const { devices, error } = useDevices();
 
@@ -804,10 +806,18 @@ export function DevicesScreen() {
               cloud.
             </p>
             <div className="flex gap-2 mt-3">
-              <Button variant="tagSec" size="sm">
+              <Button
+                variant="tagSec"
+                size="sm"
+                onClick={() => router.push("/integrations")}
+              >
                 Manage integrations
               </Button>
-              <Button variant="tagSec" size="sm">
+              <Button
+                variant="tagSec"
+                size="sm"
+                onClick={() => router.push("/webhooks")}
+              >
                 View sync log
               </Button>
             </div>
