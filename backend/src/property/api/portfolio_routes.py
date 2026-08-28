@@ -52,11 +52,13 @@ class PropertyResponse(BaseModel):
 
     id: UUID
     portfolio_id: UUID
+    organization_id: UUID
     name: str
     address: str
     property_type: str
     units: int
     timezone: str
+    description: str | None
     created_at: datetime
 
 
@@ -165,11 +167,13 @@ async def create_property(portfolio_id: UUID, request: PropertyCreateRequest) ->
         return PropertyResponse(
             id=property_obj.id,
             portfolio_id=property_obj.portfolio_id,
+            organization_id=property_obj.organization_id,
             name=property_obj.name,
             address=property_obj.address,
             property_type=property_obj.property_type,
             units=property_obj.units,
             timezone=property_obj.timezone,
+            description=property_obj.description,
             created_at=property_obj.created_at,
         )
 
@@ -185,13 +189,15 @@ async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[Pro
         return [
             PropertyResponse(
                 id=prop.id,
-                portfolio_id=prop.portfolio_id,
+            organization_id=prop.organization_id,
+            portfolio_id=prop.portfolio_id,
                 name=prop.name,
                 address=prop.address,
                 property_type=prop.property_type,
                 units=prop.units,
                 timezone=prop.timezone,
-                created_at=prop.created_at,
+            description=prop.description,
+            created_at=prop.created_at,
             )
             for prop in properties
         ]
@@ -277,11 +283,13 @@ async def update_property(
 
         return PropertyResponse(
             id=prop.id,
+            organization_id=prop.organization_id,
             portfolio_id=prop.portfolio_id,
             name=prop.name,
             address=prop.address,
             property_type=prop.property_type,
             units=prop.units,
             timezone=prop.timezone,
+            description=prop.description,
             created_at=prop.created_at,
         )

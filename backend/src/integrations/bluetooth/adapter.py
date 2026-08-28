@@ -21,6 +21,7 @@ class BluetoothAdapter:
         self,
         *,
         organization_id: UUID,
+        portfolio_id: UUID,
         property_id: UUID,
         integration_id: UUID,
         _credentials: str | None = None,
@@ -30,6 +31,7 @@ class BluetoothAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="bluetooth",
@@ -45,6 +47,7 @@ class BluetoothAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="bluetooth",

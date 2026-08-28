@@ -36,6 +36,7 @@ class DeviceRepository:
             model = DeviceModel(
                 id=incoming.id,
                 organization_id=incoming.organization_id,
+                portfolio_id=incoming.portfolio_id,
                 property_id=incoming.property_id,
                 integration_id=incoming.integration_id,
                 vendor=incoming.vendor,
@@ -67,6 +68,7 @@ class DeviceRepository:
         return Device(
             id=existing.id,
             organization_id=existing.organization_id,
+            portfolio_id=existing.portfolio_id,
             property_id=existing.property_id,
             integration_id=existing.integration_id,
             vendor=existing.vendor,
@@ -118,6 +120,7 @@ class DeviceRepository:
         return Device(
             id=model.id,
             organization_id=model.organization_id,
+            portfolio_id=model.portfolio_id,
             property_id=model.property_id,
             integration_id=model.integration_id,
             vendor=model.vendor,

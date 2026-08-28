@@ -37,6 +37,7 @@ class TadoAdapter:
         return Device(
             id=device.id,
             organization_id=device.organization_id,
+            portfolio_id=device.portfolio_id,
             property_id=device.property_id,
             integration_id=device.integration_id,
             vendor=device.vendor,

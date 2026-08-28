@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -19,7 +19,9 @@ class BluetoothDeviceRequest(BaseModel):
     """Request to create Bluetooth device."""
 
     organization_id: UUID
+    portfolio_id: UUID
     property_id: UUID
+    integration_id: UUID
     name: str
     mac_address: str
 
@@ -28,7 +30,9 @@ class ShellyDeviceRequest(BaseModel):
     """Request to create Shelly device."""
 
     organization_id: UUID
+    portfolio_id: UUID
     property_id: UUID
+    integration_id: UUID
     name: str
     device_id: str
     ip_address: str
@@ -61,8 +65,9 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
         device = Device(
             id=None,
             organization_id=request.organization_id,
+            portfolio_id=request.portfolio_id,
             property_id=request.property_id,
-            integration_id=uuid4(),
+            integration_id=request.integration_id,
             vendor="bluetooth",
             vendor_specific_id=request.mac_address,
             vendor_name=request.name,
@@ -99,8 +104,9 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
         device = Device(
             id=None,
             organization_id=request.organization_id,
+            portfolio_id=request.portfolio_id,
             property_id=request.property_id,
-            integration_id=uuid4(),
+            integration_id=request.integration_id,
             vendor="shelly",
             vendor_specific_id=request.device_id,
             vendor_name=request.name,
