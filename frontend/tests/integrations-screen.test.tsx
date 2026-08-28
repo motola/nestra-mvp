@@ -9,6 +9,13 @@ vi.mock("@/lib/api/portfolios", () => ({
   listProperties: vi.fn(() => Promise.resolve([])),
 }));
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => null,
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 describe("IntegrationsScreen", () => {
   it("renders empty state by default", () => {
     render(
