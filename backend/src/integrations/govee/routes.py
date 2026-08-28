@@ -114,7 +114,7 @@ async def sync_govee_devices(request: GoveeSyncRequest) -> list[DeviceResponse]:
         # Fetch devices from Govee cloud API
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=request.organization_id,
+            portfolio_id=request.organization_id,
             property_id=request.property_id,
             integration_id=uuid4(),
             api_key=request.api_key,

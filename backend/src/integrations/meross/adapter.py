@@ -52,7 +52,7 @@ class MerossAdapter:
                         Device(
                             id=None,
                             organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                            portfolio_id=portfolio_id,
                             property_id=property_id,
                             integration_id=integration_id,
                             vendor="meross",
@@ -94,7 +94,7 @@ class MerossAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="meross",
@@ -110,7 +110,7 @@ class MerossAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="meross",
