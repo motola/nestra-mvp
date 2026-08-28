@@ -601,7 +601,7 @@ function ErrorsTab() {
 
 export function IntegrationsScreen() {
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState(searchParams.get("tab") || "connected");
+  const [tab, setTab] = useState(searchParams?.get("tab") || "connected");
   const { selectedProperty, selectProperty } = useProperty();
   const { organization } = useAuth();
   const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
