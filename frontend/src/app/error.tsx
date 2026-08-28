@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 export default function Error({
   error,
@@ -10,7 +11,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Root error:", error);
+    logger.error("Root error:", error);
   }, [error]);
 
   return (

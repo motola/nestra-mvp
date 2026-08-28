@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
+import { logger } from "@/lib/logger";
 
 // ─── Shapes matching backend schemas ─────────────────────────────────────────
 
@@ -242,7 +243,7 @@ export function useGoogleOAuthCallback() {
       router.push("/intelligence");
     },
     onError: (error) => {
-      console.error("Google OAuth callback error:", error);
+      logger.error("Google OAuth callback error:", error);
     },
   });
 }
@@ -296,7 +297,7 @@ export function useMicrosoftOAuthCallback() {
       router.push("/intelligence");
     },
     onError: (error) => {
-      console.error("Microsoft OAuth callback error:", error);
+      logger.error("Microsoft OAuth callback error:", error);
     },
   });
 }

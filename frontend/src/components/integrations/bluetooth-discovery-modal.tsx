@@ -5,6 +5,7 @@ import { RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, SectionHead } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
+import { logger } from "@/lib/logger";
 
 interface BluetoothDevice {
   id: string;
@@ -121,7 +122,7 @@ export function BluetoothDiscoveryModal({
       const message =
         err instanceof Error ? err.message : "Failed to pair device";
       setError(message);
-      console.error("Bluetooth scan error:", err);
+      logger.error("Bluetooth scan error:", err);
     } finally {
       setIsScanning(false);
     }

@@ -5,6 +5,7 @@ import { RefreshCw, X, Lock, Signal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, SectionHead } from "@/components/ui/card";
 import { Tag } from "@/components/ui/tag";
+import { logger } from "@/lib/logger";
 
 interface WiFiNetwork {
   ssid: string;
@@ -55,7 +56,7 @@ export function WiFiDiscoveryModal({
       const message =
         err instanceof Error ? err.message : "Failed to scan networks";
       setError(message);
-      console.error("WiFi scan error:", err);
+      logger.error("WiFi scan error:", err);
     } finally {
       setIsScanning(false);
     }
