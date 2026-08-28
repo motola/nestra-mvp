@@ -33,7 +33,9 @@ class LifxAdapter:
         """Fetch LIFX devices from cloud API."""
         if not api_token:
             logger.warning("No LIFX API token provided, returning mock devices")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
         try:
             async with httpx.AsyncClient(
@@ -73,7 +75,9 @@ class LifxAdapter:
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch LIFX devices: {e}")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
     def _get_mock_devices(
         self, organization_id: UUID, portfolio_id: UUID, property_id: UUID, integration_id: UUID

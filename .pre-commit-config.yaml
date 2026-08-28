@@ -8,6 +8,7 @@ repos:
         files: ^backend/
       - id: ruff-format
         files: ^backend/
+        stages: [commit]  # Run at commit time to catch formatting early
 
   # ── Secrets detection ──────────────────────────────────────────────────────
   - repo: https://github.com/gitleaks/gitleaks

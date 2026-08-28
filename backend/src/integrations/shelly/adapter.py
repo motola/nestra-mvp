@@ -85,7 +85,9 @@ class ShellyAdapter:
         """Fetch Shelly devices from cloud API."""
         if not auth_token:
             logger.warning("No Shelly auth token provided, returning mock devices")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -128,7 +130,9 @@ class ShellyAdapter:
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch Shelly devices: {e}")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
     def _get_device_type(self, model: str) -> DeviceType:
         """Map Shelly model to device type."""
@@ -148,7 +152,7 @@ class ShellyAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-                            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="shelly",
@@ -164,7 +168,7 @@ class ShellyAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-                            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="shelly",

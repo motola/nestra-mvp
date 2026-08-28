@@ -33,7 +33,9 @@ class GoveeAdapter:
         """Fetch Govee devices from cloud API."""
         if not api_key:
             logger.warning("No Govee API key provided, returning mock devices")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -49,7 +51,7 @@ class GoveeAdapter:
                         Device(
                             id=None,
                             organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                            portfolio_id=portfolio_id,
                             property_id=property_id,
                             integration_id=integration_id,
                             vendor="govee",
@@ -68,7 +70,9 @@ class GoveeAdapter:
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch Govee devices: {e}")
-            return self._get_mock_devices(organization_id, portfolio_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
     def _get_device_type(self, govee_type: str) -> DeviceType:
         """Map Govee device type to DeviceType."""
@@ -88,7 +92,7 @@ class GoveeAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="govee",
@@ -104,7 +108,7 @@ class GoveeAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-            portfolio_id=portfolio_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="govee",

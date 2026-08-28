@@ -1,9 +1,8 @@
 """Unit tests for Shelly integration."""
 
-from uuid import UUID
 from __future__ import annotations
 
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -33,7 +32,7 @@ class TestShellyAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
             auth_token=None,
@@ -54,7 +53,7 @@ class TestShellyAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
         )
@@ -74,7 +73,7 @@ class TestShellyAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
         )
