@@ -600,6 +600,7 @@ export function IntegrationsScreen() {
   const { selectedProperty, selectProperty } = useProperty();
   const { organization } = useAuth();
   const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
+  const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
   const [loading, setLoading] = useState(false);
 
   const loadProperties = useCallback(async () => {
@@ -613,6 +614,25 @@ export function IntegrationsScreen() {
         portfolios.map((pf) => listProperties(pf.id, organizationId)),
       );
       setApiProperties(allProperties.flat());
+
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${apiUrl}/integrations?organization_id=${organizationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
+          },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setIntegrations(data.length > 0 ? data : INTEGRATIONS);
+        }
+      } catch (error) {
+        console.warn("Failed to load integrations, using fixtures:", error);
+      }
     } catch (error) {
       console.error("Failed to load properties:", error);
     } finally {
@@ -626,8 +646,8 @@ export function IntegrationsScreen() {
 
   // Use all integrations if no property selected (for demo), or filter by property
   const propertyIntegrations = selectedProperty
-    ? INTEGRATIONS.filter((i) => i.ownerName === selectedProperty.name)
-    : INTEGRATIONS;
+    ? integrations.filter((i) => i.ownerName === selectedProperty.name)
+    : integrations;
 
   const active = propertyIntegrations.filter(
     (i) => i.status === "ACTIVE",
