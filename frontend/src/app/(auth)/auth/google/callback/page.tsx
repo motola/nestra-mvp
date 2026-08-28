@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGoogleOAuthCallback } from "@/lib/api/hooks/use-auth";
+import { logger } from "@/lib/logger";
 
 function GoogleCallbackForm() {
   const searchParams = useSearchParams();
@@ -20,12 +21,12 @@ function GoogleCallbackForm() {
     );
 
     if (error) {
-      console.error("Google OAuth error from provider:", error);
+      logger.error("Google OAuth error from provider:", error);
       return;
     }
 
     if (code) {
-      console.log("Exchanging code for token...");
+      logger.info("Exchanging code for token...");
       googleCallback.mutate({ code });
     }
   }, [searchParams, googleCallback]);

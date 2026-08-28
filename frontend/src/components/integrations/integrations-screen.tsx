@@ -23,6 +23,7 @@ import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
 import { listPortfolios, listProperties } from "@/lib/api/portfolios";
 import type { Property as ApiProperty } from "@/lib/api/portfolios";
 import { useAuth } from "@/lib/auth/provider";
+import { logger } from "@/lib/logger";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ function VendorCard({ v }: { v: Vendor }) {
       return;
     }
 
-    console.warn(`No implementation for ${vendor}`);
+    logger.warn(`No implementation for ${vendor}`);
   };
 
   const handleOAuthClick = () => {
@@ -235,7 +236,7 @@ function VendorCard({ v }: { v: Vendor }) {
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Connection failed";
       setMessage(`Error: ${errMsg}`);
-      console.error("Device connection error:", err);
+      logger.error("Device connection error:", err);
     }
   };
 
@@ -259,8 +260,10 @@ function VendorCard({ v }: { v: Vendor }) {
         devices.map((device) =>
           fetch(`${apiUrl}/devices/bluetooth/create`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
             body: JSON.stringify({
               organization_id: organization?.id,
               property_id: selectedProperty.id,
@@ -274,7 +277,7 @@ function VendorCard({ v }: { v: Vendor }) {
             })
             .then((data) => {
               // Device created successfully - can now control it
-              console.log("Bluetooth device created:", data);
+              logger.info("Bluetooth device created:", data);
               return data;
             }),
         ),
@@ -287,7 +290,7 @@ function VendorCard({ v }: { v: Vendor }) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to create devices";
       setMessage(`Error: ${errMsg}`);
-      console.error("Bluetooth device creation error:", err);
+      logger.error("Bluetooth device creation error:", err);
     }
   };
 
@@ -329,7 +332,7 @@ function VendorCard({ v }: { v: Vendor }) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to create devices";
       setMessage(`Error: ${errMsg}`);
-      console.error("WiFi device creation error:", err);
+      logger.error("WiFi device creation error:", err);
     }
   };
 
@@ -636,10 +639,10 @@ export function IntegrationsScreen() {
           setIntegrations(data.length > 0 ? data : INTEGRATIONS);
         }
       } catch (error) {
-        console.warn("Failed to load integrations, using fixtures:", error);
+        logger.warn("Failed to load integrations, using fixtures:", error);
       }
     } catch (error) {
-      console.error("Failed to load properties:", error);
+      logger.error("Failed to load properties:", error);
     } finally {
       setLoading(false);
     }
