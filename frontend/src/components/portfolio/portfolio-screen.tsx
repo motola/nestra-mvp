@@ -413,7 +413,7 @@ export function PortfolioScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [portfolios, setPortfolios] = useState<ApiPortfolio[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { selectProperty } = useProperty();
   const { organization, isLoading: authLoading } = useAuth();
