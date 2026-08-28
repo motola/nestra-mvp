@@ -21,7 +21,6 @@ import { cn } from "@/lib/cn";
 import type { Device, DeviceCategory } from "@/lib/fixtures";
 import { useDevices } from "@/lib/use-devices";
 import { Button } from "@/components/ui/button";
-import { EmptyDataState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
 import { Card, SectionHead, MonoLabel } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
@@ -688,7 +687,7 @@ function DeviceList({
 
 export function DevicesScreen() {
   const [selected, setSelected] = useState<Device | null>(null);
-  const { devices, error } = useDevices("b4e3df93-f5e0-4e8f-beaa-33e2aead82ba");
+  const { devices, error } = useDevices();
 
   const total = devices.length;
   const online = devices.filter((d) => d.reachable).length;
@@ -706,11 +705,34 @@ export function DevicesScreen() {
               Pair device
             </Button>
           }
+          secondary={
+            <Button variant="secondary" icon={RefreshCw}>
+              Re-sync
+            </Button>
+          }
         />
-        <EmptyDataState
-          title="No devices connected"
-          description="Connect your first smart home integration to start monitoring devices."
-        />
+
+        <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
+          <div className="grid grid-cols-4 gap-3">
+            <StatCard label="Total devices" value={0} sub="Connected devices" />
+            <StatCard label="Online" value={0} sub="Reporting normally" />
+            <StatCard
+              label="Categories"
+              value={0}
+              sub="Thermostats, lights, locks, sensors…"
+            />
+            <StatCard
+              label="Unreachable"
+              value={0}
+              variant="amber"
+              sub="Check connections"
+            />
+          </div>
+
+          <div className="border border-border rounded-panel p-8 text-center">
+            <p className="text-[14px] text-text-2 m-0">No devices to display</p>
+          </div>
+        </div>
       </>
     );
   }
