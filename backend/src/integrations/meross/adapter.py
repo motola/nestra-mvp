@@ -27,6 +27,7 @@ class MerossAdapter:
         self,
         *,
         organization_id: UUID,
+        portfolio_id: UUID,
         property_id: UUID,
         integration_id: UUID,
         access_token: str | None = None,
@@ -49,7 +50,7 @@ class MerossAdapter:
                         Device(
                             id=None,
                             organization_id=organization_id,
-                            portfolio_id=portfolio_id,
+            portfolio_id=portfolio_id,
                             property_id=property_id,
                             integration_id=integration_id,
                             vendor="meross",
@@ -89,7 +90,7 @@ class MerossAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-                            portfolio_id=portfolio_id,
+            portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="meross",
@@ -105,7 +106,7 @@ class MerossAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
-                            portfolio_id=portfolio_id,
+            portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="meross",
