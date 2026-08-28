@@ -1,6 +1,5 @@
 """Unit tests for Govee integration."""
 
-from uuid import UUID
 from __future__ import annotations
 
 from uuid import UUID, uuid4
@@ -34,7 +33,7 @@ class TestGoveeAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
             api_key=None,
@@ -55,7 +54,7 @@ class TestGoveeAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
         )
@@ -75,7 +74,7 @@ class TestGoveeAdapter:
 
         devices = await adapter.fetch_devices(
             organization_id=UUID("00000000-0000-0000-0000-000000000001"),
-        portfolio_id=org_id,
+            portfolio_id=org_id,
             property_id=prop_id,
             integration_id=int_id,
         )
