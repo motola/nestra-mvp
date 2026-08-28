@@ -12,10 +12,13 @@ RUN pip install --no-cache-dir -e .
 COPY src ./src
 COPY alembic.ini ./
 COPY migrations ./migrations
+COPY entrypoint.sh ./
+
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["./entrypoint.sh"]
