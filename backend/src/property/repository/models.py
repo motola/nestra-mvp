@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db import Base
+from integrations.models import IntegrationModel  # noqa: F401
 from property.domain import DeviceType
 
 
@@ -46,8 +47,8 @@ class DeviceModel(Base):
     property_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=False
     )
-    integration_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False
+    integration_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=True
     )
     device_type: Mapped[DeviceType] = mapped_column(Enum(DeviceType), nullable=False)
     vendor: Mapped[str] = mapped_column(String(255), nullable=False)

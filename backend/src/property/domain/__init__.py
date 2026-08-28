@@ -27,7 +27,7 @@ class Device(BaseModel):
     id: UUID | None
     organization_id: UUID
     property_id: UUID
-    integration_id: UUID
+    integration_id: UUID | None = None
     device_type: DeviceType
     vendor: str
     vendor_specific_id: str
