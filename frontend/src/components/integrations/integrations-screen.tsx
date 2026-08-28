@@ -138,6 +138,7 @@ const CATALOG_CATS = [
 
 function VendorCard({ v }: { v: Vendor }) {
   const { selectedProperty } = useProperty();
+  const { organization } = useAuth();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
