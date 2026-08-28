@@ -10,6 +10,13 @@ vi.mock("@/lib/use-devices", () => ({
   }),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    back: vi.fn(),
+  }),
+}));
+
 describe("DevicesScreen", () => {
   it("renders full ui structure with zero data when no devices", () => {
     render(<DevicesScreen />);
