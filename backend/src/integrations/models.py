@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,7 +19,7 @@ class IntegrationModel(Base):
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
+        PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
     vendor: Mapped[str] = mapped_column(
         String(50), nullable=False
@@ -28,6 +28,16 @@ class IntegrationModel(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    provider_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    connection_identifier: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    credential_provider: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    credential_ref: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    oauth_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    config: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships will be defined in respective integration modules
     # to avoid circular imports
@@ -35,4 +45,5 @@ class IntegrationModel(Base):
 
     __table_args__ = (
         UniqueConstraint("organization_id", "vendor", name="uq_integration_org_vendor"),
+        Index("idx_integration_provider", "provider_id"),
     )

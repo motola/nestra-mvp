@@ -48,6 +48,13 @@ class DeviceRepository:
                 last_sync=incoming.last_sync,
                 created_at=incoming.created_at,
                 updated_at=incoming.updated_at,
+                category=incoming.category,
+                manufacturer=incoming.manufacturer,
+                model=incoming.model,
+                serial_number=incoming.serial_number,
+                ownership_type=incoming.ownership_type,
+                owner_property_id=incoming.owner_property_id,
+                owner_tenant_id=incoming.owner_tenant_id,
             )
             self._session.add(model)
             try:
@@ -62,6 +69,13 @@ class DeviceRepository:
         existing.online = incoming.online
         existing.raw_state = incoming.raw_state
         existing.last_sync = incoming.last_sync
+        existing.category = incoming.category
+        existing.manufacturer = incoming.manufacturer
+        existing.model = incoming.model
+        existing.serial_number = incoming.serial_number
+        existing.ownership_type = incoming.ownership_type
+        existing.owner_property_id = incoming.owner_property_id
+        existing.owner_tenant_id = incoming.owner_tenant_id
         existing.updated_at = datetime.now(UTC)
         await self._session.flush()
 
@@ -80,6 +94,13 @@ class DeviceRepository:
             last_sync=existing.last_sync,
             created_at=existing.created_at,
             updated_at=existing.updated_at,
+            category=existing.category,
+            manufacturer=existing.manufacturer,
+            model=existing.model,
+            serial_number=existing.serial_number,
+            ownership_type=existing.ownership_type,
+            owner_property_id=existing.owner_property_id,
+            owner_tenant_id=existing.owner_tenant_id,
         )
 
     async def get_by_id(self, device_id: UUID) -> Device | None:
@@ -132,4 +153,11 @@ class DeviceRepository:
             last_sync=model.last_sync,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            category=model.category,
+            manufacturer=model.manufacturer,
+            model=model.model,
+            serial_number=model.serial_number,
+            ownership_type=model.ownership_type,
+            owner_property_id=model.owner_property_id,
+            owner_tenant_id=model.owner_tenant_id,
         )

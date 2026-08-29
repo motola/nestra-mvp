@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -43,15 +43,15 @@ class DeviceModel(Base):
     __tablename__ = "devices"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
     portfolio_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("portfolios.id"), nullable=False
+        PGUUID(as_uuid=True), ForeignKey("portfolios.id"), nullable=False, index=True
     )
     property_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=False
+        PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=False, index=True
     )
     integration_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False
+        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False, index=True
     )
     device_type: Mapped[DeviceType] = mapped_column(Enum(DeviceType), nullable=False)
     vendor: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -62,3 +62,136 @@ class DeviceModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     raw_state: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    manufacturer: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    model: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    serial_number: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ownership_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    owner_property_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=True, index=True
+    )
+    owner_tenant_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True
+    )
+
+    __table_args__ = (Index("idx_device_vendor_key", "vendor", "vendor_specific_id"),)
+
+
+class CapabilityModel(Base):
+    """A capability that a device can have (global catalog)."""
+
+    __tablename__ = "capabilities"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    code: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DeviceCapabilityModel(Base):
+    """A capability that a specific device supports."""
+
+    __tablename__ = "device_capabilities"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    capability_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("capabilities.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("idx_device_capability_key", "device_id", "capability_id"),)
+
+
+class DevicePlacementModel(Base):
+    """Physical placement of a device (location within property/room)."""
+
+    __tablename__ = "device_placements"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    property_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("properties.id"), nullable=False, index=True
+    )
+    room_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("rooms.id"), nullable=True, index=True
+    )
+    placement_type: Mapped[str] = mapped_column(String(50), nullable=False, default="room")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DeviceIntegrationModel(Base):
+    """Connection between a device and an integration."""
+
+    __tablename__ = "device_integrations"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    integration_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False, index=True
+    )
+    connection_identifier: Mapped[str] = mapped_column(String(500), nullable=False)
+    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (Index("idx_device_integration_key", "device_id", "integration_id"),)
+
+
+class DeviceCurrentStateModel(Base):
+    """Current state of a device (one-to-one with device)."""
+
+    __tablename__ = "device_current_states"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    state: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    last_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DeviceStateEventModel(Base):
+    """Append-only log of device state changes."""
+
+    __tablename__ = "device_state_events"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    state_change: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
