@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -65,7 +65,7 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
         if not property_obj:
             raise HTTPException(status_code=404, detail="Property not found")
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         device = Device(
             id=None,
             organization_id=request.organization_id,
@@ -102,18 +102,13 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
 async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResponse]:
     """Create a Shelly device entry."""
     async with SessionLocal() as db:
-        property_repo = PropertyRepository(db)
-        device_repo = DeviceRepository(db)
+        repository = DeviceRepository(db)
 
-        property_obj = await property_repo.get_by_id(request.property_id)
-        if not property_obj:
-            raise HTTPException(status_code=404, detail="Property not found")
-
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         device = Device(
             id=None,
             organization_id=request.organization_id,
-            portfolio_id=property_obj.portfolio_id,
+            portfolio_id=request.portfolio_id,
             property_id=request.property_id,
             integration_id=request.integration_id,
             vendor="shelly",
@@ -131,7 +126,7 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
             updated_at=now,
         )
 
-        stored_device = await device_repo.upsert(device)
+        stored_device = await repository.upsert(device)
 
         return [
             DeviceResponse(
