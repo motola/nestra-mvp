@@ -15,6 +15,12 @@ import sqlalchemy as sa
 
 from alembic import op
 
+# Alembic metadata
+revision = "g7h8i9j0k1l2"
+down_revision = "d6e7f8g9h0i1"
+branch_labels = None
+depends_on = None
+
 
 def upgrade() -> None:
     """Set the oldest portfolio for each org as default if none exists."""
