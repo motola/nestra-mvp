@@ -26,6 +26,23 @@ def upgrade() -> None:
     """Set the oldest portfolio for each org as default if none exists."""
     connection = op.get_bind()
 
+    # Check if any organizations lack a default portfolio
+    check_stmt = sa.text("""
+        SELECT COUNT(DISTINCT organization_id)
+        FROM portfolios
+        WHERE organization_id NOT IN (
+            SELECT DISTINCT organization_id
+            FROM portfolios
+            WHERE is_default = TRUE
+        )
+    """)
+    result = connection.execute(check_stmt)
+    orgs_without_default = result.scalar() or 0
+
+    # Skip migration if all organizations already have a default portfolio
+    if orgs_without_default == 0:
+        return
+
     # For each organization, if no portfolio has is_default=True,
     # set the oldest one as default
     update_stmt = sa.text("""
