@@ -511,11 +511,6 @@ export function PortfolioScreen() {
       );
       setPortfolios(data);
       setProperties(perPortfolio.flat().map(toDisplayProperty));
-
-      const defaultPortfolio = data.find((p) => p.is_default);
-      if (defaultPortfolio) {
-        setSelectedPortfolioId(defaultPortfolio.id);
-      }
     } catch (error) {
       logger.error("Failed to load portfolios:", error);
     } finally {

@@ -21,14 +21,11 @@ class IntegrationModel(Base):
     organization_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False, index=True
     )
-    vendor: Mapped[str] = mapped_column(
-        String(50), nullable=False
-    )  # "bluetooth", "govee", "lifx", etc.
+    provider_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     account_identifier: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    provider_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     connection_identifier: Mapped[str | None] = mapped_column(String(500), nullable=True)
     display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     credential_provider: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -44,6 +41,13 @@ class IntegrationModel(Base):
     # devices: Mapped[list] = relationship(back_populates="integration")
 
     __table_args__ = (
-        UniqueConstraint("organization_id", "vendor", name="uq_integration_org_vendor"),
+        UniqueConstraint(
+            "organization_id",
+            "provider_id",
+            "connection_identifier",
+            name="uq_integration_org_provider_connection",
+            postgresql_where="deleted_at IS NULL",
+        ),
         Index("idx_integration_provider", "provider_id"),
+        Index("idx_integration_org", "organization_id"),
     )
