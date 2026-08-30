@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -41,13 +41,10 @@ class IntegrationModel(Base):
     # devices: Mapped[list] = relationship(back_populates="integration")
 
     __table_args__ = (
-        UniqueConstraint(
-            "organization_id",
-            "provider_id",
-            "connection_identifier",
-            name="uq_integration_org_provider_connection",
-            postgresql_where="deleted_at IS NULL",
-        ),
         Index("idx_integration_provider", "provider_id"),
         Index("idx_integration_org", "organization_id"),
     )
+    # Unique constraint handled in migration (d6e7f8g9h0i1)
+    # CREATE UNIQUE INDEX uq_integrations_connection ON integrations
+    # (organization_id, provider_id, connection_identifier)
+    # WHERE provider_id IS NOT NULL AND deleted_at IS NULL

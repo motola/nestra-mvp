@@ -100,7 +100,7 @@ describe("PortfolioScreen", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("2 properties · 20 units · 0 devices"),
+        screen.getByText("1 portfolio · 2 properties · 20 units · 0 devices"),
       ).toBeDefined();
     });
   });
