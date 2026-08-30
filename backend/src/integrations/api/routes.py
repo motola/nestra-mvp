@@ -10,9 +10,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from db import SessionLocal
+from identity.repository.models import OrganizationModel
 from integrations.models import IntegrationModel
 from integrations.provider import get_provider
-from property.repository.models import OrganizationModel
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
