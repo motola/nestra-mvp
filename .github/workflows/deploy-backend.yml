@@ -19,7 +19,7 @@ jobs:
   migrate:
     name: Run Database Migrations
     runs-on: ubuntu-latest
-    environment: develop
+    environment: dev
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +37,7 @@ jobs:
     needs: [migrate]
     # Require CI to be green before deploying. In GitHub, wire this up via
     # a branch protection rule requiring the CI workflow to pass on main.
-    environment: develop
+    environment: dev
     steps:
       - uses: actions/checkout@v4
 
