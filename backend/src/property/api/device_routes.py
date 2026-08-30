@@ -9,7 +9,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from db import SessionLocal
+from property.api.schemas import DeviceDetail
 from property.domain import Device, DeviceIntegration, DevicePlacement, DeviceType
+from property.persistence.capability_repository import DeviceCapabilityRepository
 from property.persistence.device_integration_repository import DeviceIntegrationRepository
 from property.persistence.device_placement_repository import DevicePlacementRepository
 from property.persistence.device_repository import DeviceRepository
@@ -294,3 +296,72 @@ async def execute_bluetooth_command(
         return {"action": "notify", "value": value, "status": "sent"}
     else:
         raise ValueError(f"Unsupported command for Bluetooth: {command}")
+
+
+@router.get("/{device_id}", response_model=DeviceDetail)
+async def get_device_detail(
+    device_id: UUID,
+    organization_id: UUID,
+) -> DeviceDetail:
+    """Get detailed device information including placement, integrations, and capabilities."""
+    async with SessionLocal() as db:
+        device_repository = DeviceRepository(db)
+        placement_repository = DevicePlacementRepository(db)
+        device_capability_repository = DeviceCapabilityRepository(db)
+
+        # Get device
+        device = await device_repository.get_by_id(device_id)
+        if not device:
+            raise HTTPException(status_code=404, detail="Device not found")
+
+        # Verify organization authorization
+        if device.organization_id != organization_id:
+            raise HTTPException(status_code=403, detail="Not authorized to access this device")
+
+        # Get placement info
+        placement = await placement_repository.get_by_device_id(device_id)
+        placement_data: dict[str, object] | None = None
+        if placement:
+            placement_data = {
+                "placement_id": str(placement.id),
+                "device_id": str(placement.device_id),
+                "property_id": str(placement.property_id),
+                "room_id": str(placement.room_id) if placement.room_id else None,
+                "placement_type": placement.placement_type,
+                "created_at": placement.created_at.isoformat(),
+                "updated_at": placement.updated_at.isoformat(),
+            }
+
+        # Get device capabilities
+        device_capabilities = await device_capability_repository.list_by_device(device_id)
+        capabilities_list = []
+        for dc in device_capabilities:
+            cap_dict = {
+                "id": str(dc.id),
+                "device_id": str(dc.device_id),
+                "capability_id": str(dc.capability_id),
+                "created_at": dc.created_at.isoformat(),
+            }
+            capabilities_list.append(cap_dict)
+
+        return DeviceDetail(
+            id=device.id,
+            organization_id=device.organization_id,
+            portfolio_id=device.portfolio_id,
+            property_id=device.property_id,
+            integration_id=device.integration_id,
+            device_type=device.device_type.value,
+            vendor=device.vendor,
+            vendor_specific_id=device.vendor_specific_id,
+            vendor_name=device.vendor_name,
+            online=device.online,
+            last_sync=device.last_sync,
+            category=device.category,
+            manufacturer=device.manufacturer,
+            model=device.model,
+            serial_number=device.serial_number,
+            placement=placement_data,
+            capabilities=capabilities_list,  # type: ignore
+            created_at=device.created_at,
+            updated_at=device.updated_at,
+        )

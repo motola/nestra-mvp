@@ -12,6 +12,8 @@ from integrations.bluetooth import router as bluetooth_router
 from integrations.lifx import router as lifx_router
 from integrations.matter import router as matter_router
 from integrations.shelly import router as shelly_router
+from occupancy.api.routes import router as occupancy_router
+from property.api.capability_routes import router as capability_router
 from property.api.device_routes import router as device_router
 
 router = APIRouter()
@@ -92,6 +94,8 @@ async def get_property_devices(property_id: UUID) -> list[DeviceResponse]:
 
 # Include all integration routers
 router.include_router(device_router)
+router.include_router(capability_router)
+router.include_router(occupancy_router)
 router.include_router(bluetooth_router)
 router.include_router(august_router)
 router.include_router(shelly_router)
