@@ -9,6 +9,7 @@ PYTHONUNBUFFERED = "1"
 
 [deploy]
 release_command = "cd /app && alembic upgrade head"
+release_command_timeout = 600
 
 [[services]]
 internal_port = 8000
