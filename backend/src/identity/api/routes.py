@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -48,6 +49,8 @@ from identity.repository.models import (
 )
 from identity.services.email_service import get_email_service
 from identity.services.signup import _hash_password, _verify_password
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["identity"])
 
@@ -691,6 +694,16 @@ async def google_oauth_callback_endpoint(
                 detail="Failed to exchange authorization code",
             )
 
+        if token_response.status_code != 200:
+            error_detail = token_response.text
+            logger.error(
+                f"Google token exchange failed: {token_response.status_code} - {error_detail}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Failed to exchange authorization code: {error_detail}",
+            )
+
         token_data = token_response.json()
 
         # Verify ID token and get user info
@@ -700,9 +713,13 @@ async def google_oauth_callback_endpoint(
         )
 
         if user_response.status_code != 200:
+            error_detail = user_response.text
+            logger.error(
+                f"Google userinfo retrieval failed: {user_response.status_code} - {error_detail}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to get user info from Google",
+                detail=f"Failed to get user info from Google: {error_detail}",
             )
 
         user_info = user_response.json()
