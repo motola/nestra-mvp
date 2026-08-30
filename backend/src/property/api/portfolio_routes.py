@@ -31,6 +31,7 @@ class PortfolioResponse(BaseModel):
     name: str
     description: str
     organization_id: UUID
+    is_default: bool
     created_at: datetime
 
 
@@ -76,6 +77,7 @@ async def list_portfolios(organization_id: UUID) -> list[PortfolioResponse]:
                 name=portfolio.name,
                 description=portfolio.description,
                 organization_id=portfolio.organization_id,
+                is_default=portfolio.is_default,
                 created_at=portfolio.created_at,
             )
             for portfolio in portfolios
@@ -105,6 +107,7 @@ async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse
             name=portfolio.name,
             description=portfolio.description,
             organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
             created_at=portfolio.created_at,
         )
 
@@ -128,6 +131,7 @@ async def get_portfolio(portfolio_id: UUID) -> PortfolioResponse:
                 name=portfolio.name,
                 description=portfolio.description,
                 organization_id=portfolio.organization_id,
+                is_default=portfolio.is_default,
                 created_at=portfolio.created_at,
             )
 
@@ -236,6 +240,7 @@ async def update_portfolio(
             name=portfolio.name,
             description=portfolio.description,
             organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
             created_at=portfolio.created_at,
         )
 

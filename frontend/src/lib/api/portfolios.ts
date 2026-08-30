@@ -7,17 +7,20 @@ export interface Portfolio {
   name: string;
   description: string;
   organization_id: string;
+  is_default: boolean;
   created_at: string;
 }
 
 export interface Property {
   id: string;
   portfolio_id: string;
+  organization_id: string;
   name: string;
   address: string;
   property_type: string;
   units: number;
   timezone: string;
+  description?: string;
   created_at: string;
 }
 
