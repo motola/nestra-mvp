@@ -86,7 +86,7 @@ async def create_device_access_grant(
             device_id=created_grant.device_id,
             grantee_user_id=created_grant.grantee_user_id,
             grantee_email=created_grant.grantee_email,
-            access_type=created_grant.access_type.value,
+            access_type=created_grant.access_type,
             capabilities=created_grant.capabilities,
             expires_at=created_grant.expires_at,
             created_at=created_grant.created_at,
@@ -111,7 +111,7 @@ async def list_device_access_grants(
                     device_id=g.device_id,
                     grantee_user_id=g.grantee_user_id,
                     grantee_email=g.grantee_email,
-                    access_type=g.access_type.value,
+                    access_type=g.access_type,
                     capabilities=g.capabilities,
                     expires_at=g.expires_at,
                     created_at=g.created_at,
@@ -149,14 +149,15 @@ async def update_access_grant(
         grant.updated_at = datetime.now(UTC)
 
         # Manually update the model since we don't have a direct update method
+        from sqlalchemy import select
+
         from property.repository.models import DeviceAccessGrantModel
 
-        result = await db.execute(
-            db.query(DeviceAccessGrantModel).filter(DeviceAccessGrantModel.id == grant_id)
-        )
+        stmt = select(DeviceAccessGrantModel).where(DeviceAccessGrantModel.id == grant_id)
+        result = await db.execute(stmt)
         model = result.scalar_one_or_none()
         if model:
-            model.access_type = grant.access_type
+            model.access_type = AccessType(grant.access_type)
             model.capabilities = grant.capabilities
             model.expires_at = grant.expires_at
             model.updated_at = grant.updated_at
@@ -169,7 +170,7 @@ async def update_access_grant(
             device_id=grant.device_id,
             grantee_user_id=grant.grantee_user_id,
             grantee_email=grant.grantee_email,
-            access_type=grant.access_type.value,
+            access_type=grant.access_type,
             capabilities=grant.capabilities,
             expires_at=grant.expires_at,
             created_at=grant.created_at,
@@ -376,13 +377,13 @@ async def list_audit_events(
                     id=e.id or org_id,
                     organization_id=e.organization_id,
                     actor_user_id=e.actor_user_id,
-                    actor_type=e.actor_type.value,
-                    action=e.action.value,
-                    resource_type=e.resource_type.value,
+                    actor_type=e.actor_type,
+                    action=e.action,
+                    resource_type=e.resource_type,
                     resource_id=e.resource_id,
                     resource_name=e.resource_name,
                     changes=e.changes,
-                    status=e.status.value,
+                    status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
                     created_at=e.created_at,
@@ -409,13 +410,13 @@ async def get_audit_event(event_id: UUID) -> AuditEventRead:
             id=event.id or event_id,
             organization_id=event.organization_id,
             actor_user_id=event.actor_user_id,
-            actor_type=event.actor_type.value,
-            action=event.action.value,
-            resource_type=event.resource_type.value,
+            actor_type=event.actor_type,
+            action=event.action,
+            resource_type=event.resource_type,
             resource_id=event.resource_id,
             resource_name=event.resource_name,
             changes=event.changes,
-            status=event.status.value,
+            status=event.status,
             reason=event.reason,
             ip_address=event.ip_address,
             created_at=event.created_at,
@@ -429,10 +430,12 @@ async def get_audit_summary(org_id: UUID) -> AuditEventSummary:
         event_repo = AuditEventRepository(db)
         summary = await event_repo.get_summary(org_id)
 
+        from typing import cast
+
         return AuditEventSummary(
-            events_today=summary.get("events_today", 0),
-            total_events=summary.get("total_events", 0),
-            action_counts=summary.get("action_counts", {}),
+            events_today=cast(int, summary.get("events_today", 0)),
+            total_events=cast(int, summary.get("total_events", 0)),
+            action_counts=cast(dict[str, int], summary.get("action_counts", {})),
         )
 
 
@@ -451,13 +454,13 @@ async def list_device_audit_events(
                     id=e.id or device_id,
                     organization_id=e.organization_id,
                     actor_user_id=e.actor_user_id,
-                    actor_type=e.actor_type.value,
-                    action=e.action.value,
-                    resource_type=e.resource_type.value,
+                    actor_type=e.actor_type,
+                    action=e.action,
+                    resource_type=e.resource_type,
                     resource_id=e.resource_id,
                     resource_name=e.resource_name,
                     changes=e.changes,
-                    status=e.status.value,
+                    status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
                     created_at=e.created_at,
@@ -483,13 +486,13 @@ async def list_user_audit_events(user_id: UUID, skip: int = 0, limit: int = 100)
                     id=e.id or user_id,
                     organization_id=e.organization_id,
                     actor_user_id=e.actor_user_id,
-                    actor_type=e.actor_type.value,
-                    action=e.action.value,
-                    resource_type=e.resource_type.value,
+                    actor_type=e.actor_type,
+                    action=e.action,
+                    resource_type=e.resource_type,
                     resource_id=e.resource_id,
                     resource_name=e.resource_name,
                     changes=e.changes,
-                    status=e.status.value,
+                    status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
                     created_at=e.created_at,
