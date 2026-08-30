@@ -7,10 +7,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
 from db import SessionLocal
 from integrations.models import IntegrationModel
 from integrations.provider import get_provider
+from property.repository.models import OrganizationModel
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
@@ -53,6 +55,27 @@ async def create_integration(request: IntegrationCreate) -> IntegrationResponse:
         )
 
     async with SessionLocal() as db:
+        # Validate organization exists
+        org = await db.get(OrganizationModel, request.organization_id)
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        # Check for duplicate integration
+        result = await db.execute(
+            select(IntegrationModel).where(
+                IntegrationModel.organization_id == request.organization_id,
+                IntegrationModel.provider_id == request.provider_id,
+                IntegrationModel.connection_identifier == request.connection_identifier,
+                IntegrationModel.deleted_at.is_(None),
+            )
+        )
+        existing = result.scalar_one_or_none()
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Integration already exists for {request.provider_id}",
+            )
+
         now = datetime.now(UTC)
 
         # Create integration

@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
 
 from db import SessionLocal
 from integrations.models import IntegrationModel
@@ -66,7 +67,10 @@ async def create_bluetooth_device(
     """Create a Bluetooth device through an integration."""
     async with SessionLocal() as db:
         # Load integration and verify provider type
-        integration = await db.get(IntegrationModel, integration_id)
+        result = await db.execute(
+            select(IntegrationModel).where(IntegrationModel.id == integration_id)
+        )
+        integration = result.scalar_one_or_none()
         if not integration:
             raise HTTPException(status_code=404, detail="Integration not found")
 
@@ -169,7 +173,10 @@ async def create_shelly_device(
     """Create a Shelly device through an integration."""
     async with SessionLocal() as db:
         # Load integration and verify provider type
-        integration = await db.get(IntegrationModel, integration_id)
+        result = await db.execute(
+            select(IntegrationModel).where(IntegrationModel.id == integration_id)
+        )
+        integration = result.scalar_one_or_none()
         if not integration:
             raise HTTPException(status_code=404, detail="Integration not found")
 
