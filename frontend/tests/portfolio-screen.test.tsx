@@ -26,6 +26,10 @@ vi.mock("@/lib/api/portfolios", () => ({
   listPortfolios: vi.fn(),
   listProperties: vi.fn(),
   createPortfolio: vi.fn(),
+  updatePortfolio: vi.fn(),
+  createProperty: vi.fn(),
+  updateProperty: vi.fn(),
+  getPortfolio: vi.fn(),
 }));
 
 function renderScreen() {
