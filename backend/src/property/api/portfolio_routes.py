@@ -107,6 +107,7 @@ async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse
             name=portfolio.name,
             description=portfolio.description,
             organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
             created_at=portfolio.created_at,
         )
 
@@ -130,6 +131,7 @@ async def get_portfolio(portfolio_id: UUID) -> PortfolioResponse:
                 name=portfolio.name,
                 description=portfolio.description,
                 organization_id=portfolio.organization_id,
+                is_default=portfolio.is_default,
                 created_at=portfolio.created_at,
             )
 
@@ -238,6 +240,7 @@ async def update_portfolio(
             name=portfolio.name,
             description=portfolio.description,
             organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
             created_at=portfolio.created_at,
         )
 
