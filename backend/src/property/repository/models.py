@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db import Base
 from integrations.models import IntegrationModel  # noqa: F401
 from property.domain import DeviceType
+from property.domain.command import CommandPriority, CommandStatus, CommandType
 
 
 class PropertyModel(Base):
@@ -195,3 +196,64 @@ class DeviceStateEventModel(Base):
     state_change: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
     event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CommandModel(Base):
+    """A command to execute on a device."""
+
+    __tablename__ = "commands"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    integration_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False, index=True
+    )
+    capability_code: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    command_type: Mapped[CommandType] = mapped_column(Enum(CommandType), nullable=False)
+    parameters: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    priority: Mapped[CommandPriority] = mapped_column(
+        Enum(CommandPriority), default=CommandPriority.NORMAL, nullable=False
+    )
+    status: Mapped[CommandStatus] = mapped_column(
+        Enum(CommandStatus), default=CommandStatus.PENDING, nullable=False, index=True
+    )
+    result: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("idx_command_device_status", "device_id", "status"),
+        Index("idx_command_created_at", "created_at"),
+    )
+
+
+class CommandExecutionLogModel(Base):
+    """Append-only log of command executions."""
+
+    __tablename__ = "command_execution_logs"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    command_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("commands.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[CommandStatus] = mapped_column(Enum(CommandStatus), nullable=False, index=True)
+    result: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+
+    __table_args__ = (Index("idx_execution_log_command_created", "command_id", "created_at"),)
