@@ -15,6 +15,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db import Base
 from integrations.models import IntegrationModel  # noqa: F401
 from property.domain import DeviceType
+from property.domain.access import AccessType
+from property.domain.audit import AuditAction, AuditActorType, AuditResourceType, AuditStatus
 from property.domain.command import CommandPriority, CommandStatus, CommandType
 
 
@@ -257,3 +259,99 @@ class CommandExecutionLogModel(Base):
     )
 
     __table_args__ = (Index("idx_execution_log_command_created", "command_id", "created_at"),)
+
+
+class DeviceAccessGrantModel(Base):
+    """Access grant for a device to a user or via email."""
+
+    __tablename__ = "device_access_grants"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    grantee_user_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    grantee_email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    granted_by_user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    access_type: Mapped[AccessType] = mapped_column(Enum(AccessType), nullable=False)
+    capabilities: Mapped[list[str]] = mapped_column(JSON, default=[], nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("idx_grant_device_grantee", "device_id", "grantee_user_id"),
+        Index("idx_grant_created_at", "created_at"),
+    )
+
+
+class MagicLinkTokenModel(Base):
+    """Magic link token for sharing device access."""
+
+    __tablename__ = "magic_link_tokens"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    device_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    access_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    created_by_user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    claimed_by_user_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AuditEventModel(Base):
+    """Append-only audit log of all actions."""
+
+    __tablename__ = "audit_events"
+
+    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    actor_user_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    actor_type: Mapped[AuditActorType] = mapped_column(Enum(AuditActorType), nullable=False)
+    action: Mapped[AuditAction] = mapped_column(Enum(AuditAction), nullable=False, index=True)
+    resource_type: Mapped[AuditResourceType] = mapped_column(
+        Enum(AuditResourceType), nullable=False, index=True
+    )
+    resource_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    resource_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    changes: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
+    status: Mapped[AuditStatus] = mapped_column(Enum(AuditStatus), nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+
+    __table_args__ = (
+        Index("idx_audit_org_action_created", "organization_id", "action", "created_at"),
+        Index("idx_audit_resource_created", "resource_type", "resource_id", "created_at"),
+    )
