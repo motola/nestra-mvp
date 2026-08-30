@@ -56,20 +56,23 @@ async def create_integration(request: IntegrationCreate) -> IntegrationResponse:
 
     async with SessionLocal() as db:
         # Validate organization exists
-        org = await db.get(OrganizationModel, request.organization_id)
+        org_result = await db.execute(
+            select(OrganizationModel).where(OrganizationModel.id == request.organization_id)
+        )
+        org = org_result.scalar_one_or_none()
         if not org:
             raise HTTPException(status_code=404, detail="Organization not found")
 
         # Check for duplicate integration
-        result = await db.execute(
+        dup_result = await db.execute(
             select(IntegrationModel).where(
                 IntegrationModel.organization_id == request.organization_id,
                 IntegrationModel.provider_id == request.provider_id,
-                IntegrationModel.connection_identifier == request.connection_identifier,
+                (IntegrationModel.connection_identifier == request.connection_identifier),
                 IntegrationModel.deleted_at.is_(None),
             )
         )
-        existing = result.scalar_one_or_none()
+        existing = dup_result.scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=409,
