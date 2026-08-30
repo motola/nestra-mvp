@@ -24,10 +24,12 @@ class AuditAction(StrEnum):
     DEVICE_UPDATED = "device_updated"
     DEVICE_DELETED = "device_deleted"
     COMMAND_EXECUTED = "command_executed"
+    COMMAND_FAILED = "command_failed"
     ACCESS_GRANTED = "access_granted"
     ACCESS_REVOKED = "access_revoked"
     SHARE_LINK_CREATED = "share_link_created"
     SHARE_LINK_CLAIMED = "share_link_claimed"
+    SHARE_LINK_REVOKED = "share_link_revoked"
     ACCESS_DENIED = "access_denied"
 
 
@@ -38,6 +40,7 @@ class AuditResourceType(StrEnum):
     PROPERTY = "property"
     COMMAND = "command"
     GRANT = "grant"
+    ACCESS_GRANT = "access_grant"
     SHARE_LINK = "share_link"
 
 
