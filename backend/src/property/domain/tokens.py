@@ -21,5 +21,6 @@ class MagicLinkToken(BaseModel):
     claimed_at: datetime | None = None
     expires_at: datetime
     created_at: datetime
+    revoked_at: datetime | None = None
 
     model_config = {"frozen": False}

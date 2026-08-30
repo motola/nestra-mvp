@@ -3,9 +3,49 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class AuditActorType(StrEnum):
+    """Actor types for audit events."""
+
+    USER = "user"
+    SYSTEM = "system"
+    AUTOMATION = "automation"
+
+
+class AuditAction(StrEnum):
+    """Action types for audit events."""
+
+    DEVICE_CREATED = "device_created"
+    DEVICE_UPDATED = "device_updated"
+    DEVICE_DELETED = "device_deleted"
+    COMMAND_EXECUTED = "command_executed"
+    ACCESS_GRANTED = "access_granted"
+    ACCESS_REVOKED = "access_revoked"
+    SHARE_LINK_CREATED = "share_link_created"
+    SHARE_LINK_CLAIMED = "share_link_claimed"
+    ACCESS_DENIED = "access_denied"
+
+
+class AuditResourceType(StrEnum):
+    """Resource types for audit events."""
+
+    DEVICE = "device"
+    PROPERTY = "property"
+    COMMAND = "command"
+    GRANT = "grant"
+    SHARE_LINK = "share_link"
+
+
+class AuditStatus(StrEnum):
+    """Status of audit events."""
+
+    SUCCESS = "success"
+    FAILURE = "failure"
 
 
 class AuditEvent(BaseModel):
