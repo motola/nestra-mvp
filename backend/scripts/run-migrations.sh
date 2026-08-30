@@ -11,7 +11,7 @@ echo "Running database migrations on Fly.io..."
 flyctl machines run \
   --app nestra-mvp-api \
   --rm \
-  registry.fly.io/nestra-mvp-api:latest \
+  -- registry.fly.io/nestra-mvp-api:latest \
   bash -c "cd /app && alembic upgrade head"
 
 echo "Migrations completed successfully"
