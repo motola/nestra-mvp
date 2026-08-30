@@ -10,8 +10,9 @@ echo "Running database migrations on Fly.io..."
 # The machine inherits environment from the app's configuration
 flyctl machines run \
   --app nestra-mvp-api \
-  --yes \
+  --rm \
   --wait-timeout 600 \
-  -- bash -c "cd /app && pip install -e . && alembic upgrade head"
+  registry.fly.io/nestra-mvp-api:latest \
+  bash -c "cd /app && pip install -e . && alembic upgrade head"
 
 echo "Migrations completed successfully"
