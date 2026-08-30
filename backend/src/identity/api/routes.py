@@ -154,7 +154,6 @@ async def signup_endpoint(
                 organization_id=org.id,
                 name="Default Portfolio",
                 description="",
-                is_default=True,
                 created_at=now,
             )
             session.add(portfolio)
@@ -778,7 +777,6 @@ async def google_oauth_callback_endpoint(
                         organization_id=org.id,
                         name="Default Portfolio",
                         description="",
-                        is_default=True,
                         created_at=now,
                     )
                     session.add(portfolio)
@@ -980,7 +978,6 @@ async def microsoft_oauth_callback_endpoint(
                         organization_id=org.id,
                         name="Default Portfolio",
                         description="",
-                        is_default=True,
                         created_at=now,
                     )
                     session.add(portfolio)

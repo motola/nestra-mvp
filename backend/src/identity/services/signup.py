@@ -72,7 +72,6 @@ async def signup(
         organization_id=org_id,
         name="Default",
         description="",
-        is_default=True,
         created_at=now,
     )
     user_row = UserModel(
@@ -117,7 +116,7 @@ async def signup(
             organization_id=org_id,
             name="Default",
             description="",
-            is_default=True,
+            is_default=False,
             created_at=now,
         ),
     )
