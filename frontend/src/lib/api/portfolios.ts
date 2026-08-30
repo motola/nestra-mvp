@@ -7,6 +7,7 @@ export interface Portfolio {
   name: string;
   description: string;
   organization_id: string;
+  is_default: boolean;
   created_at: string;
 }
 

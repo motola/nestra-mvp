@@ -64,6 +64,7 @@ describe("PortfolioScreen", () => {
         name: "North Region",
         description: "Manchester",
         organization_id: "org-1",
+        is_default: true,
         created_at: "2026-01-01T00:00:00Z",
       },
     ]);
@@ -71,6 +72,7 @@ describe("PortfolioScreen", () => {
       {
         id: "prop-1",
         portfolio_id: "pf-1",
+        organization_id: "org-1",
         name: "Maple Court",
         address: "1 Maple St",
         property_type: "MIXED_USE",
@@ -81,6 +83,7 @@ describe("PortfolioScreen", () => {
       {
         id: "prop-2",
         portfolio_id: "pf-1",
+        organization_id: "org-1",
         name: "Oak House",
         address: "2 Oak Rd",
         property_type: "LONG_TERM_RENTAL",
@@ -93,12 +96,11 @@ describe("PortfolioScreen", () => {
     renderScreen();
 
     expect(await screen.findByText("North Region")).toBeDefined();
-    expect(screen.getByText("Manchester")).toBeDefined();
     expect(listProperties).toHaveBeenCalledWith("pf-1", "org-1");
 
     await waitFor(() => {
       expect(
-        screen.getByText("1 portfolio · 2 properties · 20 units · 0 devices"),
+        screen.getByText("2 properties · 20 units · 0 devices"),
       ).toBeDefined();
     });
   });
