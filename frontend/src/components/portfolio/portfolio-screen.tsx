@@ -425,8 +425,11 @@ function PortfolioDetailView({
           onClose={() => setShowEditPortfolio(false)}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              logger.error("Organization not loaded");
-              return;
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
             }
             await updatePortfolio(portfolio.id, organization.id, data);
             await onPortfolioUpdate();
@@ -444,8 +447,11 @@ function PortfolioDetailView({
           }}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              logger.error("Organization not loaded");
-              return;
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
             }
 
             if (editingProperty) {
@@ -574,7 +580,7 @@ export function PortfolioScreen() {
       <PageHeader
         eyebrow="WORKSPACE"
         title="Portfolios"
-        sub={`${portfolios.length} portfolios · ${properties.length} properties · ${totalUnits} units · ${totalDevices} devices`}
+        sub={`${portfolios.length} portfolio${portfolios.length !== 1 ? "s" : ""} · ${properties.length} propert${properties.length !== 1 ? "ies" : "y"} · ${totalUnits} unit${totalUnits !== 1 ? "s" : ""} · ${totalDevices} device${totalDevices !== 1 ? "s" : ""}`}
         primary={
           <Button
             variant="primary"

@@ -1,4 +1,4 @@
-"""Property domain models — portfolios, properties, devices, and integrations."""
+"""Property domain models — portfolios, properties, devices, integrations, access, and audit."""
 
 from __future__ import annotations
 
@@ -7,6 +7,17 @@ from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+# Access control models
+from property.domain.access import AccessType, DeviceAccessGrant  # noqa: F401
+from property.domain.audit import (  # noqa: F401
+    AuditAction,
+    AuditActorType,
+    AuditEvent,
+    AuditResourceType,
+    AuditStatus,
+)
+from property.domain.tokens import MagicLinkToken  # noqa: F401
 
 
 class DeviceType(StrEnum):

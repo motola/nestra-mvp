@@ -81,11 +81,12 @@ def upgrade() -> None:
         "portfolio_memberships",
         ["user_id"],
     )
-    op.create_unique_constraint(
-        "uq_portfolio_memberships",
-        "portfolio_memberships",
-        ["portfolio_id", "user_id"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    # Partial unique index for active memberships (soft delete support)
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_portfolio_memberships ON portfolio_memberships "
+            "(portfolio_id, user_id) WHERE deleted_at IS NULL"
+        )
     )
 
     # Add property_assignments
@@ -119,11 +120,11 @@ def upgrade() -> None:
         "property_assignments",
         ["user_id"],
     )
-    op.create_unique_constraint(
-        "uq_property_assignments",
-        "property_assignments",
-        ["property_id", "user_id"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_property_assignments ON property_assignments "
+            "(property_id, user_id) WHERE deleted_at IS NULL"
+        )
     )
 
     # ========================================================================
@@ -148,11 +149,11 @@ def upgrade() -> None:
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.create_index("ix_rooms_property_id", "rooms", ["property_id"])
-    op.create_unique_constraint(
-        "uq_rooms_property_name",
-        "rooms",
-        ["property_id", "name"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_rooms_property_name ON rooms "
+            "(property_id, name) WHERE deleted_at IS NULL"
+        )
     )
 
     # ========================================================================
@@ -184,11 +185,11 @@ def upgrade() -> None:
     op.create_index("ix_tenants_organization_id", "tenants", ["organization_id"])
     op.create_index("ix_tenants_user_id", "tenants", ["user_id"])
     op.create_index("ix_tenants_email", "tenants", ["email"])
-    op.create_unique_constraint(
-        "uq_tenants_org_user",
-        "tenants",
-        ["organization_id", "user_id"],
-        postgresql_where=sa.text("user_id IS NOT NULL AND deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_tenants_org_user ON tenants "
+            "(organization_id, user_id) WHERE user_id IS NOT NULL AND deleted_at IS NULL"
+        )
     )
 
     op.create_table(
@@ -210,11 +211,11 @@ def upgrade() -> None:
     )
     op.create_index("ix_stays_property_id", "stays", ["property_id"])
     op.create_index("ix_stays_check_in_at", "stays", ["check_in_at"])
-    op.create_unique_constraint(
-        "uq_stays_booking",
-        "stays",
-        ["booking_source", "external_booking_id"],
-        postgresql_where=sa.text("external_booking_id IS NOT NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_stays_booking ON stays "
+            "(booking_source, external_booking_id) WHERE external_booking_id IS NOT NULL"
+        )
     )
 
     op.create_table(
@@ -349,11 +350,12 @@ def upgrade() -> None:
     )
 
     op.create_index("ix_integrations_provider_id", "integrations", ["provider_id"])
-    op.create_unique_constraint(
-        "uq_integrations_connection",
-        "integrations",
-        ["organization_id", "provider_id", "connection_identifier"],
-        postgresql_where=sa.text("provider_id IS NOT NULL AND deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_integrations_connection ON integrations "
+            "(organization_id, provider_id, connection_identifier) "
+            "WHERE provider_id IS NOT NULL AND deleted_at IS NULL"
+        )
     )
 
     # ========================================================================
@@ -414,11 +416,11 @@ def upgrade() -> None:
         ["id"],
         ondelete="SET NULL",
     )
-    op.create_unique_constraint(
-        "uq_devices_serial",
-        "devices",
-        ["manufacturer", "serial_number"],
-        postgresql_where=sa.text("serial_number IS NOT NULL AND deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_devices_serial ON devices "
+            "(manufacturer, serial_number) WHERE serial_number IS NOT NULL AND deleted_at IS NULL"
+        )
     )
 
     op.create_table(
@@ -481,17 +483,17 @@ def upgrade() -> None:
     op.create_index(
         "ix_device_integrations_integration_id", "device_integrations", ["integration_id"]
     )
-    op.create_unique_constraint(
-        "uq_device_integrations",
-        "device_integrations",
-        ["device_id", "integration_id"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_device_integrations ON device_integrations "
+            "(device_id, integration_id) WHERE deleted_at IS NULL"
+        )
     )
-    op.create_unique_constraint(
-        "uq_device_integrations_external",
-        "device_integrations",
-        ["integration_id", "external_device_id"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_device_integrations_external ON device_integrations "
+            "(integration_id, external_device_id) WHERE deleted_at IS NULL"
+        )
     )
 
     # ========================================================================
@@ -536,11 +538,11 @@ def upgrade() -> None:
     op.create_index(
         "ix_device_capabilities_capability_id", "device_capabilities", ["capability_id"]
     )
-    op.create_unique_constraint(
-        "uq_device_capabilities",
-        "device_capabilities",
-        ["device_id", "capability_id"],
-        postgresql_where=sa.text("deleted_at IS NULL"),
+    op.execute(
+        sa.text(
+            "CREATE UNIQUE INDEX uq_device_capabilities ON device_capabilities "
+            "(device_id, capability_id) WHERE deleted_at IS NULL"
+        )
     )
 
     # ========================================================================
