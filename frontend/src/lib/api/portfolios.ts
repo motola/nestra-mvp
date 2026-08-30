@@ -2,6 +2,8 @@
  * Portfolio and Property API client
  */
 
+import { getToken } from "@/lib/auth/session";
+
 export interface Portfolio {
   id: string;
   name: string;
@@ -27,7 +29,7 @@ export interface Property {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("auth_token");
+  const token = getToken();
   if (!token) {
     throw new Error("No authentication token available. Please log in.");
   }
@@ -76,9 +78,7 @@ export async function listPortfolios(
 
 export async function getPortfolio(portfolioId: string): Promise<Portfolio> {
   const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -107,7 +107,7 @@ export async function createProperty(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
@@ -152,7 +152,7 @@ export async function updatePortfolio(
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
@@ -184,7 +184,7 @@ export async function updateProperty(
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
