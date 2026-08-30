@@ -2,11 +2,14 @@ name: Deploy — Backend
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
     paths:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: deploy-backend
@@ -16,7 +19,7 @@ jobs:
   migrate:
     name: Run Database Migrations
     runs-on: ubuntu-latest
-    environment: production
+    environment: dev
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +37,7 @@ jobs:
     needs: [migrate]
     # Require CI to be green before deploying. In GitHub, wire this up via
     # a branch protection rule requiring the CI workflow to pass on main.
-    environment: production
+    environment: dev
     steps:
       - uses: actions/checkout@v4
 
