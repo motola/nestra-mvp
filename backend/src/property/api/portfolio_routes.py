@@ -122,7 +122,9 @@ async def get_portfolio(portfolio_id: UUID) -> PortfolioResponse:
         if not portfolio:
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
+        # Validate org scope BEFORE returning any portfolio data
         async with org_scope(db, portfolio.organization_id):
+            # Query within org scope to ensure access validation
             return PortfolioResponse(
                 id=portfolio.id,
                 name=portfolio.name,

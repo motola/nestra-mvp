@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from db import SessionLocal
 from property.api.schemas import DeviceDetail
+from property.audit.logger import AuditLogger
 from property.domain import Device, DeviceIntegration, DevicePlacement, DeviceType
 from property.persistence.capability_repository import DeviceCapabilityRepository
 from property.persistence.device_integration_repository import DeviceIntegrationRepository
@@ -68,6 +69,7 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
         device_repository = DeviceRepository(db)
         placement_repository = DevicePlacementRepository(db)
         integration_repository = DeviceIntegrationRepository(db)
+        audit_logger = AuditLogger(db)
 
         # Get property to derive portfolio_id
         property_obj = await property_repository.get_by_id(request.property_id)
@@ -99,6 +101,13 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
         if not stored_device.id:
             raise HTTPException(status_code=500, detail="Failed to create device")
 
+        # Log device creation
+        await audit_logger.log_device_created(
+            organization_id=request.organization_id,
+            device_id=stored_device.id,
+            device_name=request.name,
+        )
+
         # Create DevicePlacement (device location)
         placement = DevicePlacement(
             id=None,
@@ -123,6 +132,8 @@ async def create_bluetooth_devices(request: BluetoothDeviceRequest) -> list[Devi
         )
         await integration_repository.create(integration)
 
+        await db.commit()
+
         return [
             DeviceResponse(
                 id=stored_device.id,
@@ -141,6 +152,7 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
         device_repository = DeviceRepository(db)
         placement_repository = DevicePlacementRepository(db)
         integration_repository = DeviceIntegrationRepository(db)
+        audit_logger = AuditLogger(db)
 
         # Get property to derive portfolio_id
         property_obj = await property_repository.get_by_id(request.property_id)
@@ -173,6 +185,13 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
         if not stored_device.id:
             raise HTTPException(status_code=500, detail="Failed to create device")
 
+        # Log device creation
+        await audit_logger.log_device_created(
+            organization_id=request.organization_id,
+            device_id=stored_device.id,
+            device_name=request.name,
+        )
+
         # Create DevicePlacement (device location)
         placement = DevicePlacement(
             id=None,
@@ -196,6 +215,8 @@ async def create_shelly_devices(request: ShellyDeviceRequest) -> list[DeviceResp
             updated_at=now,
         )
         await integration_repository.create(integration)
+
+        await db.commit()
 
         return [
             DeviceResponse(
