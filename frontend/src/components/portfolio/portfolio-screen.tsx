@@ -425,8 +425,11 @@ function PortfolioDetailView({
           onClose={() => setShowEditPortfolio(false)}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              logger.error("Organization not loaded");
-              return;
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
             }
             await updatePortfolio(portfolio.id, organization.id, data);
             await onPortfolioUpdate();
@@ -444,8 +447,11 @@ function PortfolioDetailView({
           }}
           onSubmit={async (data) => {
             if (!organization?.id) {
-              logger.error("Organization not loaded");
-              return;
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
             }
 
             if (editingProperty) {

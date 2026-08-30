@@ -23,6 +23,17 @@ export interface Property {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("auth_token");
+  if (!token) {
+    throw new Error("No authentication token available. Please log in.");
+  }
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 export async function createPortfolio(data: {
   organization_id: string;
   name: string;
@@ -31,8 +42,7 @@ export async function createPortfolio(data: {
   const response = await fetch(`${API_BASE}/portfolios`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
   });
@@ -50,9 +60,7 @@ export async function listPortfolios(
   const response = await fetch(
     `${API_BASE}/portfolios?organization_id=${organizationId}`,
     {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-      },
+      headers: getAuthHeaders(),
     },
   );
 
@@ -116,9 +124,7 @@ export async function listProperties(
   const response = await fetch(
     `${API_BASE}/portfolios/${portfolioId}/properties?organization_id=${organizationId}`,
     {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-      },
+      headers: getAuthHeaders(),
     },
   );
 
