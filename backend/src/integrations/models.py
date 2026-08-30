@@ -44,6 +44,13 @@ class IntegrationModel(Base):
     # devices: Mapped[list] = relationship(back_populates="integration")
 
     __table_args__ = (
-        UniqueConstraint("organization_id", "vendor", name="uq_integration_org_vendor"),
+        UniqueConstraint(
+            "organization_id",
+            "provider_id",
+            "connection_identifier",
+            name="uq_integration_org_provider_connection",
+            postgresql_where="deleted_at IS NULL",
+        ),
         Index("idx_integration_provider", "provider_id"),
+        Index("idx_integration_org", "organization_id"),
     )
