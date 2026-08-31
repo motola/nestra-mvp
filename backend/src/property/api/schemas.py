@@ -133,10 +133,9 @@ class IntegrationRead(BaseModel):
 
     id: UUID
     organization_id: UUID
-    vendor: str = Field(..., description="Integration vendor (shelly, august, lifx, etc)")
-    account_identifier: str = Field(..., description="Vendor account identifier")
+    provider_id: str = Field(..., description="Provider slug (bluetooth, shelly, etc)")
+    account_identifier: str = Field(..., description="Provider account identifier")
     enabled: bool = Field(True, description="Whether integration is active")
-    provider_id: str | None = None
     connection_identifier: str | None = None
     display_name: str | None = None
     credential_provider: str | None = None

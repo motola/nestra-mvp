@@ -32,10 +32,12 @@ interface ApiIntegration {
   id: string;
   organization_id: string;
   provider_id: string;
+  account_identifier: string;
   connection_identifier: string | null;
   display_name: string | null;
   enabled: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 function IntegrationCard({ item: i }: { item: ApiIntegration }) {
