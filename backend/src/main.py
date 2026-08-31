@@ -8,10 +8,12 @@ from fastapi.responses import JSONResponse
 from config import get_settings
 from identity.api.routes import router as identity_router
 from integrations.api.oauth import router as oauth_router
+from integrations.api.routes import router as integrations_router
 from integrations.govee.routes import router as govee_router
 from integrations.shelly.routes import router as shelly_router
 from integrations.wifi.routes import router as wifi_router
 from intelligence.api.routes import router as intelligence_router
+from property.api.device_routes import router as device_router
 from property.api.portfolio_routes import router as portfolio_router
 from property.api.routes import router as property_router
 
@@ -63,6 +65,8 @@ async def health() -> dict[str, str]:
 app.include_router(identity_router)
 app.include_router(intelligence_router)
 app.include_router(oauth_router)
+app.include_router(integrations_router)
+app.include_router(device_router)
 app.include_router(govee_router)
 app.include_router(shelly_router)
 app.include_router(portfolio_router)
