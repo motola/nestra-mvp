@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, BookOpen } from "lucide-react";
+import { Plus, BookOpen, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
 import type { Integration, Vendor } from "@/lib/fixtures";
@@ -24,8 +24,7 @@ import { useAuth } from "@/lib/auth/provider";
 import { getToken } from "@/lib/auth/session";
 import { listPortfolios, listProperties } from "@/lib/api/portfolios";
 import type { Property as ApiProperty } from "@/lib/api/portfolios";
-
-const logger = console;
+import { logger } from "@/lib/logger";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -156,15 +155,10 @@ function VendorCard({ v }: { v: Vendor }) {
       return;
     }
 
-    // For Bluetooth, open Bluetooth-only discovery modal
-    if (vendor === "bluetooth") {
-      setBluetoothModalOpen(true);
-      return;
-    }
-
-    // For WiFi, open WiFi-only discovery modal
-    if (vendor === "wifi") {
-      setWifiModalOpen(true);
+    // For local discovery vendors, don't trigger from card
+    // The top "Connect vendor" button handles this
+    if (["bluetooth", "wifi"].includes(vendor)) {
+      logger.info(`Device discovery handled by main Connect vendor button`);
       return;
     }
 
@@ -695,6 +689,9 @@ export function IntegrationsScreen() {
   const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
   const [loading, setLoading] = useState(false);
+  const [showDeviceTypeModal, setShowDeviceTypeModal] = useState(false);
+  const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
+  const [wifiModalOpen, setWifiModalOpen] = useState(false);
 
   const loadProperties = useCallback(async () => {
     const organizationId = organization?.id;
@@ -754,7 +751,11 @@ export function IntegrationsScreen() {
         title="Integrations"
         sub={`${propertyIntegrations.length} connections · ${active} active ${needsReauth ? `· ${needsReauth} needs reauth` : ""}`}
         primary={
-          <Button variant="primary" icon={Plus}>
+          <Button
+            variant="primary"
+            icon={Plus}
+            onClick={() => setShowDeviceTypeModal(true)}
+          >
             Connect vendor
           </Button>
         }
@@ -846,6 +847,182 @@ export function IntegrationsScreen() {
         {tab === "webhooks" && <WebhooksTab />}
         {tab === "errors" && <ErrorsTab />}
       </div>
+
+      {showDeviceTypeModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-bg rounded-lg shadow-lg w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[16px] font-semibold text-text m-0">
+                Connect Device
+              </h2>
+              <button
+                onClick={() => setShowDeviceTypeModal(false)}
+                className="p-1 hover:bg-surface rounded-lg border-0 cursor-pointer bg-transparent"
+              >
+                <X size={20} className="text-text-2" />
+              </button>
+            </div>
+            <p className="text-[13px] text-text-2 mb-4">
+              Select the type of device you want to connect
+            </p>
+            <div className="space-y-2">
+              <Button
+                variant="secondary"
+                className="w-full justify-start"
+                onClick={() => {
+                  setBluetoothModalOpen(true);
+                  setShowDeviceTypeModal(false);
+                }}
+              >
+                Bluetooth Device
+              </Button>
+              <Button
+                variant="secondary"
+                className="w-full justify-start"
+                onClick={() => {
+                  setWifiModalOpen(true);
+                  setShowDeviceTypeModal(false);
+                }}
+              >
+                WiFi Network
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <BluetoothDiscoveryModal
+        isOpen={bluetoothModalOpen}
+        onClose={() => setBluetoothModalOpen(false)}
+        onDevicesSelected={async (devices) => {
+          if (!selectedProperty?.id || !organization?.id) {
+            logger.error("No property or organization selected");
+            return;
+          }
+
+          try {
+            const apiUrl =
+              process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const authToken = getToken();
+
+            let integrationId: string;
+            const listRes = await fetch(
+              `${apiUrl}/integrations?organization_id=${organization.id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${authToken}`,
+                },
+              },
+            );
+
+            if (listRes.ok) {
+              const integrations = await listRes.json();
+              const btIntegration = integrations.find(
+                (i: { provider_id: string }) => i.provider_id === "bluetooth",
+              );
+
+              if (btIntegration) {
+                integrationId = btIntegration.id;
+              } else {
+                const createRes = await fetch(`${apiUrl}/integrations`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                  },
+                  body: JSON.stringify({
+                    organization_id: organization.id,
+                    provider_id: "bluetooth",
+                    connection_identifier: "local",
+                    display_name: "Local Bluetooth",
+                  }),
+                });
+
+                if (!createRes.ok)
+                  throw new Error(
+                    `Integration creation failed: ${createRes.status}`,
+                  );
+                const integration = await createRes.json();
+                integrationId = integration.id;
+              }
+            } else {
+              throw new Error("Failed to list integrations");
+            }
+
+            const results = await Promise.all(
+              devices.map((device) =>
+                fetch(
+                  `${apiUrl}/integrations/${integrationId}/devices/bluetooth`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${authToken}`,
+                    },
+                    body: JSON.stringify({
+                      property_id: selectedProperty.id,
+                      name: device.name,
+                      mac_address: device.id,
+                    }),
+                  },
+                )
+                  .then((r) => {
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    return r.json();
+                  })
+                  .then((data) => {
+                    logger.info("Bluetooth device created:", data);
+                    return data;
+                  }),
+              ),
+            );
+
+            const createdCount = results.filter(Boolean).length;
+            logger.info(
+              `Successfully created ${createdCount} Bluetooth device(s)`,
+            );
+          } catch (err) {
+            logger.error("Bluetooth device creation error:", err);
+          }
+        }}
+      />
+
+      <WiFiDiscoveryModal
+        isOpen={wifiModalOpen}
+        onClose={() => setWifiModalOpen(false)}
+        onNetworksSelected={async (networks) => {
+          if (!selectedProperty?.id) {
+            logger.error("No property selected");
+            return;
+          }
+
+          try {
+            const apiUrl =
+              process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const response = await fetch(`${apiUrl}/wifi/devices/create`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                organization_id: organization?.id,
+                property_id: selectedProperty.id,
+                networks,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `Failed to create devices: HTTP ${response.status}`,
+              );
+            }
+
+            const devices = await response.json();
+            logger.info(`Successfully created ${devices.length} WiFi devices`);
+          } catch (err) {
+            logger.error("WiFi device creation error:", err);
+          }
+        }}
+      />
     </>
   );
 }
