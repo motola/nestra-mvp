@@ -458,8 +458,10 @@ function PortfolioDetailView({
               await updateProperty(portfolio.id, editingProperty.id, {
                 name: data.name,
                 address: data.address,
-                property_type: data.type,
+                property_type: data.property_type,
                 units: data.units,
+                timezone: data.timezone,
+                description: data.description,
               });
             } else {
               await createProperty(portfolio.id, {
@@ -467,8 +469,10 @@ function PortfolioDetailView({
                 portfolio_id: portfolio.id,
                 name: data.name,
                 address: data.address,
-                property_type: data.type,
+                property_type: data.property_type,
                 units: data.units,
+                timezone: data.timezone,
+                description: data.description,
               });
             }
 

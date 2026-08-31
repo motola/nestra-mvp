@@ -13,13 +13,17 @@ interface PropertyFormProps {
     address: string;
     type: string;
     units: number;
+    timezone?: string;
+    description?: string;
   } | null;
   onClose: () => void;
   onSubmit: (data: {
     name: string;
     address: string;
-    type: string;
+    property_type: string;
     units: number;
+    timezone: string;
+    description: string;
   }) => Promise<void>;
 }
 
@@ -40,8 +44,10 @@ export function PropertyForm({
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     address: initialData?.address || "",
-    type: initialData?.type || "MIXED_USE",
+    property_type: initialData?.type || "MIXED_USE",
     units: initialData?.units || 1,
+    timezone: initialData?.timezone || "UTC",
+    description: initialData?.description || "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,9 +142,9 @@ export function PropertyForm({
               Property Type
             </label>
             <select
-              value={formData.type}
+              value={formData.property_type}
               onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
+                setFormData({ ...formData, property_type: e.target.value })
               }
               className="w-full px-3 py-2.5 border border-border rounded-[8px] bg-bg text-text text-[13px] focus:outline-none focus:border-graphite transition-colors"
             >
@@ -171,6 +177,38 @@ export function PropertyForm({
             {errors.units && (
               <p className="text-[11px] text-red mt-1">{errors.units}</p>
             )}
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="block text-[12px] font-semibold text-text-2 uppercase tracking-[0.08em] mb-1.5">
+              Timezone
+            </label>
+            <input
+              type="text"
+              value={formData.timezone}
+              onChange={(e) =>
+                setFormData({ ...formData, timezone: e.target.value })
+              }
+              className="w-full px-3 py-2.5 border border-border rounded-[8px] bg-bg text-text text-[13px] focus:outline-none focus:border-graphite transition-colors"
+              placeholder="e.g., UTC, America/New_York"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-[12px] font-semibold text-text-2 uppercase tracking-[0.08em] mb-1.5">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full px-3 py-2.5 border border-border rounded-[8px] bg-bg text-text text-[13px] focus:outline-none focus:border-graphite transition-colors resize-none"
+              placeholder="Optional notes about this property"
+              rows={3}
+            />
           </div>
 
           {/* Actions */}
