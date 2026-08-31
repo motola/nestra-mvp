@@ -77,6 +77,7 @@ async def list_portfolios(organization_id: UUID) -> list[PortfolioResponse]:
                 name=portfolio.name,
                 description=portfolio.description,
                 organization_id=portfolio.organization_id,
+                is_default=portfolio.is_default,
                 created_at=portfolio.created_at,
             )
             for portfolio in portfolios
@@ -204,11 +205,13 @@ async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[Pro
             PropertyResponse(
                 id=prop.id,
                 portfolio_id=prop.portfolio_id,
+                organization_id=prop.organization_id,
                 name=prop.name,
                 address=prop.address,
                 property_type=prop.property_type,
                 units=prop.units,
                 timezone=prop.timezone,
+                description=prop.description,
                 created_at=prop.created_at,
             )
             for prop in properties
