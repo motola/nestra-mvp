@@ -51,10 +51,22 @@
   - [ ] All nullable fields are correctly marked
   - [ ] Indexes defined in model are in migration
 - [ ] **[CRITICAL] Migration chain is correct**
-  - [ ] down_revision points to previous migration
-  - [ ] Migration revision ID is unique
+  - [ ] down_revision points to PREVIOUS migration (not future)
+  - [ ] Migration revision ID is unique (no duplicates)
   - [ ] Both upgrade() and downgrade() functions work
   - [ ] No orphaned migrations
+  - [ ] **[CRITICAL] Only ONE migration head**
+    - [ ] Run: `alembic heads`
+    - [ ] Should return exactly ONE head revision
+    - [ ] If multiple heads: broken migration chain
+    - [ ] If error "Cycle detected": circular dependency
+  - [ ] **[CRITICAL] No circular dependencies**
+    - [ ] A → B → C (correct)
+    - [ ] A → B → A (WRONG - creates cycle)
+    - [ ] Check that down_revision never points forward
+  - [ ] Migration chain is sequential
+    - [ ] Each migration depends on the one before it
+    - [ ] No parallel branches that don't merge
 
 ## Security
 
@@ -153,6 +165,23 @@
 - [ ] ❌ Auth not checked → Security bypass
 - [ ] ❌ Response format wrong → Frontend parse error
 - [ ] ❌ Migration doesn't run → Deployment fails
+
+### Migration Chain Failures to Catch
+- [ ] ❌ Multiple migration heads
+  - Error: `Multiple head revisions are present for given argument 'head'`
+  - Cause: Two independent migration chains that don't connect
+  - Fix: Ensure each migration's `down_revision` points to previous one only
+- [ ] ❌ Circular migration dependency
+  - Error: `Cycle is detected in revisions`
+  - Cause: A migration points forward (or creates a loop)
+  - Example: A→B→C→A (wrong!) or A→B→A (wrong!)
+  - Fix: Verify `down_revision` only points backward
+- [ ] ❌ Orphaned migration
+  - Cause: Migration with no parent (down_revision=None) when it should have one
+  - Fix: Set down_revision to the migration before it
+- [ ] ❌ Broken migration chain
+  - Cause: Migration points to non-existent previous migration
+  - Fix: Verify down_revision matches actual previous migration ID
 
 ## Deployment
 
