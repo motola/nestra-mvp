@@ -24,6 +24,7 @@ import { listPortfolios, listProperties } from "@/lib/api/portfolios";
 import type { Property as ApiProperty } from "@/lib/api/portfolios";
 import { useAuth } from "@/lib/auth/provider";
 import { logger } from "@/lib/logger";
+import { getToken } from "@/lib/auth/session";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -262,7 +263,7 @@ function VendorCard({ v }: { v: Vendor }) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+              Authorization: `Bearer ${getToken()}`,
             },
             body: JSON.stringify({
               organization_id: organization?.id,
@@ -630,7 +631,7 @@ export function IntegrationsScreen() {
           `${apiUrl}/integrations?organization_id=${organizationId}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+              Authorization: `Bearer ${getToken()}`,
             },
           },
         );
