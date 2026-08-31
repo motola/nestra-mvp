@@ -708,23 +708,20 @@ def upgrade() -> None:
             sa.ForeignKey("users.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column(
-            "actor_stay_tenant_id",
-            PGUUID(as_uuid=True),
-            sa.ForeignKey("stay_tenants.id", ondelete="SET NULL"),
-            nullable=True,
-        ),
         sa.Column("actor_type", sa.String(50), nullable=False),
         sa.Column("action", sa.String(100), nullable=False),
         sa.Column("resource_type", sa.String(100), nullable=False),
         sa.Column("resource_id", PGUUID(as_uuid=True), nullable=False),
-        sa.Column("metadata", JSONB(), nullable=True),
-        sa.Column("request_id", sa.String(100), nullable=True),
-        sa.Column("ip_address", sa.String(50), nullable=True),
-        sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("resource_name", sa.String(500), nullable=True),
+        sa.Column("changes", JSONB(), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("status", sa.String(50), nullable=False),
+        sa.Column("reason", sa.String(1000), nullable=True),
+        sa.Column("ip_address", sa.String(45), nullable=True),
+        sa.Column("user_agent", sa.String(500), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     op.create_index("ix_audit_events_organization", "audit_events", ["organization_id"])
-    op.create_index("ix_audit_events_occurred", "audit_events", ["occurred_at"])
+    op.create_index("ix_audit_events_created_at", "audit_events", ["created_at"])
     op.create_index("ix_audit_events_action", "audit_events", ["action"])
 
 
