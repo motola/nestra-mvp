@@ -27,9 +27,45 @@ import { PropertyCard } from "@/components/ui/property-card";
 import { DataTable } from "@/components/ui/data-table";
 import type { TableColumn } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { useProperty } from "@/lib/property/provider";
 import { useAuth } from "@/lib/auth/provider";
 import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
+import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
+import { PropertyForm } from "@/components/portfolio/property-form";
+import { logger } from "@/lib/logger";
+
+// ─── API → display adapter ────────────────────────────────────────────────────
+
+const PROPERTY_TYPES: PropertyType[] = [
+  "MIXED_USE",
+  "SHORT_TERM_RENTAL",
+  "LONG_TERM_RENTAL",
+  "OWNER_OCCUPIED",
+  "COMMERCIAL",
+];
+
+/**
+ * Map an API property onto the shape the cards, table and property provider
+ * expect. Occupancy, device and alert counts come from subsystems that are not
+ * exposed by the API yet, so they read as zero until those land.
+ */
+function toDisplayProperty(p: ApiProperty): Property {
+  return {
+    id: p.id,
+    portfolio: p.portfolio_id,
+    name: p.name,
+    address: p.address,
+    type: PROPERTY_TYPES.includes(p.property_type as PropertyType)
+      ? (p.property_type as PropertyType)
+      : "MIXED_USE",
+    tz: p.timezone,
+    units: p.units,
+    occupied: 0,
+    alerts: 0,
+    status: "ok",
+    devices: 0,
+    integrations: 0,
+  };
+}
 
 // ─── API → display adapter ────────────────────────────────────────────────────
 
@@ -304,15 +340,21 @@ function PortfolioDetailView({
   portfolio,
   properties: props,
   onBack,
-  onPropertyClick,
+  onPortfolioUpdate,
+  onPropertyCreate,
 }: {
   portfolio: ApiPortfolio;
   properties: Property[];
   onBack: () => void;
-  onPropertyClick: (property: Property) => void;
+  onPortfolioUpdate: () => Promise<void>;
+  onPropertyCreate: () => Promise<void>;
 }) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [showEditPortfolio, setShowEditPortfolio] = useState(false);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const { organization } = useAuth();
   const filtered =
     filter === "all" ? props : props.filter((p) => p.status === filter);
 
@@ -323,14 +365,29 @@ function PortfolioDetailView({
         title={portfolio.name}
         sub={`${props.length} properties · ${props.reduce((s, p) => s + p.units, 0)} units · ${props.reduce((s, p) => s + p.devices, 0)} devices`}
         primary={
-          <Button variant="primary" icon={Plus}>
+          <Button
+            variant="primary"
+            icon={Plus}
+            onClick={() => {
+              setEditingProperty(null);
+              setShowPropertyForm(true);
+            }}
+          >
             Add property
           </Button>
         }
         secondary={
-          <Button variant="secondary" icon={Download}>
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowEditPortfolio(true)}
+            >
+              Edit
+            </Button>
+            <Button variant="secondary" icon={Download}>
+              Export CSV
+            </Button>
+          </div>
         }
       />
 
@@ -385,21 +442,77 @@ function PortfolioDetailView({
             }}
           >
             {filtered.map((p) => (
-              <PropertyCard
-                key={p.id}
-                {...p}
-                onClick={() => onPropertyClick(p)}
-              />
+              <PropertyCard key={p.id} {...p} />
             ))}
           </div>
         ) : (
-          <DataTable
-            columns={TABLE_COLUMNS}
-            rows={filtered}
-            onRowClick={(p) => onPropertyClick(p)}
-          />
+          <DataTable columns={TABLE_COLUMNS} rows={filtered} />
         )}
       </div>
+
+      {showEditPortfolio && (
+        <EditPortfolioForm
+          initialName={portfolio.name}
+          initialDescription={portfolio.description}
+          onClose={() => setShowEditPortfolio(false)}
+          onSubmit={async (data) => {
+            if (!organization?.id) {
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
+            }
+            await updatePortfolio(portfolio.id, organization.id, data);
+            await onPortfolioUpdate();
+          }}
+        />
+      )}
+
+      {showPropertyForm && (
+        <PropertyForm
+          mode={editingProperty ? "edit" : "create"}
+          initialData={editingProperty}
+          onClose={() => {
+            setShowPropertyForm(false);
+            setEditingProperty(null);
+          }}
+          onSubmit={async (data) => {
+            if (!organization?.id) {
+              const error = new Error(
+                "Organization not loaded. Please refresh the page.",
+              );
+              logger.error("Organization not loaded", error);
+              throw error;
+            }
+
+            if (editingProperty) {
+              await updateProperty(
+                portfolio.id,
+                editingProperty.id,
+                organization.id,
+                {
+                  name: data.name,
+                  address: data.address,
+                  property_type: data.type,
+                  units: data.units,
+                },
+              );
+            } else {
+              await createProperty(portfolio.id, {
+                organization_id: organization.id,
+                portfolio_id: portfolio.id,
+                name: data.name,
+                address: data.address,
+                property_type: data.type,
+                units: data.units,
+              });
+            }
+
+            await onPropertyCreate();
+          }}
+        />
+      )}
     </>
   );
 }
@@ -475,7 +588,7 @@ export function PortfolioScreen() {
       setShowAddForm(false);
       await loadPortfolios();
     } catch (error) {
-      console.error("Failed to create portfolio:", error);
+      logger.error("Failed to create portfolio:", error);
     }
   }
 
@@ -490,7 +603,8 @@ export function PortfolioScreen() {
           (p) => p.portfolio === selectedPortfolio.id,
         )}
         onBack={() => setSelectedPortfolioId(null)}
-        onPropertyClick={handlePropertyClick}
+        onPortfolioUpdate={loadPortfolios}
+        onPropertyCreate={loadPortfolios}
       />
     );
   }

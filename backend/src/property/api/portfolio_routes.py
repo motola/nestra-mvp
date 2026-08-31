@@ -31,6 +31,7 @@ class PortfolioResponse(BaseModel):
     name: str
     description: str
     organization_id: UUID
+    is_default: bool
     created_at: datetime
 
 
@@ -52,11 +53,13 @@ class PropertyResponse(BaseModel):
 
     id: UUID
     portfolio_id: UUID
+    organization_id: UUID
     name: str
     address: str
     property_type: str
     units: int
     timezone: str
+    description: str | None
     created_at: datetime
 
 
@@ -86,11 +89,20 @@ async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse
     async with SessionLocal() as db, org_scope(db, request.organization_id):
         now = datetime.now(UTC)
 
+        # Check if this organization has any default portfolio
+        has_default = await db.execute(
+            select(PortfolioModel).where(
+                PortfolioModel.organization_id == request.organization_id,
+                PortfolioModel.is_default,
+            )
+        )
+        has_default_portfolio = has_default.scalar_one_or_none() is not None
+
         portfolio = PortfolioModel(
             organization_id=request.organization_id,
             name=request.name,
             description=request.description,
-            is_default=False,
+            is_default=not has_default_portfolio,  # First portfolio becomes default
             created_at=now,
         )
 
@@ -103,29 +115,33 @@ async def create_portfolio(request: PortfolioCreateRequest) -> PortfolioResponse
             name=portfolio.name,
             description=portfolio.description,
             organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
             created_at=portfolio.created_at,
         )
 
 
 @router.get("/{portfolio_id}", response_model=PortfolioResponse)
-async def get_portfolio(portfolio_id: UUID) -> PortfolioResponse:
-    """Get a portfolio by ID."""
-    async with SessionLocal() as db:
-        stmt = select(PortfolioModel).where(PortfolioModel.id == portfolio_id)
+async def get_portfolio(portfolio_id: UUID, organization_id: UUID) -> PortfolioResponse:
+    """Get a portfolio by ID with organization validation."""
+    async with SessionLocal() as db, org_scope(db, organization_id):
+        stmt = select(PortfolioModel).where(
+            PortfolioModel.id == portfolio_id,
+            PortfolioModel.organization_id == organization_id,
+        )
         result = await db.execute(stmt)
         portfolio = result.scalar_one_or_none()
 
         if not portfolio:
             raise HTTPException(status_code=404, detail="Portfolio not found")
 
-        async with org_scope(db, portfolio.organization_id):
-            return PortfolioResponse(
-                id=portfolio.id,
-                name=portfolio.name,
-                description=portfolio.description,
-                organization_id=portfolio.organization_id,
-                created_at=portfolio.created_at,
-            )
+        return PortfolioResponse(
+            id=portfolio.id,
+            name=portfolio.name,
+            description=portfolio.description,
+            organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
+            created_at=portfolio.created_at,
+        )
 
 
 @router.post("/{portfolio_id}/properties", response_model=PropertyResponse)
@@ -165,11 +181,13 @@ async def create_property(portfolio_id: UUID, request: PropertyCreateRequest) ->
         return PropertyResponse(
             id=property_obj.id,
             portfolio_id=property_obj.portfolio_id,
+            organization_id=property_obj.organization_id,
             name=property_obj.name,
             address=property_obj.address,
             property_type=property_obj.property_type,
             units=property_obj.units,
             timezone=property_obj.timezone,
+            description=property_obj.description,
             created_at=property_obj.created_at,
         )
 

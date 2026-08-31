@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -48,6 +49,8 @@ from identity.repository.models import (
 )
 from identity.services.email_service import get_email_service
 from identity.services.signup import _hash_password, _verify_password
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["identity"])
 
@@ -154,7 +157,6 @@ async def signup_endpoint(
                 organization_id=org.id,
                 name="Default Portfolio",
                 description="",
-                is_default=True,
                 created_at=now,
             )
             session.add(portfolio)
@@ -692,6 +694,16 @@ async def google_oauth_callback_endpoint(
                 detail="Failed to exchange authorization code",
             )
 
+        if token_response.status_code != 200:
+            error_detail = token_response.text
+            logger.error(
+                f"Google token exchange failed: {token_response.status_code} - {error_detail}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Failed to exchange authorization code: {error_detail}",
+            )
+
         token_data = token_response.json()
 
         # Verify ID token and get user info
@@ -701,9 +713,13 @@ async def google_oauth_callback_endpoint(
         )
 
         if user_response.status_code != 200:
+            error_detail = user_response.text
+            logger.error(
+                f"Google userinfo retrieval failed: {user_response.status_code} - {error_detail}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to get user info from Google",
+                detail=f"Failed to get user info from Google: {error_detail}",
             )
 
         user_info = user_response.json()
@@ -778,7 +794,6 @@ async def google_oauth_callback_endpoint(
                         organization_id=org.id,
                         name="Default Portfolio",
                         description="",
-                        is_default=True,
                         created_at=now,
                     )
                     session.add(portfolio)
@@ -980,7 +995,6 @@ async def microsoft_oauth_callback_endpoint(
                         organization_id=org.id,
                         name="Default Portfolio",
                         description="",
-                        is_default=True,
                         created_at=now,
                     )
                     session.add(portfolio)
@@ -1040,3 +1054,47 @@ async def microsoft_oauth_callback_endpoint(
             token_type="bearer",
             organization_id=user_membership.organization_id,
         )
+
+
+# ─── Organization endpoints ───────────────────────────────────────────────────
+
+org_router = APIRouter(prefix="/organizations", tags=["organizations"])
+
+
+class OrganizationUpdateRequest:
+    """Request to update organization settings."""
+
+    def __init__(self, name: str, slug: str, timezone: str = "UTC"):
+        self.name = name
+        self.slug = slug
+        self.timezone = timezone
+
+
+@org_router.put("/{organization_id}")
+async def update_organization(
+    organization_id: UUID, name: str, slug: str, timezone: str = "UTC"
+) -> OrganizationOut:
+    """Update organization settings."""
+    async with SessionLocal() as session:
+        result = await session.execute(
+            select(OrganizationModel).where(OrganizationModel.id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+
+        if not org:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        org.name = name
+        org.slug = slug
+
+        await session.commit()
+        await session.refresh(org)
+
+        return OrganizationOut(
+            id=org.id,
+            name=org.name,
+            slug=org.slug,
+        )
+
+
+router.include_router(org_router)

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { clearToken, getToken, setToken } from "@/lib/auth/session";
 import { apiFetch } from "@/lib/api/client";
+import { logger } from "@/lib/logger";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setCachedAuthData(user, organization, token);
       })
       .catch((error) => {
-        console.error("Failed to fetch user session:", error);
+        logger.error("Failed to fetch user session:", error);
         clearCachedAuthData();
         clearToken();
       });

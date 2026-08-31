@@ -2,26 +2,42 @@
  * Portfolio and Property API client
  */
 
+import { getToken } from "@/lib/auth/session";
+
 export interface Portfolio {
   id: string;
   name: string;
   description: string;
   organization_id: string;
+  is_default: boolean;
   created_at: string;
 }
 
 export interface Property {
   id: string;
   portfolio_id: string;
+  organization_id: string;
   name: string;
   address: string;
   property_type: string;
   units: number;
   timezone: string;
+  description?: string;
   created_at: string;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  if (!token) {
+    throw new Error("No authentication token available. Please log in.");
+  }
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
 export async function createPortfolio(data: {
   organization_id: string;
@@ -31,8 +47,7 @@ export async function createPortfolio(data: {
   const response = await fetch(`${API_BASE}/portfolios`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
   });
@@ -65,9 +80,7 @@ export async function listPortfolios(
 
 export async function getPortfolio(portfolioId: string): Promise<Portfolio> {
   const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -96,7 +109,7 @@ export async function createProperty(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
@@ -116,14 +129,49 @@ export async function listProperties(
   const response = await fetch(
     `${API_BASE}/portfolios/${portfolioId}/properties?organization_id=${organizationId}`,
     {
+      method: "PUT",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
       },
+      body: JSON.stringify(data),
     },
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch properties: ${response.statusText}`);
+    throw new Error(`Failed to update portfolio: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function updateProperty(
+  portfolioId: string,
+  propertyId: string,
+  organizationId: string,
+  data: {
+    name: string;
+    address: string;
+    property_type: string;
+    units?: number;
+    timezone?: string;
+    description?: string;
+  },
+): Promise<Property> {
+  const response = await fetch(
+    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}?organization_id=${organizationId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update property: ${response.statusText}`);
   }
 
   return response.json();

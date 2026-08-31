@@ -1,6 +1,7 @@
 "use client"; // Client: tab switching
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Plus, BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
@@ -15,7 +16,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AlertCard } from "@/components/ui/alert-card";
 import { VendorLogo } from "@/components/integrations/vendor-logos";
 import { useProperty } from "@/lib/property/provider";
-import { PROPERTIES } from "@/lib/fixtures";
+import type { PropertyType } from "@/lib/fixtures";
 import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
 import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
 import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
@@ -158,7 +159,7 @@ function VendorCard({ v }: { v: Vendor }) {
       return;
     }
 
-    console.warn(`No implementation for ${vendor}`);
+    logger.warn(`No implementation for ${vendor}`);
   };
 
   const handleOAuthClick = () => {
@@ -178,58 +179,94 @@ function VendorCard({ v }: { v: Vendor }) {
   const handleTokenSubmit = async (token: string) => {
     const vendor = v.name.toLowerCase();
 
-    if (!selectedProperty?.id) {
-      setMessage("Error: No property selected");
+    if (!selectedProperty?.id || !organization?.id) {
+      setMessage("Error: No property or organization selected");
       return;
     }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const authToken = getToken();
 
-      // For Shelly devices, create a device entry
+      // For Shelly, create integration then device
       if (vendor === "shelly") {
-        const response = await fetch(`${apiUrl}/devices/shelly/create`, {
+        // Create integration
+        const integrationRes = await fetch(`${apiUrl}/integrations`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({
-            property_id: selectedProperty.id,
-            name: `${vendor} Device`,
-            device_id: "shelly_device",
-            ip_address: "0.0.0.0", // Would come from device discovery
+            organization_id: organization.id,
+            provider_id: "shelly",
+            connection_identifier: "shelly_cloud",
+            display_name: "Shelly Cloud",
+            config: { api_token: token },
           }),
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await response.json();
+        if (!integrationRes.ok)
+          throw new Error(
+            `Integration creation failed: ${integrationRes.status}`,
+          );
+        const integration = await integrationRes.json();
+
+        // Create device under integration
+        const deviceRes = await fetch(
+          `${apiUrl}/integrations/${integration.id}/devices/shelly`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              property_id: selectedProperty.id,
+              name: "Shelly Device",
+              device_id: "shelly_device",
+              ip_address: "0.0.0.0",
+            }),
+          },
+        );
+
+        if (!deviceRes.ok)
+          throw new Error(`Device creation failed: ${deviceRes.status}`);
+        await deviceRes.json();
 
         setMessage(`Connected to ${vendor} - Device ready to control`);
         setOauthTokenModalOpen(false);
         setTimeout(() => setMessage(null), 3000);
       } else if (vendor === "govee") {
-        // For Govee, sync devices from their cloud API
-        const response = await fetch(`${apiUrl}/integrations/govee/sync`, {
+        // For Govee, create integration
+        const integrationRes = await fetch(`${apiUrl}/integrations`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({
-            property_id: selectedProperty.id,
-            api_key: token,
+            organization_id: organization.id,
+            provider_id: "govee",
+            connection_identifier: token,
+            display_name: "Govee",
+            config: { api_key: token },
           }),
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const deviceCount = Array.isArray(data) ? data.length : 1;
+        if (!integrationRes.ok)
+          throw new Error(
+            `Integration creation failed: ${integrationRes.status}`,
+          );
 
-        setMessage(`Synced ${deviceCount} Govee device(s) - Ready to control`);
+        setMessage(`Connected to ${vendor} - Ready to control`);
         setOauthTokenModalOpen(false);
         setTimeout(() => setMessage(null), 3000);
       }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Connection failed";
       setMessage(`Error: ${errMsg}`);
-      console.error("Device connection error:", err);
+      logger.error("Device connection error:", err);
     }
   };
 
@@ -241,20 +278,70 @@ function VendorCard({ v }: { v: Vendor }) {
       services: string[];
     }>,
   ) => {
-    if (!selectedProperty?.id) {
-      setMessage("Error: No property selected");
+    if (!selectedProperty?.id || !organization?.id) {
+      setMessage("Error: No property or organization selected");
       return;
     }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const authToken = getToken();
 
+      // Create or get Bluetooth integration
+      let integrationId: string;
+
+      // Try to find existing Bluetooth integration
+      const listRes = await fetch(
+        `${apiUrl}/integrations?organization_id=${organization.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+
+      if (listRes.ok) {
+        const integrations = await listRes.json();
+        const btIntegration = integrations.find(
+          (i: { provider_id: string }) => i.provider_id === "bluetooth",
+        );
+
+        if (btIntegration) {
+          integrationId = btIntegration.id;
+        } else {
+          // Create new Bluetooth integration
+          const createRes = await fetch(`${apiUrl}/integrations`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              organization_id: organization.id,
+              provider_id: "bluetooth",
+              connection_identifier: "local",
+              display_name: "Local Bluetooth",
+            }),
+          });
+
+          if (!createRes.ok)
+            throw new Error(`Integration creation failed: ${createRes.status}`);
+          const integration = await createRes.json();
+          integrationId = integration.id;
+        }
+      } else {
+        throw new Error("Failed to list integrations");
+      }
+
+      // Create devices under the integration
       const results = await Promise.all(
         devices.map((device) =>
-          fetch(`${apiUrl}/devices/bluetooth/create`, {
+          fetch(`${apiUrl}/integrations/${integrationId}/devices/bluetooth`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
             body: JSON.stringify({
               property_id: selectedProperty.id,
               name: device.name,
@@ -266,8 +353,7 @@ function VendorCard({ v }: { v: Vendor }) {
               return r.json();
             })
             .then((data) => {
-              // Device created successfully - can now control it
-              console.log("Bluetooth device created:", data);
+              logger.info("Bluetooth device created:", data);
               return data;
             }),
         ),
@@ -280,7 +366,7 @@ function VendorCard({ v }: { v: Vendor }) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to create devices";
       setMessage(`Error: ${errMsg}`);
-      console.error("Bluetooth device creation error:", err);
+      logger.error("Bluetooth device creation error:", err);
     }
   };
 
@@ -305,6 +391,7 @@ function VendorCard({ v }: { v: Vendor }) {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          organization_id: organization?.id,
           property_id: selectedProperty.id,
           networks,
         }),
@@ -321,7 +408,7 @@ function VendorCard({ v }: { v: Vendor }) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to create devices";
       setMessage(`Error: ${errMsg}`);
-      console.error("WiFi device creation error:", err);
+      logger.error("WiFi device creation error:", err);
     }
   };
 
@@ -681,13 +768,59 @@ function ErrorsTab() {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function IntegrationsScreen() {
-  const [tab, setTab] = useState("connected");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState(searchParams?.get("tab") || "connected");
   const { selectedProperty, selectProperty } = useProperty();
+  const { organization } = useAuth();
+  const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
+  const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
+  const [loading, setLoading] = useState(false);
+
+  const loadProperties = useCallback(async () => {
+    const organizationId = organization?.id;
+    if (!organizationId) return;
+
+    setLoading(true);
+    try {
+      const portfolios = await listPortfolios(organizationId);
+      const allProperties = await Promise.all(
+        portfolios.map((pf) => listProperties(pf.id, organizationId)),
+      );
+      setApiProperties(allProperties.flat());
+
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${apiUrl}/integrations?organization_id=${organizationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${getToken()}`,
+            },
+          },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setIntegrations(data.length > 0 ? data : INTEGRATIONS);
+        }
+      } catch (error) {
+        logger.warn("Failed to load integrations, using fixtures:", error);
+      }
+    } catch (error) {
+      logger.error("Failed to load properties:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [organization?.id]);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
 
   // Use all integrations if no property selected (for demo), or filter by property
   const propertyIntegrations = selectedProperty
-    ? INTEGRATIONS.filter((i) => i.ownerName === selectedProperty.name)
-    : INTEGRATIONS;
+    ? integrations.filter((i) => i.ownerName === selectedProperty.name)
+    : integrations;
 
   const active = propertyIntegrations.filter(
     (i) => i.status === "ACTIVE",
@@ -720,13 +853,46 @@ export function IntegrationsScreen() {
           <select
             value={selectedProperty?.id || ""}
             onChange={(e) => {
-              const prop = PROPERTIES.find((p) => p.id === e.target.value);
-              if (prop) selectProperty(prop);
+              const apiProp = apiProperties.find(
+                (p) => p.id === e.target.value,
+              );
+              if (apiProp) {
+                const PROPERTY_TYPES: PropertyType[] = [
+                  "MIXED_USE",
+                  "SHORT_TERM_RENTAL",
+                  "LONG_TERM_RENTAL",
+                  "OWNER_OCCUPIED",
+                  "COMMERCIAL",
+                ];
+                const propertyType = PROPERTY_TYPES.includes(
+                  apiProp.property_type as PropertyType,
+                )
+                  ? (apiProp.property_type as PropertyType)
+                  : "MIXED_USE";
+
+                selectProperty({
+                  id: apiProp.id,
+                  portfolio: apiProp.portfolio_id,
+                  name: apiProp.name,
+                  address: apiProp.address,
+                  type: propertyType,
+                  tz: apiProp.timezone,
+                  units: apiProp.units,
+                  occupied: 0,
+                  alerts: 0,
+                  status: "ok",
+                  devices: 0,
+                  integrations: 0,
+                });
+              }
             }}
             className="px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+            disabled={loading}
           >
-            <option value="">-- Select a property --</option>
-            {PROPERTIES.map((p) => (
+            <option value="">
+              {loading ? "Loading..." : "-- Select a property --"}
+            </option>
+            {apiProperties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
@@ -746,8 +912,8 @@ export function IntegrationsScreen() {
               count: propertyIntegrations.length,
             },
             { id: "catalog", label: "Catalog", count: VENDORS.length },
-            { id: "webhooks", label: "Webhooks", count: 18 },
-            { id: "errors", label: "Errors", count: 1 },
+            { id: "webhooks", label: "Webhooks", count: WEBHOOK_ROWS.length },
+            { id: "errors", label: "Errors", count: ERROR_ROWS.length },
           ]}
         />
       </div>

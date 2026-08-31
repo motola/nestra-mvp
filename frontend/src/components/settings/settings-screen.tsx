@@ -1,13 +1,13 @@
 "use client"; // Client: tab switching
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
-import { Card, SectionHead } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/lib/auth/provider";
 import { cn } from "@/lib/cn";
+import { getToken } from "@/lib/auth/session";
 
 // ─── Shared form primitives ───────────────────────────────────────────────────
 
@@ -29,19 +29,35 @@ function Field({
   );
 }
 
-function TextInput({ value }: { value: string }) {
+function TextInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <input
-      defaultValue={value}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
       className="bg-bg border border-border rounded-[9px] px-3 py-2 text-[13px] text-text outline-none focus:border-accent"
     />
   );
 }
 
-function SelectInput({ value, options }: { value: string; options: string[] }) {
+function SelectInput({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
   return (
     <select
-      defaultValue={value}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
       className="bg-bg border border-border rounded-[9px] px-3 py-2 text-[13px] text-text outline-none focus:border-accent appearance-none"
     >
       {options.map((o) => (
@@ -90,73 +106,106 @@ function OrgTab({
   displayName,
   legalName,
   slug,
+  organizationId,
 }: {
   displayName: string;
   legalName: string;
   slug: string;
+  organizationId: string;
 }) {
+  const [formData, setFormData] = useState({
+    name: displayName,
+    slug: slug,
+    timezone: "UTC",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setMessage(null);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(
+        `${apiUrl}/organizations/${organizationId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      setMessage({ type: "success", text: "Settings saved successfully" });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Failed to save";
+      setMessage({ type: "error", text: errMsg });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <>
+      {message && (
+        <div
+          className={`mb-4 px-4 py-2 rounded-lg text-sm font-medium ${
+            message.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
       <SettingsCard
         title="Organization profile"
         sub="Visible to teammates. Tenants see only the display name."
         footer={
-          <Button variant="primary" size="sm">
-            Save changes
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save changes"}
           </Button>
         }
       >
         <div className="grid grid-cols-2 gap-3.5">
           <Field label="Display name">
-            <TextInput value={displayName} />
+            <TextInput
+              value={formData.name}
+              onChange={(val) => setFormData({ ...formData, name: val })}
+            />
           </Field>
           <Field label="Legal name">
-            <TextInput value={legalName} />
+            <TextInput value={legalName} onChange={() => {}} />
           </Field>
           <Field label="URL slug" hint="yourorg.nestra.com">
-            <TextInput value={slug} />
+            <TextInput
+              value={formData.slug}
+              onChange={(val) => setFormData({ ...formData, slug: val })}
+            />
           </Field>
           <Field label="Default timezone">
             <SelectInput
-              value="UTC"
+              value={formData.timezone}
+              onChange={(val) => setFormData({ ...formData, timezone: val })}
               options={["Europe/London", "Europe/Paris", "UTC", "US/Eastern"]}
             />
           </Field>
         </div>
       </SettingsCard>
-
-      <SettingsCard
-        title="Danger zone"
-        sub="Permanently delete this organization and all data."
-        footer={
-          <Button variant="destructive" size="sm">
-            Delete organization
-          </Button>
-        }
-      />
-    </>
-  );
-}
-
-// ─── Portfolios tab ───────────────────────────────────────────────────────────
-
-function PortfoliosTab() {
-  return (
-    <>
-      <SectionHead
-        title="Portfolios"
-        sub="LEVEL 2 · GROUPS PROPERTIES UNDER A REGIONAL TEAM"
-        right={
-          <Button variant="primary" size="sm" icon={Plus}>
-            New portfolio
-          </Button>
-        }
-      />
-      <div className="text-center py-12 text-text-3">
-        <p className="text-[13px]">
-          No portfolios yet. Create your first portfolio to get started.
-        </p>
-      </div>
     </>
   );
 }
@@ -236,7 +285,6 @@ function AgentTab() {
 
 const TABS = [
   { id: "organization", label: "Organization" },
-  { id: "portfolios", label: "Portfolios" },
   { id: "billing", label: "Billing" },
   { id: "security", label: "Security" },
   { id: "audit", label: "Audit log" },
@@ -272,9 +320,9 @@ export function SettingsScreen() {
             displayName={organization?.name || ""}
             legalName={organization?.name || ""}
             slug={organization?.slug || ""}
+            organizationId={organization?.id || ""}
           />
         )}
-        {tab === "portfolios" && <PortfoliosTab />}
         {tab === "billing" && <BillingTab />}
         {tab === "security" && <SecurityTab />}
         {tab === "audit" && <AuditTab />}

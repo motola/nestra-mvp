@@ -1,14 +1,18 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGoogleOAuthCallback } from "@/lib/api/hooks/use-auth";
+import { logger } from "@/lib/logger";
 
 function GoogleCallbackForm() {
   const searchParams = useSearchParams();
   const googleCallback = useGoogleOAuthCallback();
+  const mutateCalledRef = useRef(false);
 
   useEffect(() => {
+    if (mutateCalledRef.current) return;
+
     const code = searchParams.get("code");
     const error = searchParams.get("error");
 
@@ -20,12 +24,13 @@ function GoogleCallbackForm() {
     );
 
     if (error) {
-      console.error("Google OAuth error from provider:", error);
+      logger.error("Google OAuth error from provider:", error);
       return;
     }
 
     if (code) {
-      console.log("Exchanging code for token...");
+      mutateCalledRef.current = true;
+      logger.info("Exchanging code for token...");
       googleCallback.mutate({ code });
     }
   }, [searchParams, googleCallback]);

@@ -1,8 +1,10 @@
 """Tests for device sync pipeline: factory, adapter, registry, sync, repository."""
 
+from __future__ import annotations
+
 import unittest
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from integrations.factory import create_device_data
 from integrations.registry import AdapterRegistry, UnknownVendorError, create_registry
@@ -44,6 +46,7 @@ class TestDeviceFactory(unittest.TestCase):
 
         device = create_device_data(
             organization_id=org_id,
+            portfolio_id=UUID("00000000-0000-0000-0000-000000000001"),
             property_id=prop_id,
             integration_id=int_id,
             vendor="august",
@@ -72,6 +75,7 @@ class TestDeviceFactory(unittest.TestCase):
         """Factory defaults raw_state to empty dict."""
         device = create_device_data(
             organization_id=uuid4(),
+            portfolio_id=UUID("00000000-0000-0000-0000-000000000001"),
             property_id=uuid4(),
             integration_id=uuid4(),
             vendor="bluetooth",
@@ -87,6 +91,7 @@ class TestDeviceFactory(unittest.TestCase):
         """Factory timestamps are UTC-aware."""
         device = create_device_data(
             organization_id=uuid4(),
+            portfolio_id=UUID("00000000-0000-0000-0000-000000000001"),
             property_id=uuid4(),
             integration_id=uuid4(),
             vendor="ecobee",

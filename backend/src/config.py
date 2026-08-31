@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     microsoft_oauth_client_secret: str = ""
     microsoft_oauth_tenant: str = "common"
     frontend_url: str = "https://nestra-mvp.fly.dev"
+    backend_url: str = "https://nestra-mvp-api.fly.dev"
 
     @model_validator(mode="after")
     def _reject_insecure_secret_in_production(self) -> Settings:

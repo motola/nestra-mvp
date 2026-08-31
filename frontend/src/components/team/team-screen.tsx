@@ -8,6 +8,7 @@ import { Card, SectionHead } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { InviteMemberForm } from "@/components/team/invite-member-form";
+import { logger } from "@/lib/logger";
 
 // ─── Role permission cards ────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ export function TeamScreen() {
 
   function handleInviteMember(data: { email: string; role: string }) {
     // TODO: Call backend API to send invite
-    console.log("Inviting member:", data);
+    logger.info("Inviting member:", data);
     setShowInviteForm(false);
   }
 

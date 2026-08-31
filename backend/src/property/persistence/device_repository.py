@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import ProgrammingError  # noqa: F401
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from property.domain import Device
 from property.repository.models import DeviceModel
+
+logger = logging.getLogger(__name__)
 
 
 class DeviceRepository:
@@ -32,6 +36,7 @@ class DeviceRepository:
             model = DeviceModel(
                 id=incoming.id,
                 organization_id=incoming.organization_id,
+                portfolio_id=incoming.portfolio_id,
                 property_id=incoming.property_id,
                 integration_id=incoming.integration_id,
                 vendor=incoming.vendor,
@@ -43,9 +48,20 @@ class DeviceRepository:
                 last_sync=incoming.last_sync,
                 created_at=incoming.created_at,
                 updated_at=incoming.updated_at,
+                category=incoming.category,
+                manufacturer=incoming.manufacturer,
+                model=incoming.model,
+                serial_number=incoming.serial_number,
+                ownership_type=incoming.ownership_type,
+                owner_property_id=incoming.owner_property_id,
+                owner_tenant_id=incoming.owner_tenant_id,
             )
             self._session.add(model)
-            await self._session.flush()
+            try:
+                await self._session.flush()
+            except ProgrammingError as e:
+                logger.error(f"Failed to persist device - table may not exist: {e}")
+                raise
             return incoming
 
         existing.vendor_name = incoming.vendor_name
@@ -53,12 +69,20 @@ class DeviceRepository:
         existing.online = incoming.online
         existing.raw_state = incoming.raw_state
         existing.last_sync = incoming.last_sync
+        existing.category = incoming.category
+        existing.manufacturer = incoming.manufacturer
+        existing.model = incoming.model
+        existing.serial_number = incoming.serial_number
+        existing.ownership_type = incoming.ownership_type
+        existing.owner_property_id = incoming.owner_property_id
+        existing.owner_tenant_id = incoming.owner_tenant_id
         existing.updated_at = datetime.now(UTC)
         await self._session.flush()
 
         return Device(
             id=existing.id,
             organization_id=existing.organization_id,
+            portfolio_id=existing.portfolio_id,
             property_id=existing.property_id,
             integration_id=existing.integration_id,
             vendor=existing.vendor,
@@ -70,6 +94,13 @@ class DeviceRepository:
             last_sync=existing.last_sync,
             created_at=existing.created_at,
             updated_at=existing.updated_at,
+            category=existing.category,
+            manufacturer=existing.manufacturer,
+            model=existing.model,
+            serial_number=existing.serial_number,
+            ownership_type=existing.ownership_type,
+            owner_property_id=existing.owner_property_id,
+            owner_tenant_id=existing.owner_tenant_id,
         )
 
     async def get_by_id(self, device_id: UUID) -> Device | None:
@@ -92,13 +123,17 @@ class DeviceRepository:
 
     async def _get_by_vendor_key(self, vendor: str, vendor_specific_id: str) -> DeviceModel | None:
         """O(1) lookup by (vendor, vendor_specific_id) index."""
-        result = await self._session.execute(
-            select(DeviceModel).where(
-                DeviceModel.vendor == vendor,
-                DeviceModel.vendor_specific_id == vendor_specific_id,
+        try:
+            result = await self._session.execute(
+                select(DeviceModel).where(
+                    DeviceModel.vendor == vendor,
+                    DeviceModel.vendor_specific_id == vendor_specific_id,
+                )
             )
-        )
-        return result.scalar_one_or_none()
+            return result.scalar_one_or_none()
+        except ProgrammingError as e:
+            logger.warning(f"Devices table not ready: {e} - treating as new device")
+            return None
 
     @staticmethod
     def _model_to_domain(model: DeviceModel) -> Device:
@@ -106,6 +141,7 @@ class DeviceRepository:
         return Device(
             id=model.id,
             organization_id=model.organization_id,
+            portfolio_id=model.portfolio_id,
             property_id=model.property_id,
             integration_id=model.integration_id,
             vendor=model.vendor,
@@ -117,4 +153,11 @@ class DeviceRepository:
             last_sync=model.last_sync,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            category=model.category,
+            manufacturer=model.manufacturer,
+            model=model.model,
+            serial_number=model.serial_number,
+            ownership_type=model.ownership_type,
+            owner_property_id=model.owner_property_id,
+            owner_tenant_id=model.owner_tenant_id,
         )

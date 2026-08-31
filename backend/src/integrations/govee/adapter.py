@@ -25,6 +25,7 @@ class GoveeAdapter:
         self,
         *,
         organization_id: UUID,
+        portfolio_id: UUID,
         property_id: UUID,
         integration_id: UUID,
         api_key: str | None = None,
@@ -32,7 +33,9 @@ class GoveeAdapter:
         """Fetch Govee devices from cloud API."""
         if not api_key:
             logger.warning("No Govee API key provided, returning mock devices")
-            return self._get_mock_devices(organization_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -48,6 +51,7 @@ class GoveeAdapter:
                         Device(
                             id=None,
                             organization_id=organization_id,
+                            portfolio_id=portfolio_id,
                             property_id=property_id,
                             integration_id=integration_id,
                             vendor="govee",
@@ -66,7 +70,9 @@ class GoveeAdapter:
                 return devices
         except Exception as e:
             logger.error(f"Failed to fetch Govee devices: {e}")
-            return self._get_mock_devices(organization_id, property_id, integration_id)
+            return self._get_mock_devices(
+                organization_id, portfolio_id, property_id, integration_id
+            )
 
     def _get_device_type(self, govee_type: str) -> DeviceType:
         """Map Govee device type to DeviceType."""
@@ -79,13 +85,14 @@ class GoveeAdapter:
         return type_map.get(govee_type, DeviceType.PLUG)
 
     def _get_mock_devices(
-        self, organization_id: UUID, property_id: UUID, integration_id: UUID
+        self, organization_id: UUID, portfolio_id: UUID, property_id: UUID, integration_id: UUID
     ) -> list[Device]:
         """Return mock Govee devices for testing."""
         return [
             Device(
                 id=None,
                 organization_id=organization_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="govee",
@@ -101,6 +108,7 @@ class GoveeAdapter:
             Device(
                 id=None,
                 organization_id=organization_id,
+                portfolio_id=portfolio_id,
                 property_id=property_id,
                 integration_id=integration_id,
                 vendor="govee",
