@@ -8,7 +8,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface BackendDevice {
   id: string;
-  name: string;
   vendor: string;
   vendor_name: string;
   device_type: string;
@@ -19,18 +18,18 @@ interface BackendDevice {
 function convertBackendDevice(bd: BackendDevice): Device {
   // Map backend device_type to frontend category
   const categoryMap: Record<string, DeviceCategory> = {
-    SENSOR: "SENSOR_MOTION",
-    PLUG: "PLUG",
-    LIGHT: "LIGHT",
-    LOCK: "LOCK",
-    THERMOSTAT: "THERMOSTAT",
-    SWITCH: "SWITCH",
-    HUB: "HUB",
+    sensor: "SENSOR_MOTION",
+    plug: "PLUG",
+    light: "LIGHT",
+    lock: "LOCK",
+    thermostat: "THERMOSTAT",
+    switch: "SWITCH",
+    hub: "HUB",
   };
 
   return {
     id: bd.id,
-    name: bd.vendor_name || bd.name,
+    name: bd.vendor_name || bd.vendor,
     room: "Unknown",
     category: categoryMap[bd.device_type] || "PLUG",
     vendor: bd.vendor,
