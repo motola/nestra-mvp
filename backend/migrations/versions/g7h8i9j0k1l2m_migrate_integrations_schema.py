@@ -20,6 +20,13 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # Drop foreign key constraints that depend on integrations table
+    op.drop_constraint("devices_integration_id_fkey", "devices", type_="foreignkey")
+    op.drop_constraint(
+        "device_integrations_integration_id_fkey", "device_integrations", type_="foreignkey"
+    )
+    op.drop_constraint("commands_integration_id_fkey", "commands", type_="foreignkey")
+
     # Drop old integrations table
     op.drop_index("ix_integrations_vendor", table_name="integrations")
     op.drop_index("ix_integrations_organization_id", table_name="integrations")
@@ -54,8 +61,31 @@ def upgrade() -> None:
     op.create_index("idx_integration_provider", "integrations", ["provider_id"])
     op.create_index("idx_integration_org", "integrations", ["organization_id"])
 
+    # Recreate foreign key constraints
+    op.create_foreign_key(
+        "devices_integration_id_fkey", "devices", "integrations", ["integration_id"], ["id"]
+    )
+    op.create_foreign_key(
+        "device_integrations_integration_id_fkey",
+        "device_integrations",
+        "integrations",
+        ["integration_id"],
+        ["id"],
+    )
+    op.create_foreign_key(
+        "commands_integration_id_fkey", "commands", "integrations", ["integration_id"], ["id"]
+    )
+
 
 def downgrade() -> None:
+    # Drop foreign key constraints
+    op.drop_constraint("devices_integration_id_fkey", "devices", type_="foreignkey")
+    op.drop_constraint(
+        "device_integrations_integration_id_fkey", "device_integrations", type_="foreignkey"
+    )
+    op.drop_constraint("commands_integration_id_fkey", "commands", type_="foreignkey")
+
+    # Drop new integrations table
     op.drop_index("idx_integration_org", table_name="integrations")
     op.drop_index("idx_integration_provider", table_name="integrations")
     op.drop_table("integrations")
