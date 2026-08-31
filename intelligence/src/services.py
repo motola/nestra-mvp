@@ -8,12 +8,12 @@ from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from uuid import UUID
 
+from intelligence.domain import Conversation, Message
+from intelligence.models import ConversationModel, MessageModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.clients import ClaudeClient
-from intelligence.domain import Conversation, Message
-from intelligence.models import ConversationModel, MessageModel
 
 logger = logging.getLogger(__name__)
 

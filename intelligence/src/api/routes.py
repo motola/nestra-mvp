@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from domain import ChatRequest
 from fastapi import APIRouter
-
-from domain import ChatRequest, Conversation
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 

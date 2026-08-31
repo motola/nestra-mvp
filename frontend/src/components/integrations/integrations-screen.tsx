@@ -153,6 +153,12 @@ function VendorCard({
   const [message, setMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
+    // Check if property is selected first
+    if (!selectedProperty?.id) {
+      setMessage("Error: Please select a property first");
+      return;
+    }
+
     const vendor = v.name.toLowerCase();
 
     // For OAuth vendors, show the OAuth/Token selection modal
@@ -347,8 +353,8 @@ function VendorCard({
         throw new Error("Failed to list integrations");
       }
 
-      // Create devices under the integration
-      const results = await Promise.all(
+      // Create devices under the integration (handle individual failures)
+      const results = await Promise.allSettled(
         devices.map((device) =>
           fetch(`${apiUrl}/integrations/${integrationId}/devices/bluetooth`, {
             method: "POST",
@@ -373,13 +379,26 @@ function VendorCard({
         ),
       );
 
-      const createdCount = results.filter(Boolean).length;
+      const successCount = results.filter(
+        (r) => r.status === "fulfilled",
+      ).length;
+      const failureCount = results.filter(
+        (r) => r.status === "rejected",
+      ).length;
+
+      if (successCount === 0) {
+        const firstError =
+          results.find((r) => r.status === "rejected")?.reason?.message ||
+          "Failed to create devices";
+        throw new Error(firstError);
+      }
+
       setMessage(
-        `Added Bluetooth integration successfully · ${createdCount} device(s)`,
+        `Added Bluetooth integration successfully · ${successCount} device(s)${failureCount > 0 ? ` (${failureCount} failed)` : ""}`,
       );
       setBluetoothModalOpen(false);
       onDeviceAdded?.();
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => setMessage(null), 4000);
     } catch (err) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to create devices";
@@ -962,7 +981,7 @@ export function IntegrationsScreen() {
               throw new Error("Failed to list integrations");
             }
 
-            const results = await Promise.all(
+            const results = await Promise.allSettled(
               devices.map((device) =>
                 fetch(
                   `${apiUrl}/integrations/${integrationId}/devices/bluetooth`,
@@ -990,10 +1009,20 @@ export function IntegrationsScreen() {
               ),
             );
 
-            const createdCount = results.filter(Boolean).length;
-            logger.info(
-              `Successfully created ${createdCount} Bluetooth device(s)`,
-            );
+            const successCount = results.filter(
+              (r) => r.status === "fulfilled",
+            ).length;
+            const failureCount = results.filter(
+              (r) => r.status === "rejected",
+            ).length;
+
+            if (successCount > 0) {
+              logger.info(
+                `Successfully created ${successCount} Bluetooth device(s)${failureCount > 0 ? ` (${failureCount} failed)` : ""}`,
+              );
+            } else {
+              throw new Error("Failed to create any Bluetooth devices");
+            }
           } catch (err) {
             logger.error("Bluetooth device creation error:", err);
           }

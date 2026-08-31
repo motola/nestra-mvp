@@ -5,13 +5,12 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from integrations.registry import create_registry
 from integrations.sync import DeviceSyncService
 from property.persistence.device_repository import DeviceRepository
 from property.repository.models import DeviceModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class DeviceExecutor:
                 return f"Error: Unknown tool {tool_name}"
         except Exception as exc:
             logger.error("Tool execution error: %s", exc)
-            return f"Error executing {tool_name}: {str(exc)}"
+            return f"Error executing {tool_name}: {exc!s}"
 
     async def _list_devices(self, tool_input: dict[str, str | float | bool]) -> str:
         """List all devices for a property from repository."""
