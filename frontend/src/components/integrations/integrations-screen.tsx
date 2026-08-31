@@ -138,7 +138,13 @@ const CATALOG_CATS = [
   "Hubs & bridges",
 ];
 
-function VendorCard({ v }: { v: Vendor }) {
+function VendorCard({
+  v,
+  onDeviceAdded,
+}: {
+  v: Vendor;
+  onDeviceAdded?: () => void;
+}) {
   const { selectedProperty } = useProperty();
   const { organization } = useAuth();
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
@@ -368,7 +374,11 @@ function VendorCard({ v }: { v: Vendor }) {
       );
 
       const createdCount = results.filter(Boolean).length;
-      setMessage(`Successfully created ${createdCount} Bluetooth device(s)`);
+      setMessage(
+        `Added Bluetooth integration successfully · ${createdCount} device(s)`,
+      );
+      setBluetoothModalOpen(false);
+      onDeviceAdded?.();
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       const errMsg =
@@ -483,7 +493,7 @@ function VendorCard({ v }: { v: Vendor }) {
   );
 }
 
-function CatalogTab() {
+function CatalogTab({ onDeviceAdded }: { onDeviceAdded?: () => void }) {
   const [cat, setCat] = useState("All vendors");
 
   const filteredVendors =
@@ -506,7 +516,9 @@ function CatalogTab() {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {filteredVendors.length > 0 ? (
-          filteredVendors.map((v) => <VendorCard key={v.id} v={v} />)
+          filteredVendors.map((v) => (
+            <VendorCard key={v.id} v={v} onDeviceAdded={onDeviceAdded} />
+          ))
         ) : (
           <div className="col-span-3 border border-border rounded-panel p-12 text-center">
             <p className="text-[16px] text-text font-serif m-0">
@@ -848,7 +860,7 @@ export function IntegrationsScreen() {
         {tab === "connected" && (
           <ConnectedTab integrations={propertyIntegrations} />
         )}
-        {tab === "catalog" && <CatalogTab />}
+        {tab === "catalog" && <CatalogTab onDeviceAdded={loadProperties} />}
         {tab === "webhooks" && <WebhooksTab />}
         {tab === "errors" && <ErrorsTab />}
       </div>
