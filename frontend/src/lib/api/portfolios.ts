@@ -65,9 +65,7 @@ export async function listPortfolios(
   const response = await fetch(
     `${API_BASE}/portfolios?organization_id=${organizationId}`,
     {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-      },
+      headers: getAuthHeaders(),
     },
   );
 
@@ -78,10 +76,16 @@ export async function listPortfolios(
   return response.json();
 }
 
-export async function getPortfolio(portfolioId: string): Promise<Portfolio> {
-  const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
-    headers: getAuthHeaders(),
-  });
+export async function getPortfolio(
+  portfolioId: string,
+  organizationId: string,
+): Promise<Portfolio> {
+  const response = await fetch(
+    `${API_BASE}/portfolios/${portfolioId}?organization_id=${organizationId}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch portfolio: ${response.statusText}`);

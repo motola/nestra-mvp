@@ -152,8 +152,11 @@ async def create_property(portfolio_id: UUID, request: PropertyCreateRequest) ->
         raise HTTPException(status_code=400, detail="Portfolio ID mismatch")
 
     async with SessionLocal() as db, org_scope(db, request.organization_id):
-        # Verify portfolio exists
-        stmt = select(PortfolioModel).where(PortfolioModel.id == portfolio_id)
+        # Verify portfolio exists and belongs to the requesting organization
+        stmt = select(PortfolioModel).where(
+            PortfolioModel.id == portfolio_id,
+            PortfolioModel.organization_id == request.organization_id,
+        )
         result = await db.execute(stmt)
         portfolio = result.scalar_one_or_none()
 
@@ -216,3 +219,106 @@ async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[Pro
             )
             for prop in properties
         ]
+
+
+class PortfolioUpdateRequest(BaseModel):
+    """Request to update a portfolio."""
+
+    name: str | None = None
+    description: str | None = None
+
+
+@router.put("/{portfolio_id}", response_model=PortfolioResponse)
+async def update_portfolio(
+    portfolio_id: UUID, organization_id: UUID, request: PortfolioUpdateRequest
+) -> PortfolioResponse:
+    """Update a portfolio."""
+    async with SessionLocal() as db, org_scope(db, organization_id):
+        stmt = select(PortfolioModel).where(
+            PortfolioModel.id == portfolio_id,
+            PortfolioModel.organization_id == organization_id,
+        )
+        result = await db.execute(stmt)
+        portfolio = result.scalar_one_or_none()
+
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+
+        if request.name is not None:
+            portfolio.name = request.name
+        if request.description is not None:
+            portfolio.description = request.description
+
+        await db.commit()
+        await db.refresh(portfolio)
+
+        return PortfolioResponse(
+            id=portfolio.id,
+            name=portfolio.name,
+            description=portfolio.description,
+            organization_id=portfolio.organization_id,
+            is_default=portfolio.is_default,
+            created_at=portfolio.created_at,
+        )
+
+
+class PropertyUpdateRequest(BaseModel):
+    """Request to update a property."""
+
+    name: str | None = None
+    address: str | None = None
+    property_type: str | None = None
+    units: int | None = None
+    timezone: str | None = None
+    description: str | None = None
+
+
+@router.put("/{portfolio_id}/properties/{property_id}", response_model=PropertyResponse)
+async def update_property(
+    portfolio_id: UUID,
+    property_id: UUID,
+    organization_id: UUID,
+    request: PropertyUpdateRequest,
+) -> PropertyResponse:
+    """Update a property in a portfolio."""
+    async with SessionLocal() as db, org_scope(db, organization_id):
+        stmt = select(PropertyModel).where(
+            PropertyModel.id == property_id,
+            PropertyModel.portfolio_id == portfolio_id,
+            PropertyModel.organization_id == organization_id,
+        )
+        result = await db.execute(stmt)
+        prop = result.scalar_one_or_none()
+
+        if not prop:
+            raise HTTPException(status_code=404, detail="Property not found")
+
+        if request.name is not None:
+            prop.name = request.name
+        if request.address is not None:
+            prop.address = request.address
+        if request.property_type is not None:
+            prop.property_type = request.property_type
+        if request.units is not None:
+            prop.units = request.units
+        if request.timezone is not None:
+            prop.timezone = request.timezone
+        if request.description is not None:
+            prop.description = request.description
+
+        prop.updated_at = datetime.now(UTC)
+        await db.commit()
+        await db.refresh(prop)
+
+        return PropertyResponse(
+            id=prop.id,
+            portfolio_id=prop.portfolio_id,
+            organization_id=prop.organization_id,
+            name=prop.name,
+            address=prop.address,
+            property_type=prop.property_type,
+            units=prop.units,
+            timezone=prop.timezone,
+            description=prop.description,
+            created_at=prop.created_at,
+        )
