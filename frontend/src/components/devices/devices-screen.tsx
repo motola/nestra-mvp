@@ -1,7 +1,11 @@
 "use client"; // Client: device filter, drawer open/close state
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useProperty } from "@/lib/property/provider";
+import { useAuth } from "@/lib/auth/provider";
+import { listPortfolios, listProperties } from "@/lib/api/portfolios";
+import type { Property as ApiProperty } from "@/lib/api/portfolios";
 import {
   X,
   Plus,
@@ -689,7 +693,29 @@ function DeviceList({
 export function DevicesScreen() {
   const router = useRouter();
   const [selected, setSelected] = useState<Device | null>(null);
-  const { devices, error } = useDevices();
+  const { selectedProperty, selectProperty } = useProperty();
+  const { organization } = useAuth();
+  const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
+  const { devices, error } = useDevices(selectedProperty?.id);
+
+  useEffect(() => {
+    const loadProperties = async () => {
+      const organizationId = organization?.id;
+      if (!organizationId) return;
+
+      try {
+        const portfolios = await listPortfolios(organizationId);
+        const allProperties = await Promise.all(
+          portfolios.map((pf) => listProperties(pf.id, organizationId)),
+        );
+        setApiProperties(allProperties.flat());
+      } catch (err) {
+        console.error("Failed to load properties:", err);
+      }
+    };
+
+    loadProperties();
+  }, [organization?.id]);
 
   const total = devices.length;
   const online = devices.filter((d) => d.reachable).length;
@@ -713,6 +739,46 @@ export function DevicesScreen() {
             </Button>
           }
         />
+
+        <div className="px-7 py-4 bg-surface border-b border-border">
+          <label className="flex items-center gap-3">
+            <span className="text-sm font-medium text-text">
+              Select property:
+            </span>
+            <select
+              value={selectedProperty?.id || ""}
+              onChange={(e) => {
+                const apiProp = apiProperties.find(
+                  (p) => p.id === e.target.value,
+                );
+                if (apiProp) {
+                  selectProperty({
+                    id: apiProp.id,
+                    portfolio: apiProp.portfolio_id,
+                    name: apiProp.name,
+                    address: apiProp.address,
+                    type: "MIXED_USE",
+                    tz: apiProp.timezone,
+                    units: apiProp.units,
+                    occupied: 0,
+                    alerts: 0,
+                    status: "ok",
+                    devices: 0,
+                    integrations: 0,
+                  });
+                }
+              }}
+              className="px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+            >
+              <option value="">-- Select a property --</option>
+              {apiProperties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
           <div className="grid grid-cols-4 gap-3">
@@ -756,6 +822,46 @@ export function DevicesScreen() {
           </Button>
         }
       />
+
+      <div className="px-7 py-4 bg-surface border-b border-border">
+        <label className="flex items-center gap-3">
+          <span className="text-sm font-medium text-text">
+            Select property:
+          </span>
+          <select
+            value={selectedProperty?.id || ""}
+            onChange={(e) => {
+              const apiProp = apiProperties.find(
+                (p) => p.id === e.target.value,
+              );
+              if (apiProp) {
+                selectProperty({
+                  id: apiProp.id,
+                  portfolio: apiProp.portfolio_id,
+                  name: apiProp.name,
+                  address: apiProp.address,
+                  type: "MIXED_USE",
+                  tz: apiProp.timezone,
+                  units: apiProp.units,
+                  occupied: 0,
+                  alerts: 0,
+                  status: "ok",
+                  devices: 0,
+                  integrations: 0,
+                });
+              }
+            }}
+            className="px-3 py-2 border border-border rounded-lg bg-surface text-text text-sm"
+          >
+            <option value="">-- Select a property --</option>
+            {apiProperties.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-3">
