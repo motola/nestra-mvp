@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -41,6 +42,7 @@ class DeviceData(BaseModel):
     device_type: str
     online: bool
     raw_state: dict[str, Any]
+    created_at: datetime
 
 
 class ExecuteCommandRequest(BaseModel):
@@ -99,6 +101,7 @@ async def sync_devices(
                     device_type=d.device_type,
                     online=d.online,
                     raw_state=d.raw_state,
+                    created_at=d.created_at,
                 )
                 for d in devices
             ],
@@ -125,6 +128,7 @@ async def get_property_devices(
                 device_type=d.device_type,
                 online=d.online,
                 raw_state=d.raw_state,
+                created_at=d.created_at,
             )
             for d in devices
         ]
@@ -152,6 +156,7 @@ async def get_device(
             device_type=device.device_type,
             online=device.online,
             raw_state=device.raw_state,
+            created_at=device.created_at,
         )
     except HTTPException:
         raise
@@ -243,6 +248,7 @@ async def refresh_device_state(
             device_type=device.device_type,
             online=device.online,
             raw_state=device.raw_state,
+            created_at=device.created_at,
         )
     except HTTPException:
         raise
