@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from anthropic import Anthropic, AsyncAnthropic
+from typing_extensions import Self
 
 
 class ClaudeClient:
@@ -113,7 +114,7 @@ class ClaudeClient:
         """Close async client."""
         await self._async_client.close()
 
-    async def __aenter__(self) -> ClaudeClient:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         return self
 

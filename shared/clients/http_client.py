@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 import httpx
+from typing_extensions import Self
 
 
 class HttpClient:
@@ -200,7 +201,7 @@ class HttpClient:
         """Close HTTP client."""
         await self._client.aclose()
 
-    async def __aenter__(self) -> HttpClient:
+    async def __aenter__(self) -> Self:
         """Async context manager entry."""
         return self
 
