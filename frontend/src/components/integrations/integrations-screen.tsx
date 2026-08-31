@@ -63,7 +63,7 @@ function IntegrationCard({ item: i }: { item: ApiIntegration }) {
             )}
           </div>
           <MonoLabel className="mt-1 block">
-            provider · {i.provider_id}
+            organization integration · {i.provider_id}
           </MonoLabel>
         </div>
         <Button variant={i.enabled ? "ghost" : "primary"} size="sm">
@@ -101,6 +101,24 @@ function IntegrationCard({ item: i }: { item: ApiIntegration }) {
           </div>
         ))}
       </div>
+
+      <div className="h-px bg-border my-3.5" />
+
+      <div>
+        <MonoLabel>integration id</MonoLabel>
+        <p className="font-mono text-[11px] text-text-2 mt-1 mb-0 break-all">
+          {i.id}
+        </p>
+      </div>
+
+      {i.account_identifier && (
+        <div className="mt-3">
+          <MonoLabel>account</MonoLabel>
+          <p className="font-mono text-[11px] text-text-2 mt-1 mb-0 break-all">
+            {i.account_identifier}
+          </p>
+        </div>
+      )}
     </Card>
   );
 }
