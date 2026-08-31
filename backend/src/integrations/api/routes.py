@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
@@ -41,6 +41,34 @@ class IntegrationResponse(BaseModel):
     display_name: str | None
     enabled: bool
     created_at: datetime
+
+
+@router.get("", response_model=list[IntegrationResponse])
+async def list_integrations(
+    organization_id: UUID = Query(...),  # noqa: B008
+) -> list[IntegrationResponse]:
+    """List all integrations for an organization."""
+    async with SessionLocal() as db:
+        result = await db.execute(
+            select(IntegrationModel).where(
+                IntegrationModel.organization_id == organization_id,
+                IntegrationModel.deleted_at.is_(None),
+            )
+        )
+        integrations = result.scalars().all()
+
+        return [
+            IntegrationResponse(
+                id=integration.id,
+                organization_id=integration.organization_id,
+                provider_id=integration.provider_id,
+                connection_identifier=integration.connection_identifier,
+                display_name=integration.display_name,
+                enabled=integration.enabled,
+                created_at=integration.created_at,
+            )
+            for integration in integrations
+        ]
 
 
 @router.post("", response_model=IntegrationResponse)

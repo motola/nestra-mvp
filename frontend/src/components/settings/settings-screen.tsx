@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { useAuth } from "@/lib/auth/provider";
 import { cn } from "@/lib/cn";
+import { getToken } from "@/lib/auth/session";
 
 // ─── Shared form primitives ───────────────────────────────────────────────────
 
@@ -134,7 +135,7 @@ function OrgTab({
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${getToken()}`,
           },
           body: JSON.stringify(formData),
         },

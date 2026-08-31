@@ -2,6 +2,8 @@
  * Occupancy management API client
  */
 
+import { getToken } from "@/lib/auth/session";
+
 export interface Tenant {
   id: string;
   organization_id: string;
@@ -52,7 +54,7 @@ export async function createTenant(data: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });
@@ -77,7 +79,7 @@ export async function listTenants(
 
   const response = await fetch(`${API_BASE}/occupancy/tenants?${params}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -91,7 +93,7 @@ export async function listTenants(
 export async function getTenant(tenantId: string): Promise<Tenant> {
   const response = await fetch(`${API_BASE}/occupancy/tenants/${tenantId}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -114,7 +116,7 @@ export async function updateTenant(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });
@@ -130,7 +132,7 @@ export async function deleteTenant(tenantId: string): Promise<void> {
   const response = await fetch(`${API_BASE}/occupancy/tenants/${tenantId}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -152,7 +154,7 @@ export async function createRoom(data: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });
@@ -177,7 +179,7 @@ export async function listRooms(
 
   const response = await fetch(`${API_BASE}/occupancy/rooms?${params}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -200,7 +202,7 @@ export async function createStay(data: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });
@@ -225,7 +227,7 @@ export async function listStays(
 
   const response = await fetch(`${API_BASE}/occupancy/stays?${params}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -239,7 +241,7 @@ export async function listStays(
 export async function getStay(stayId: string): Promise<Stay> {
   const response = await fetch(`${API_BASE}/occupancy/stays/${stayId}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -261,7 +263,7 @@ export async function updateStay(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });

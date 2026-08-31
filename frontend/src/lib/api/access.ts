@@ -2,6 +2,8 @@
  * Access control and audit API client
  */
 
+import { getToken } from "@/lib/auth/session";
+
 export interface AccessGrant {
   id: string;
   device_id: string;
@@ -60,7 +62,7 @@ export async function grantDeviceAccess(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
@@ -87,7 +89,7 @@ export async function listAccessGrants(
     `${API_BASE}/access/devices/${deviceId}/access-grants?${params}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
     },
   );
@@ -103,7 +105,7 @@ export async function revokeAccess(grantId: string): Promise<void> {
   const response = await fetch(`${API_BASE}/access/access-grants/${grantId}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -123,7 +125,7 @@ export async function getMyDevices(
 
   const response = await fetch(`${API_BASE}/access/my-devices?${params}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -150,7 +152,7 @@ export async function createShareLink(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify(data),
     },
@@ -177,7 +179,7 @@ export async function listShareLinks(
     `${API_BASE}/access/devices/${deviceId}/share-links?${params}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
     },
   );
@@ -199,7 +201,7 @@ export async function claimShareLink(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
       body: JSON.stringify({ user_id: userId }),
     },
@@ -236,7 +238,7 @@ export async function listAuditEvents(
 
   const response = await fetch(`${API_BASE}/access/audit/events?${params}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -250,7 +252,7 @@ export async function listAuditEvents(
 export async function getAuditEvent(eventId: string): Promise<AuditEvent> {
   const response = await fetch(`${API_BASE}/access/audit/events/${eventId}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -271,7 +273,7 @@ export async function getAuditSummary(organizationId: string): Promise<{
     `${API_BASE}/access/audit/summary?organization_id=${organizationId}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
     },
   );
@@ -297,7 +299,7 @@ export async function getDeviceAuditLog(
     `${API_BASE}/access/audit/events/device/${deviceId}?${params}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Authorization: `Bearer ${getToken()}`,
       },
     },
   );

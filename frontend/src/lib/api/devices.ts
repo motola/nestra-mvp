@@ -2,6 +2,8 @@
  * Device management API client
  */
 
+import { getToken } from "@/lib/auth/session";
+
 export interface Device {
   id: string;
   organization_id: string;
@@ -45,21 +47,29 @@ export interface DeviceDetail extends Device {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export async function createBluetoothDevice(data: {
-  organization_id: string;
-  property_id: string;
   integration_id: string;
+  property_id: string;
   name: string;
   mac_address: string;
   room_id?: string;
 }): Promise<Device> {
-  const response = await fetch(`${API_BASE}/devices/bluetooth/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+  const token = getToken();
+  const response = await fetch(
+    `${API_BASE}/integrations/${data.integration_id}/devices/bluetooth`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        property_id: data.property_id,
+        name: data.name,
+        mac_address: data.mac_address,
+        room_id: data.room_id,
+      }),
     },
-    body: JSON.stringify(data),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -72,22 +82,31 @@ export async function createBluetoothDevice(data: {
 }
 
 export async function createShellyDevice(data: {
-  organization_id: string;
-  property_id: string;
   integration_id: string;
+  property_id: string;
   name: string;
   device_id: string;
   ip_address: string;
   room_id?: string;
 }): Promise<Device> {
-  const response = await fetch(`${API_BASE}/devices/shelly/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+  const token = getToken();
+  const response = await fetch(
+    `${API_BASE}/integrations/${data.integration_id}/devices/shelly`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        property_id: data.property_id,
+        name: data.name,
+        device_id: data.device_id,
+        ip_address: data.ip_address,
+        room_id: data.room_id,
+      }),
     },
-    body: JSON.stringify(data),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to create Shelly device: ${response.statusText}`);
@@ -100,7 +119,7 @@ export async function createShellyDevice(data: {
 export async function getDevice(deviceId: string): Promise<DeviceDetail> {
   const response = await fetch(`${API_BASE}/devices/${deviceId}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
@@ -123,7 +142,7 @@ export async function controlDevice(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(data),
   });
@@ -140,7 +159,7 @@ export async function getPropertyDevices(
 ): Promise<Device[]> {
   const response = await fetch(`${API_BASE}/properties/${propertyId}/devices`, {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      Authorization: `Bearer ${getToken()}`,
     },
   });
 
