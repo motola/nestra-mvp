@@ -56,7 +56,15 @@ class DeviceModel(Base):
     integration_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("integrations.id"), nullable=False, index=True
     )
-    device_type: Mapped[DeviceType] = mapped_column(Enum(DeviceType), nullable=False)
+    device_type: Mapped[DeviceType] = mapped_column(
+        Enum(
+            DeviceType,
+            name="devicetype",
+            values_callable=lambda enum_type: [member.value for member in enum_type],
+            validate_strings=True,
+        ),
+        nullable=False,
+    )
     vendor: Mapped[str] = mapped_column(String(255), nullable=False)
     vendor_specific_id: Mapped[str] = mapped_column(String(255), nullable=False)
     vendor_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
