@@ -155,10 +155,15 @@ function VendorCard({ v }: { v: Vendor }) {
       return;
     }
 
-    // For local discovery vendors, don't trigger from card
-    // The top "Connect vendor" button handles this
-    if (["bluetooth", "wifi"].includes(vendor)) {
-      logger.info(`Device discovery handled by main Connect vendor button`);
+    // For Bluetooth discovery
+    if (vendor === "bluetooth") {
+      setBluetoothModalOpen(true);
+      return;
+    }
+
+    // For WiFi discovery
+    if (vendor === "wifi") {
+      setWifiModalOpen(true);
       return;
     }
 
