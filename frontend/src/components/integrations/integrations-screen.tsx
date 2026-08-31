@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Plus, BookOpen, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { INTEGRATIONS, VENDORS } from "@/lib/fixtures";
-import type { Integration, Vendor } from "@/lib/fixtures";
+import { VENDORS } from "@/lib/fixtures";
+import type { Vendor } from "@/lib/fixtures";
 import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/ui/tag";
 import { Tabs } from "@/components/ui/tabs";
@@ -28,38 +28,63 @@ import { logger } from "@/lib/logger";
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
-function IntegrationCard({ item: i }: { item: Integration }) {
+interface ApiIntegration {
+  id: string;
+  organization_id: string;
+  provider_id: string;
+  account_identifier: string;
+  connection_identifier: string | null;
+  display_name: string | null;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+function IntegrationCard({ item: i }: { item: ApiIntegration }) {
+  const providerName = i.display_name || i.provider_id;
+
   return (
     <Card hoverable className="p-[18px]">
       <div className="flex items-center gap-3.5">
-        <VendorLogo name={i.vendor} size={48} />
+        <VendorLogo name={i.provider_id} size={48} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5">
-            <span className="font-serif text-[18px] text-text">{i.vendor}</span>
-            {i.status === "ACTIVE" ? (
+            <span className="font-serif text-[18px] text-text">
+              {providerName}
+            </span>
+            {i.enabled ? (
               <Tag variant="ok" withDot>
                 active
               </Tag>
             ) : (
               <Tag variant="warn" withDot>
-                token expired
+                disabled
               </Tag>
             )}
           </div>
-          <MonoLabel className="mt-1 block">property · {i.ownerName}</MonoLabel>
+          <MonoLabel className="mt-1 block">
+            provider · {i.provider_id}
+          </MonoLabel>
         </div>
-        <Button variant={i.needsReauth ? "primary" : "ghost"} size="sm">
-          {i.needsReauth ? "Reauthorize" : "Manage"}
+        <Button variant={i.enabled ? "ghost" : "primary"} size="sm">
+          {i.enabled ? "Manage" : "Reconnect"}
         </Button>
       </div>
 
       <div className="h-px bg-border my-3.5" />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "devices", value: String(i.devices), mono: true },
-          { label: "last sync", value: i.lastSync, mono: false },
-          { label: "connected", value: i.connectedAt, mono: true },
+          {
+            label: "connection",
+            value: i.connection_identifier || "default",
+            mono: true,
+          },
+          {
+            label: "connected",
+            value: new Date(i.created_at).toLocaleDateString(),
+            mono: true,
+          },
         ].map(({ label, value, mono }) => (
           <div key={label}>
             <MonoLabel>{label}</MonoLabel>
@@ -76,29 +101,21 @@ function IntegrationCard({ item: i }: { item: Integration }) {
           </div>
         ))}
       </div>
-
-      <div className="flex gap-1.5 mt-3.5 flex-wrap">
-        {i.scopes.map((s) => (
-          <Tag key={s} variant="neutral">
-            {s}
-          </Tag>
-        ))}
-      </div>
     </Card>
   );
 }
 
-function ConnectedTab({ integrations }: { integrations: Integration[] }) {
-  const reauth = integrations.find((i) => i.needsReauth);
+function ConnectedTab({ integrations }: { integrations: ApiIntegration[] }) {
+  const disabled = integrations.find((integration) => !integration.enabled);
   return (
     <>
-      {reauth && (
+      {disabled && (
         <AlertCard
           severity="amber"
-          title={`${reauth.vendor} token expired`}
-          desc={`Your ${reauth.vendor} access token expired. Reconnect to restore — your scopes will carry over.`}
-          meta={`Integration · ${reauth.ownerName} · Today 03:14`}
-          actions={["Reauthorize", "Open integration"]}
+          title={`${disabled.display_name || disabled.provider_id} is disabled`}
+          desc="Reconnect this provider to restore device communication."
+          meta={`Integration · ${disabled.provider_id}`}
+          actions={["Reconnect", "Open integration"]}
         />
       )}
       <SectionHead
@@ -723,7 +740,7 @@ export function IntegrationsScreen() {
   const { selectedProperty, selectProperty } = useProperty();
   const { organization } = useAuth();
   const [apiProperties, setApiProperties] = useState<ApiProperty[]>([]);
-  const [integrations, setIntegrations] = useState<Integration[]>(INTEGRATIONS);
+  const [integrations, setIntegrations] = useState<ApiIntegration[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDeviceTypeModal, setShowDeviceTypeModal] = useState(false);
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
@@ -735,7 +752,10 @@ export function IntegrationsScreen() {
 
     setLoading(true);
     try {
-      const portfolios = await listPortfolios(organizationId);
+      const portfolioResponse = await listPortfolios(organizationId);
+      const portfolios = Array.isArray(portfolioResponse)
+        ? portfolioResponse
+        : [];
       const allProperties = await Promise.all(
         portfolios.map((pf) => listProperties(pf.id, organizationId)),
       );
@@ -753,11 +773,14 @@ export function IntegrationsScreen() {
           },
         );
         if (response.ok) {
-          const data = await response.json();
-          setIntegrations(data.length > 0 ? data : INTEGRATIONS);
+          const data: unknown = await response.json();
+          const apiIntegrations = Array.isArray(data)
+            ? (data as ApiIntegration[])
+            : [];
+          setIntegrations(apiIntegrations);
         }
       } catch (error) {
-        logger.warn("Failed to load integrations, using fixtures:", error);
+        logger.warn("Failed to load integrations:", error);
       }
     } catch (error) {
       logger.error("Failed to load properties:", error);
@@ -770,22 +793,17 @@ export function IntegrationsScreen() {
     loadProperties();
   }, [loadProperties]);
 
-  // Use all integrations if no property selected (for demo), or filter by property
-  const propertyIntegrations = selectedProperty
-    ? integrations.filter((i) => i.ownerName === selectedProperty.name)
-    : integrations;
-
-  const active = propertyIntegrations.filter(
-    (i) => i.status === "ACTIVE",
+  const active = integrations.filter(
+    (integration) => integration.enabled,
   ).length;
-  const needsReauth = propertyIntegrations.filter((i) => i.needsReauth).length;
+  const needsReconnect = integrations.length - active;
 
   return (
     <>
       <PageHeader
         eyebrow={selectedProperty?.name.toUpperCase() || "WORKSPACE"}
         title="Integrations"
-        sub={`${propertyIntegrations.length} connections · ${active} active ${needsReauth ? `· ${needsReauth} needs reauth` : ""}`}
+        sub={`${integrations.length} connections · ${active} active ${needsReconnect ? `· ${needsReconnect} needs reconnect` : ""}`}
         primary={
           <Button variant="primary" icon={Plus}>
             Connect vendor
@@ -862,7 +880,7 @@ export function IntegrationsScreen() {
             {
               id: "connected",
               label: "Connected",
-              count: propertyIntegrations.length,
+              count: integrations.length,
             },
             { id: "catalog", label: "Catalog", count: VENDORS.length },
             { id: "webhooks", label: "Webhooks", count: WEBHOOK_ROWS.length },
@@ -872,9 +890,7 @@ export function IntegrationsScreen() {
       </div>
 
       <div className="px-7 pt-5 pb-8 flex flex-col gap-5">
-        {tab === "connected" && (
-          <ConnectedTab integrations={propertyIntegrations} />
-        )}
+        {tab === "connected" && <ConnectedTab integrations={integrations} />}
         {tab === "catalog" && <CatalogTab onDeviceAdded={loadProperties} />}
         {tab === "webhooks" && <WebhooksTab />}
         {tab === "errors" && <ErrorsTab />}

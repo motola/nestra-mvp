@@ -9,9 +9,8 @@ Create Date: 2026-08-28
 from __future__ import annotations
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
-
 from alembic import op
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 revision = "f5g6h7i8j9k0"
 down_revision = "e4f5a6b7c8d9"

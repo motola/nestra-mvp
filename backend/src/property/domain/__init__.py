@@ -33,16 +33,15 @@ class DeviceType(StrEnum):
 
 
 class Integration(BaseModel):
-    """Integration connection to a vendor (Bluetooth, WiFi, etc)."""
+    """Configured provider connection belonging to an organization."""
 
     id: UUID | None = None
     organization_id: UUID
-    vendor: str
+    provider_id: str
     account_identifier: str = ""
     enabled: bool = True
     created_at: datetime
     updated_at: datetime
-    provider_id: str | None = None
     connection_identifier: str | None = None
     display_name: str | None = None
     credential_provider: str | None = None

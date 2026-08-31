@@ -25,10 +25,9 @@ Soft delete policy:
 from __future__ import annotations
 
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-
-from alembic import op
 
 revision: str = "d6e7f8g9h0i1"
 down_revision: str | None = "c520e2a2989a"
