@@ -11,10 +11,9 @@ commands retain valid foreign-key references.
 from __future__ import annotations
 
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-
-from alembic import op
 
 revision = "g7h8i9j0k1l2m"
 down_revision = "g7h8i9j0k1l2"
