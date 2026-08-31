@@ -186,51 +186,87 @@ function VendorCard({ v }: { v: Vendor }) {
   const handleTokenSubmit = async (token: string) => {
     const vendor = v.name.toLowerCase();
 
-    if (!selectedProperty?.id) {
-      setMessage("Error: No property selected");
+    if (!selectedProperty?.id || !organization?.id) {
+      setMessage("Error: No property or organization selected");
       return;
     }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const authToken = getToken();
 
-      // For Shelly devices, create a device entry
+      // For Shelly, create integration then device
       if (vendor === "shelly") {
-        const response = await fetch(`${apiUrl}/devices/shelly/create`, {
+        // Create integration
+        const integrationRes = await fetch(`${apiUrl}/integrations`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({
-            property_id: selectedProperty.id,
-            name: `${vendor} Device`,
-            device_id: "shelly_device",
-            ip_address: "0.0.0.0", // Would come from device discovery
+            organization_id: organization.id,
+            provider_id: "shelly",
+            connection_identifier: "shelly_cloud",
+            display_name: "Shelly Cloud",
+            config: { api_token: token },
           }),
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        await response.json();
+        if (!integrationRes.ok)
+          throw new Error(
+            `Integration creation failed: ${integrationRes.status}`,
+          );
+        const integration = await integrationRes.json();
+
+        // Create device under integration
+        const deviceRes = await fetch(
+          `${apiUrl}/integrations/${integration.id}/devices/shelly`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              property_id: selectedProperty.id,
+              name: "Shelly Device",
+              device_id: "shelly_device",
+              ip_address: "0.0.0.0",
+            }),
+          },
+        );
+
+        if (!deviceRes.ok)
+          throw new Error(`Device creation failed: ${deviceRes.status}`);
+        await deviceRes.json();
 
         setMessage(`Connected to ${vendor} - Device ready to control`);
         setOauthTokenModalOpen(false);
         setTimeout(() => setMessage(null), 3000);
       } else if (vendor === "govee") {
-        // For Govee, sync devices from their cloud API
-        const response = await fetch(`${apiUrl}/integrations/govee/sync`, {
+        // For Govee, create integration
+        const integrationRes = await fetch(`${apiUrl}/integrations`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
           body: JSON.stringify({
-            property_id: selectedProperty.id,
-            api_key: token,
+            organization_id: organization.id,
+            provider_id: "govee",
+            connection_identifier: token,
+            display_name: "Govee",
+            config: { api_key: token },
           }),
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const deviceCount = Array.isArray(data) ? data.length : 1;
+        if (!integrationRes.ok)
+          throw new Error(
+            `Integration creation failed: ${integrationRes.status}`,
+          );
 
-        setMessage(`Synced ${deviceCount} Govee device(s) - Ready to control`);
+        setMessage(`Connected to ${vendor} - Ready to control`);
         setOauthTokenModalOpen(false);
         setTimeout(() => setMessage(null), 3000);
       }
@@ -249,24 +285,71 @@ function VendorCard({ v }: { v: Vendor }) {
       services: string[];
     }>,
   ) => {
-    if (!selectedProperty?.id) {
-      setMessage("Error: No property selected");
+    if (!selectedProperty?.id || !organization?.id) {
+      setMessage("Error: No property or organization selected");
       return;
     }
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const authToken = getToken();
 
-      const results = await Promise.all(
-        devices.map((device) =>
-          fetch(`${apiUrl}/devices/bluetooth/create`, {
+      // Create or get Bluetooth integration
+      let integrationId: string;
+
+      // Try to find existing Bluetooth integration
+      const listRes = await fetch(
+        `${apiUrl}/integrations?organization_id=${organization.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      );
+
+      if (listRes.ok) {
+        const integrations = await listRes.json();
+        const btIntegration = integrations.find(
+          (i: { provider_id: string }) => i.provider_id === "bluetooth",
+        );
+
+        if (btIntegration) {
+          integrationId = btIntegration.id;
+        } else {
+          // Create new Bluetooth integration
+          const createRes = await fetch(`${apiUrl}/integrations`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${getToken()}`,
+              Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify({
-              organization_id: organization?.id,
+              organization_id: organization.id,
+              provider_id: "bluetooth",
+              connection_identifier: "local",
+              display_name: "Local Bluetooth",
+            }),
+          });
+
+          if (!createRes.ok)
+            throw new Error(`Integration creation failed: ${createRes.status}`);
+          const integration = await createRes.json();
+          integrationId = integration.id;
+        }
+      } else {
+        throw new Error("Failed to list integrations");
+      }
+
+      // Create devices under the integration
+      const results = await Promise.all(
+        devices.map((device) =>
+          fetch(`${apiUrl}/integrations/${integrationId}/devices/bluetooth`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
               property_id: selectedProperty.id,
               name: device.name,
               mac_address: device.id,
@@ -277,7 +360,6 @@ function VendorCard({ v }: { v: Vendor }) {
               return r.json();
             })
             .then((data) => {
-              // Device created successfully - can now control it
               logger.info("Bluetooth device created:", data);
               return data;
             }),
