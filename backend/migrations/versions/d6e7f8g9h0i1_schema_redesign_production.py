@@ -470,30 +470,20 @@ def upgrade() -> None:
             sa.ForeignKey("integrations.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("external_device_id", sa.String(255), nullable=False),
-        sa.Column("is_primary", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("metadata", JSONB(), nullable=True),
-        sa.Column("status", sa.String(50), nullable=False, server_default="ACTIVE"),
-        sa.Column("last_seen_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("connection_identifier", sa.String(500), nullable=False),
+        sa.Column("discovered_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.create_index("ix_device_integrations_device_id", "device_integrations", ["device_id"])
     op.create_index(
         "ix_device_integrations_integration_id", "device_integrations", ["integration_id"]
     )
-    op.execute(
-        sa.text(
-            "CREATE UNIQUE INDEX uq_device_integrations ON device_integrations "
-            "(device_id, integration_id) WHERE deleted_at IS NULL"
-        )
-    )
-    op.execute(
-        sa.text(
-            "CREATE UNIQUE INDEX uq_device_integrations_external ON device_integrations "
-            "(integration_id, external_device_id) WHERE deleted_at IS NULL"
-        )
+    op.create_unique_constraint(
+        "uq_device_integrations",
+        "device_integrations",
+        ["device_id", "integration_id"],
     )
 
     # ========================================================================
@@ -749,8 +739,8 @@ def downgrade() -> None:
     op.drop_table("device_current_state")
     op.drop_table("device_capabilities")
     op.drop_table("capabilities")
-    op.drop_table("device_integrations")
     op.drop_table("device_placements")
+    op.drop_table("device_integrations")
 
     op.drop_constraint("fk_devices_owner_tenant", "devices")
     op.drop_constraint("fk_devices_owner_property", "devices")

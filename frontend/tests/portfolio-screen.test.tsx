@@ -26,10 +26,6 @@ vi.mock("@/lib/api/portfolios", () => ({
   listPortfolios: vi.fn(),
   listProperties: vi.fn(),
   createPortfolio: vi.fn(),
-  updatePortfolio: vi.fn(),
-  createProperty: vi.fn(),
-  updateProperty: vi.fn(),
-  getPortfolio: vi.fn(),
 }));
 
 function renderScreen() {
@@ -78,6 +74,7 @@ describe("PortfolioScreen", () => {
         property_type: "MIXED_USE",
         units: 12,
         timezone: "Europe/London",
+        description: undefined,
         created_at: "2026-01-01T00:00:00Z",
       },
       {
@@ -89,6 +86,7 @@ describe("PortfolioScreen", () => {
         property_type: "LONG_TERM_RENTAL",
         units: 8,
         timezone: "Europe/London",
+        description: undefined,
         created_at: "2026-01-01T00:00:00Z",
       },
     ]);
@@ -96,11 +94,12 @@ describe("PortfolioScreen", () => {
     renderScreen();
 
     expect(await screen.findByText("North Region")).toBeDefined();
+    expect(screen.getByText("Manchester")).toBeDefined();
     expect(listProperties).toHaveBeenCalledWith("pf-1", "org-1");
 
     await waitFor(() => {
       expect(
-        screen.getByText("1 portfolio · 2 properties · 20 units · 0 devices"),
+        screen.getByText("1 portfolios · 2 properties · 20 units · 0 devices"),
       ).toBeDefined();
     });
   });

@@ -65,7 +65,9 @@ export async function listPortfolios(
   const response = await fetch(
     `${API_BASE}/portfolios?organization_id=${organizationId}`,
     {
-      headers: getAuthHeaders(),
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
     },
   );
 
@@ -127,7 +129,9 @@ export async function listProperties(
   const response = await fetch(
     `${API_BASE}/portfolios/${portfolioId}/properties?organization_id=${organizationId}`,
     {
-      headers: getAuthHeaders(),
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
     },
   );
 
@@ -140,23 +144,19 @@ export async function listProperties(
 
 export async function updatePortfolio(
   portfolioId: string,
-  organizationId: string,
   data: {
-    name: string;
+    name?: string;
     description?: string;
   },
 ): Promise<Portfolio> {
-  const response = await fetch(
-    `${API_BASE}/portfolios/${portfolioId}?organization_id=${organizationId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify(data),
+  const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to update portfolio: ${response.statusText}`);
@@ -168,18 +168,17 @@ export async function updatePortfolio(
 export async function updateProperty(
   portfolioId: string,
   propertyId: string,
-  organizationId: string,
   data: {
-    name: string;
-    address: string;
-    property_type: string;
+    name?: string;
+    address?: string;
+    property_type?: string;
     units?: number;
     timezone?: string;
     description?: string;
   },
 ): Promise<Property> {
   const response = await fetch(
-    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}?organization_id=${organizationId}`,
+    `${API_BASE}/portfolios/${portfolioId}/properties/${propertyId}`,
     {
       method: "PUT",
       headers: {

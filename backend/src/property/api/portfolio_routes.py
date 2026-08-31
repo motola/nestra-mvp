@@ -204,8 +204,8 @@ async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[Pro
         return [
             PropertyResponse(
                 id=prop.id,
-                organization_id=prop.organization_id,
                 portfolio_id=prop.portfolio_id,
+                organization_id=prop.organization_id,
                 name=prop.name,
                 address=prop.address,
                 property_type=prop.property_type,
@@ -216,96 +216,3 @@ async def list_properties(portfolio_id: UUID, organization_id: UUID) -> list[Pro
             )
             for prop in properties
         ]
-
-
-class PortfolioUpdateRequest(BaseModel):
-    """Request to update a portfolio."""
-
-    name: str
-    description: str = ""
-
-
-@router.put("/{portfolio_id}", response_model=PortfolioResponse)
-async def update_portfolio(
-    portfolio_id: UUID, request: PortfolioUpdateRequest, organization_id: UUID
-) -> PortfolioResponse:
-    """Update a portfolio."""
-    async with SessionLocal() as db, org_scope(db, organization_id):
-        stmt = select(PortfolioModel).where(PortfolioModel.id == portfolio_id)
-        result = await db.execute(stmt)
-        portfolio = result.scalar_one_or_none()
-
-        if not portfolio:
-            raise HTTPException(status_code=404, detail="Portfolio not found")
-
-        portfolio.name = request.name
-        portfolio.description = request.description
-
-        await db.commit()
-        await db.refresh(portfolio)
-
-        return PortfolioResponse(
-            id=portfolio.id,
-            name=portfolio.name,
-            description=portfolio.description,
-            organization_id=portfolio.organization_id,
-            is_default=portfolio.is_default,
-            created_at=portfolio.created_at,
-        )
-
-
-class PropertyUpdateRequest(BaseModel):
-    """Request to update a property."""
-
-    name: str
-    address: str
-    property_type: str
-    units: int = 1
-    timezone: str = "UTC"
-    description: str = ""
-
-
-@router.put("/{portfolio_id}/properties/{property_id}", response_model=PropertyResponse)
-async def update_property(
-    portfolio_id: UUID,
-    property_id: UUID,
-    request: PropertyUpdateRequest,
-    organization_id: UUID,
-) -> PropertyResponse:
-    """Update a property."""
-    async with SessionLocal() as db, org_scope(db, organization_id):
-        stmt = select(PropertyModel).where(PropertyModel.id == property_id)
-        result = await db.execute(stmt)
-        prop = result.scalar_one_or_none()
-
-        if not prop:
-            raise HTTPException(status_code=404, detail="Property not found")
-
-        if prop.portfolio_id != portfolio_id:
-            raise HTTPException(
-                status_code=400, detail="Property does not belong to this portfolio"
-            )
-
-        prop.name = request.name
-        prop.address = request.address
-        prop.property_type = request.property_type
-        prop.units = request.units
-        prop.timezone = request.timezone
-        prop.description = request.description if request.description else None
-        prop.updated_at = datetime.now(UTC)
-
-        await db.commit()
-        await db.refresh(prop)
-
-        return PropertyResponse(
-            id=prop.id,
-            organization_id=prop.organization_id,
-            portfolio_id=prop.portfolio_id,
-            name=prop.name,
-            address=prop.address,
-            property_type=prop.property_type,
-            units=prop.units,
-            timezone=prop.timezone,
-            description=prop.description,
-            created_at=prop.created_at,
-        )

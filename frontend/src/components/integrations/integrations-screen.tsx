@@ -20,11 +20,13 @@ import type { PropertyType } from "@/lib/fixtures";
 import { BluetoothDiscoveryModal } from "@/components/integrations/bluetooth-discovery-modal";
 import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-modal";
 import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
+import { ConnectVendorModal } from "@/components/integrations/connect-vendor-modal";
+import { useAuth } from "@/lib/auth/provider";
+import { getToken } from "@/lib/auth/session";
 import { listPortfolios, listProperties } from "@/lib/api/portfolios";
 import type { Property as ApiProperty } from "@/lib/api/portfolios";
-import { useAuth } from "@/lib/auth/provider";
-import { logger } from "@/lib/logger";
-import { getToken } from "@/lib/auth/session";
+
+const logger = console;
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
@@ -141,6 +143,7 @@ const CATALOG_CATS = [
 function VendorCard({ v }: { v: Vendor }) {
   const { selectedProperty } = useProperty();
   const { organization } = useAuth();
+  const [connectVendorModalOpen, setConnectVendorModalOpen] = useState(false);
   const [bluetoothModalOpen, setBluetoothModalOpen] = useState(false);
   const [wifiModalOpen, setWifiModalOpen] = useState(false);
   const [oauthTokenModalOpen, setOauthTokenModalOpen] = useState(false);
@@ -155,14 +158,9 @@ function VendorCard({ v }: { v: Vendor }) {
       return;
     }
 
-    // For local discovery vendors
-    if (vendor === "bluetooth") {
-      setBluetoothModalOpen(true);
-      return;
-    }
-
-    if (vendor === "wifi") {
-      setWifiModalOpen(true);
+    // For local discovery vendors, open unified connect vendor modal
+    if (["bluetooth", "wifi"].includes(vendor)) {
+      setConnectVendorModalOpen(true);
       return;
     }
 
@@ -419,6 +417,88 @@ function VendorCard({ v }: { v: Vendor }) {
     }
   };
 
+  const handleConnectVendor = async (
+    bluetoothDevices: Array<{
+      id: string;
+      name: string;
+      rssi: number;
+      services: string[];
+    }>,
+    wifiNetworks: Array<{
+      ssid: string;
+      bssid: string;
+      signal_strength: number;
+      channel: number;
+      security: string;
+    }>,
+  ) => {
+    if (!selectedProperty?.id) {
+      setMessage("Error: No property selected");
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      let createdCount = 0;
+
+      if (bluetoothDevices.length > 0) {
+        const btResults = await Promise.all(
+          bluetoothDevices.map((device) =>
+            fetch(`${apiUrl}/devices/bluetooth/create`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                organization_id: organization?.id,
+                property_id: selectedProperty.id,
+                name: device.name,
+                mac_address: device.id,
+              }),
+            })
+              .then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+              })
+              .catch((err) => {
+                console.error("Bluetooth device creation error:", err);
+                return null;
+              }),
+          ),
+        );
+        createdCount += btResults.filter(Boolean).length;
+      }
+
+      if (wifiNetworks.length > 0) {
+        const response = await fetch(`${apiUrl}/wifi/devices/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            organization_id: organization?.id,
+            property_id: selectedProperty.id,
+            networks: wifiNetworks,
+          }),
+        });
+
+        if (response.ok) {
+          const devices = await response.json();
+          createdCount += devices.length;
+        }
+      }
+
+      setConnectVendorModalOpen(false);
+      setMessage(
+        `Successfully connected ${createdCount} device(s) from ${v.name}`,
+      );
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      const errMsg =
+        err instanceof Error ? err.message : "Failed to connect devices";
+      setMessage(`Error: ${errMsg}`);
+      console.error("Device connection error:", err);
+    }
+  };
+
   return (
     <>
       <Card hoverable className="p-[18px] flex flex-col gap-3">
@@ -477,6 +557,13 @@ function VendorCard({ v }: { v: Vendor }) {
         isOpen={wifiModalOpen}
         onClose={() => setWifiModalOpen(false)}
         onNetworksSelected={handleWifiNetworks}
+      />
+
+      <ConnectVendorModal
+        isOpen={connectVendorModalOpen}
+        vendor={v}
+        onClose={() => setConnectVendorModalOpen(false)}
+        onDevicesSelected={handleConnectVendor}
       />
     </>
   );

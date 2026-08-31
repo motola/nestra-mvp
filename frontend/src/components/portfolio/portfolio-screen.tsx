@@ -16,8 +16,8 @@ import {
   listPortfolios,
   listProperties,
   updatePortfolio,
-  createProperty,
   updateProperty,
+  createProperty,
 } from "@/lib/api/portfolios";
 import type {
   Portfolio as ApiPortfolio,
@@ -431,7 +431,7 @@ function PortfolioDetailView({
               logger.error("Organization not loaded", error);
               throw error;
             }
-            await updatePortfolio(portfolio.id, organization.id, data);
+            await updatePortfolio(portfolio.id, data);
             await onPortfolioUpdate();
           }}
         />
@@ -455,17 +455,12 @@ function PortfolioDetailView({
             }
 
             if (editingProperty) {
-              await updateProperty(
-                portfolio.id,
-                editingProperty.id,
-                organization.id,
-                {
-                  name: data.name,
-                  address: data.address,
-                  property_type: data.type,
-                  units: data.units,
-                },
-              );
+              await updateProperty(portfolio.id, editingProperty.id, {
+                name: data.name,
+                address: data.address,
+                property_type: data.type,
+                units: data.units,
+              });
             } else {
               await createProperty(portfolio.id, {
                 organization_id: organization.id,
@@ -494,7 +489,7 @@ export function PortfolioScreen() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [portfolios, setPortfolios] = useState<ApiPortfolio[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { organization, isLoading: authLoading } = useAuth();
   const totalUnits = properties.reduce((s, p) => s + p.units, 0);
   const totalDevices = properties.reduce((s, p) => s + p.devices, 0);
@@ -512,7 +507,7 @@ export function PortfolioScreen() {
       setPortfolios(data);
       setProperties(perPortfolio.flat().map(toDisplayProperty));
     } catch (error) {
-      logger.error("Failed to load portfolios:", error);
+      console.error("Failed to load portfolios:", error);
     } finally {
       setLoading(false);
     }
@@ -535,7 +530,7 @@ export function PortfolioScreen() {
     manager: string;
   }) {
     if (!organization?.id) {
-      logger.error("Organization not loaded");
+      console.error("Organization not loaded");
       return;
     }
 
@@ -575,7 +570,7 @@ export function PortfolioScreen() {
       <PageHeader
         eyebrow="WORKSPACE"
         title="Portfolios"
-        sub={`${portfolios.length} portfolio${portfolios.length !== 1 ? "s" : ""} · ${properties.length} propert${properties.length !== 1 ? "ies" : "y"} · ${totalUnits} unit${totalUnits !== 1 ? "s" : ""} · ${totalDevices} device${totalDevices !== 1 ? "s" : ""}`}
+        sub={`${portfolios.length} portfolios · ${properties.length} properties · ${totalUnits} units · ${totalDevices} devices`}
         primary={
           <Button
             variant="primary"

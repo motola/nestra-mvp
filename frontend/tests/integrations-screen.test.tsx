@@ -4,16 +4,8 @@ import { IntegrationsScreen } from "../src/components/integrations/integrations-
 import { PropertyProvider } from "../src/lib/property/provider";
 import { AuthProvider } from "../src/lib/auth/provider";
 
-vi.mock("@/lib/api/portfolios", () => ({
-  listPortfolios: vi.fn(() => Promise.resolve([])),
-  listProperties: vi.fn(() => Promise.resolve([])),
-}));
-
 vi.mock("next/navigation", () => ({
   useSearchParams: () => null,
-  useRouter: () => ({
-    push: vi.fn(),
-  }),
 }));
 
 describe("IntegrationsScreen", () => {

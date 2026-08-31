@@ -1,7 +1,7 @@
 """Migrate integrations table to new schema.
 
 Revision ID: g7h8i9j0k1l2m
-Revises: f5g6h7i8j9k0
+Revises: g7h8i9j0k1l2
 Create Date: 2026-08-31
 
 """
