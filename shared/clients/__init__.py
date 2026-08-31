@@ -1,6 +1,6 @@
 """Shared API clients for all services."""
 
-from .http_client import HttpClient
 from .claude_client import ClaudeClient
+from .http_client import HttpClient
 
-__all__ = ["HttpClient", "ClaudeClient"]
+__all__ = ["ClaudeClient", "HttpClient"]

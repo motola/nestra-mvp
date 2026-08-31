@@ -11,8 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from config import get_settings
 from api.routes import router as intelligence_router
+from config import get_settings
 
 _settings = get_settings()
 
