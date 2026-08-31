@@ -153,6 +153,12 @@ function VendorCard({
   const [message, setMessage] = useState<string | null>(null);
 
   const handleConnect = async () => {
+    // Check if property is selected first
+    if (!selectedProperty?.id) {
+      setMessage("Error: Please select a property first");
+      return;
+    }
+
     const vendor = v.name.toLowerCase();
 
     // For OAuth vendors, show the OAuth/Token selection modal
