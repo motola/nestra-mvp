@@ -1,7 +1,6 @@
 "use client"; // Client: portfolio selection, property browsing
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Plus,
   Download,
@@ -16,6 +15,9 @@ import {
   createPortfolio,
   listPortfolios,
   listProperties,
+  updatePortfolio,
+  updateProperty,
+  createProperty,
 } from "@/lib/api/portfolios";
 import type {
   Portfolio as ApiPortfolio,
@@ -32,40 +34,6 @@ import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
 import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
 import { PropertyForm } from "@/components/portfolio/property-form";
 import { logger } from "@/lib/logger";
-
-// ─── API → display adapter ────────────────────────────────────────────────────
-
-const PROPERTY_TYPES: PropertyType[] = [
-  "MIXED_USE",
-  "SHORT_TERM_RENTAL",
-  "LONG_TERM_RENTAL",
-  "OWNER_OCCUPIED",
-  "COMMERCIAL",
-];
-
-/**
- * Map an API property onto the shape the cards, table and property provider
- * expect. Occupancy, device and alert counts come from subsystems that are not
- * exposed by the API yet, so they read as zero until those land.
- */
-function toDisplayProperty(p: ApiProperty): Property {
-  return {
-    id: p.id,
-    portfolio: p.portfolio_id,
-    name: p.name,
-    address: p.address,
-    type: PROPERTY_TYPES.includes(p.property_type as PropertyType)
-      ? (p.property_type as PropertyType)
-      : "MIXED_USE",
-    tz: p.timezone,
-    units: p.units,
-    occupied: 0,
-    alerts: 0,
-    status: "ok",
-    devices: 0,
-    integrations: 0,
-  };
-}
 
 // ─── API → display adapter ────────────────────────────────────────────────────
 
@@ -463,7 +431,7 @@ function PortfolioDetailView({
               logger.error("Organization not loaded", error);
               throw error;
             }
-            await updatePortfolio(portfolio.id, organization.id, data);
+            await updatePortfolio(portfolio.id, data);
             await onPortfolioUpdate();
           }}
         />
@@ -487,17 +455,12 @@ function PortfolioDetailView({
             }
 
             if (editingProperty) {
-              await updateProperty(
-                portfolio.id,
-                editingProperty.id,
-                organization.id,
-                {
-                  name: data.name,
-                  address: data.address,
-                  property_type: data.type,
-                  units: data.units,
-                },
-              );
+              await updateProperty(portfolio.id, editingProperty.id, {
+                name: data.name,
+                address: data.address,
+                property_type: data.type,
+                units: data.units,
+              });
             } else {
               await createProperty(portfolio.id, {
                 organization_id: organization.id,
@@ -527,8 +490,6 @@ export function PortfolioScreen() {
   const [portfolios, setPortfolios] = useState<ApiPortfolio[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { selectProperty } = useProperty();
   const { organization, isLoading: authLoading } = useAuth();
   const totalUnits = properties.reduce((s, p) => s + p.units, 0);
   const totalDevices = properties.reduce((s, p) => s + p.devices, 0);
@@ -562,11 +523,6 @@ export function PortfolioScreen() {
     }
     loadPortfolios();
   }, [authLoading, organization?.id, loadPortfolios]);
-
-  function handlePropertyClick(property: Property) {
-    selectProperty(property);
-    router.push(`/properties/${property.id}`);
-  }
 
   async function handleAddPortfolio(data: {
     name: string;

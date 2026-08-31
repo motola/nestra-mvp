@@ -22,6 +22,11 @@ import { WiFiDiscoveryModal } from "@/components/integrations/wifi-discovery-mod
 import { OAuthTokenModal } from "@/components/integrations/oauth-token-modal";
 import { ConnectVendorModal } from "@/components/integrations/connect-vendor-modal";
 import { useAuth } from "@/lib/auth/provider";
+import { getToken } from "@/lib/auth/session";
+import { listPortfolios, listProperties } from "@/lib/api/portfolios";
+import type { Property as ApiProperty } from "@/lib/api/portfolios";
+
+const logger = console;
 
 // ─── Connected tab ────────────────────────────────────────────────────────────
 
