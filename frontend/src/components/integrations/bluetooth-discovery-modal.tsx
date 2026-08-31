@@ -39,85 +39,63 @@ export function BluetoothDiscoveryModal({
     try {
       const bluetoothDevices: BluetoothDevice[] = [];
 
-      // Try to use Web Bluetooth API if available
-      if ("bluetooth" in navigator) {
-        type BluetoothGATT = {
-          connect: () => Promise<{
-            getPrimaryServices: () => Promise<Array<{ uuid: string }>>;
-          }>;
-        };
-
-        type BluetoothRequestDevice = {
-          id: string;
-          name: string;
-          gatt: BluetoothGATT;
-        };
-
-        const device = await (
-          navigator as unknown as {
-            bluetooth: {
-              requestDevice: (
-                options: object,
-              ) => Promise<BluetoothRequestDevice>;
-            };
-          }
-        ).bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [
-            0x180a, // Device Information
-            0x180f, // Battery Service
-            0x181a, // Environmental Sensing
-            0x1809, // Health Thermometer
-            0x180d, // Heart Rate
-            0x181e, // Body Composition
-            0x1800, // Generic Access
-            0x1801, // Generic Attribute
-            0x180d, // Heart Rate Service
-            0x181c, // User Data
-          ],
-        });
-
-        let services: string[] = [];
-        try {
-          const gatt = await device.gatt.connect();
-          const primaryServices = await gatt.getPrimaryServices();
-          services = primaryServices.map((s: { uuid: string }) => s.uuid);
-        } catch {
-          // Services not available - device can still be added
-          services = [];
-        }
-
-        bluetoothDevices.push({
-          id: device.id,
-          name: device.name || "Unknown Device",
-          rssi: 0,
-          services,
-        });
-
-        setDevices([...devices, ...bluetoothDevices]);
-      } else {
-        // Fallback: Mock BLE devices for testing
-        setDevices([
-          {
-            id: "ble_sensor_temp_1",
-            name: "BLE Temperature Sensor",
-            rssi: -65,
-            services: ["temperature", "battery"],
-          },
-          {
-            id: "ble_sensor_contact_1",
-            name: "BLE Door Contact Sensor",
-            rssi: -72,
-            services: ["contact", "battery"],
-          },
-          {
-            id: "ble_sensor_motion_1",
-            name: "BLE Motion Sensor",
-            rssi: -58,
-            services: ["motion", "battery"],
-          },
-        ]);
+      if (!("bluetooth" in navigator)) {
+        throw new Error(
+          "Web Bluetooth API is not available in your browser. Use Chrome, Edge, or Opera on Windows/Mac/Linux.",
+        );
       }
+
+      type BluetoothGATT = {
+        connect: () => Promise<{
+          getPrimaryServices: () => Promise<Array<{ uuid: string }>>;
+        }>;
+      };
+
+      type BluetoothRequestDevice = {
+        id: string;
+        name: string;
+        gatt: BluetoothGATT;
+      };
+
+      const device = await (
+        navigator as unknown as {
+          bluetooth: {
+            requestDevice: (options: object) => Promise<BluetoothRequestDevice>;
+          };
+        }
+      ).bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [
+          0x180a, // Device Information
+          0x180f, // Battery Service
+          0x181a, // Environmental Sensing
+          0x1809, // Health Thermometer
+          0x180d, // Heart Rate
+          0x181e, // Body Composition
+          0x1800, // Generic Access
+          0x1801, // Generic Attribute
+          0x181c, // User Data
+        ],
+      });
+
+      let services: string[] = [];
+      try {
+        const gatt = await device.gatt.connect();
+        const primaryServices = await gatt.getPrimaryServices();
+        services = primaryServices.map((s: { uuid: string }) => s.uuid);
+      } catch {
+        // Services not available - device can still be added
+        services = [];
+      }
+
+      bluetoothDevices.push({
+        id: device.id,
+        name: device.name || "Unknown Device",
+        rssi: 0,
+        services,
+      });
+
+      setDevices([...devices, ...bluetoothDevices]);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to pair device";
