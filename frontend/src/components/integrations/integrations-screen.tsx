@@ -768,11 +768,7 @@ export function IntegrationsScreen() {
         title="Integrations"
         sub={`${propertyIntegrations.length} connections · ${active} active ${needsReauth ? `· ${needsReauth} needs reauth` : ""}`}
         primary={
-          <Button
-            variant="primary"
-            icon={Plus}
-            onClick={() => setShowDeviceTypeModal(true)}
-          >
+          <Button variant="primary" icon={Plus}>
             Connect vendor
           </Button>
         }

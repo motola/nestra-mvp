@@ -1,7 +1,7 @@
 """Create properties table.
 
 Revision ID: 0001_create_properties
-Revises:
+Revises: 0000_create_base
 Create Date: 2026-08-27 00:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0001_create_properties"
-down_revision = None
+down_revision = "0000_create_base"
 branch_labels = None
 depends_on = None
 
