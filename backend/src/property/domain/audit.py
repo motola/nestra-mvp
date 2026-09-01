@@ -57,13 +57,13 @@ class AuditEvent(BaseModel):
     id: UUID | None = None
     organization_id: UUID
     actor_user_id: UUID | None = None
-    actor_type: str  # "user", "system", "automation"
-    action: str  # "device_created", "command_executed", etc.
-    resource_type: str  # "device", "property", "command"
+    actor_type: AuditActorType
+    action: AuditAction
+    resource_type: AuditResourceType
     resource_id: UUID
     resource_name: str | None = None
     changes: dict[str, object] = Field(default_factory=dict)
-    status: str  # "success", "failure"
+    status: AuditStatus
     reason: str | None = None
     ip_address: str | None = None
     user_agent: str | None = None

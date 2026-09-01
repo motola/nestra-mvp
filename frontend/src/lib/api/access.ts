@@ -40,7 +40,15 @@ export interface AuditEvent {
   status: "success" | "failure";
   reason?: string;
   ip_address?: string;
+  user_agent?: string;
   created_at: string;
+}
+
+export interface AuditEventList {
+  items: AuditEvent[];
+  total: number;
+  skip: number;
+  limit: number;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -225,7 +233,7 @@ export async function listAuditEvents(
     skip?: number;
     limit?: number;
   },
-): Promise<Array<AuditEvent>> {
+): Promise<AuditEventList> {
   const params = new URLSearchParams({
     organization_id: organizationId,
     ...(filters?.action && { action: filters.action }),
@@ -249,12 +257,19 @@ export async function listAuditEvents(
   return response.json();
 }
 
-export async function getAuditEvent(eventId: string): Promise<AuditEvent> {
-  const response = await fetch(`${API_BASE}/access/audit/events/${eventId}`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
+export async function getAuditEvent(
+  eventId: string,
+  organizationId: string,
+): Promise<AuditEvent> {
+  const params = new URLSearchParams({ organization_id: organizationId });
+  const response = await fetch(
+    `${API_BASE}/access/audit/events/${eventId}?${params}`,
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch audit event: ${response.statusText}`);
@@ -266,8 +281,7 @@ export async function getAuditEvent(eventId: string): Promise<AuditEvent> {
 export async function getAuditSummary(organizationId: string): Promise<{
   total_events: number;
   events_today: number;
-  by_action: Record<string, number>;
-  by_actor_type: Record<string, number>;
+  action_counts: Record<string, number>;
 }> {
   const response = await fetch(
     `${API_BASE}/access/audit/summary?organization_id=${organizationId}`,
@@ -287,10 +301,12 @@ export async function getAuditSummary(organizationId: string): Promise<{
 
 export async function getDeviceAuditLog(
   deviceId: string,
+  organizationId: string,
   skip?: number,
   limit?: number,
-): Promise<Array<AuditEvent>> {
+): Promise<AuditEventList> {
   const params = new URLSearchParams({
+    organization_id: organizationId,
     ...(skip !== undefined && { skip: String(skip) }),
     ...(limit !== undefined && { limit: String(limit) }),
   });

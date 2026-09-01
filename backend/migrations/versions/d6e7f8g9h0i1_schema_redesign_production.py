@@ -723,6 +723,18 @@ def upgrade() -> None:
     op.create_index("ix_audit_events_organization", "audit_events", ["organization_id"])
     op.create_index("ix_audit_events_created_at", "audit_events", ["created_at"])
     op.create_index("ix_audit_events_action", "audit_events", ["action"])
+    op.create_index("ix_audit_events_resource_type", "audit_events", ["resource_type"])
+    op.create_index("ix_audit_events_resource_id", "audit_events", ["resource_id"])
+    op.create_index(
+        "idx_audit_org_action_created",
+        "audit_events",
+        ["organization_id", "action", "created_at"],
+    )
+    op.create_index(
+        "idx_audit_resource_created",
+        "audit_events",
+        ["resource_type", "resource_id", "created_at"],
+    )
 
 
 def downgrade() -> None:

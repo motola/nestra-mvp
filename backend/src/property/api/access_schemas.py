@@ -94,6 +94,7 @@ class AuditEventRead(BaseModel):
     status: str
     reason: str | None = None
     ip_address: str | None = None
+    user_agent: str | None = None
     created_at: datetime
 
 
