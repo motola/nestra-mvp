@@ -9,7 +9,13 @@ from uuid import UUID, uuid4
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from property.domain.audit import AuditEvent
+from property.domain.audit import (
+    AuditAction,
+    AuditActorType,
+    AuditEvent,
+    AuditResourceType,
+    AuditStatus,
+)
 from property.repository.models import AuditEventModel
 
 logger = logging.getLogger(__name__)
@@ -45,10 +51,13 @@ class AuditEventRepository:
         await self._session.flush()
         return event
 
-    async def get_by_id(self, event_id: UUID) -> AuditEvent | None:
+    async def get_by_id(self, event_id: UUID, organization_id: UUID) -> AuditEvent | None:
         """Get an audit event by ID."""
         result = await self._session.execute(
-            select(AuditEventModel).where(AuditEventModel.id == event_id)
+            select(AuditEventModel).where(
+                AuditEventModel.id == event_id,
+                AuditEventModel.organization_id == organization_id,
+            )
         )
         model = result.scalar_one_or_none()
         return self._model_to_domain(model) if model else None
@@ -81,12 +90,19 @@ class AuditEventRepository:
         return [self._model_to_domain(m) for m in models]
 
     async def list_by_resource(
-        self, resource_id: UUID, skip: int = 0, limit: int = 100
+        self,
+        resource_id: UUID,
+        organization_id: UUID,
+        skip: int = 0,
+        limit: int = 100,
     ) -> list[AuditEvent]:
         """List all events for a specific resource."""
         result = await self._session.execute(
             select(AuditEventModel)
-            .where(AuditEventModel.resource_id == resource_id)
+            .where(
+                AuditEventModel.resource_id == resource_id,
+                AuditEventModel.organization_id == organization_id,
+            )
             .order_by(AuditEventModel.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -95,12 +111,19 @@ class AuditEventRepository:
         return [self._model_to_domain(m) for m in models]
 
     async def list_by_actor(
-        self, actor_id: UUID, skip: int = 0, limit: int = 100
+        self,
+        actor_id: UUID,
+        organization_id: UUID,
+        skip: int = 0,
+        limit: int = 100,
     ) -> list[AuditEvent]:
         """List all events performed by a user."""
         result = await self._session.execute(
             select(AuditEventModel)
-            .where(AuditEventModel.actor_user_id == actor_id)
+            .where(
+                AuditEventModel.actor_user_id == actor_id,
+                AuditEventModel.organization_id == organization_id,
+            )
             .order_by(AuditEventModel.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -150,13 +173,13 @@ class AuditEventRepository:
             id=model.id,
             organization_id=model.organization_id,
             actor_user_id=model.actor_user_id,
-            actor_type=model.actor_type,
-            action=model.action,
-            resource_type=model.resource_type,
+            actor_type=AuditActorType(model.actor_type),
+            action=AuditAction(model.action),
+            resource_type=AuditResourceType(model.resource_type),
             resource_id=model.resource_id,
             resource_name=model.resource_name,
             changes=model.changes,
-            status=model.status,
+            status=AuditStatus(model.status),
             reason=model.reason,
             ip_address=model.ip_address,
             user_agent=model.user_agent,

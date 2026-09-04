@@ -357,7 +357,7 @@ async def revoke_share_link(token_id: UUID, request: Request) -> dict[str, str]:
 
 @router.get("/audit/events", response_model=AuditEventList)
 async def list_audit_events(
-    org_id: UUID,
+    organization_id: UUID,
     skip: int = 0,
     limit: int = 100,
     action: str | None = None,
@@ -368,13 +368,13 @@ async def list_audit_events(
     async with SessionLocal() as db:
         event_repo = AuditEventRepository(db)
         events = await event_repo.list_by_organization(
-            org_id, skip, limit, action, start_date, end_date
+            organization_id, skip, limit, action, start_date, end_date
         )
 
         return AuditEventList(
             items=[
                 AuditEventRead(
-                    id=e.id or org_id,
+                    id=e.id or organization_id,
                     organization_id=e.organization_id,
                     actor_user_id=e.actor_user_id,
                     actor_type=e.actor_type,
@@ -386,6 +386,7 @@ async def list_audit_events(
                     status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
+                    user_agent=e.user_agent,
                     created_at=e.created_at,
                 )
                 for e in events
@@ -397,11 +398,11 @@ async def list_audit_events(
 
 
 @router.get("/audit/events/{event_id}", response_model=AuditEventRead)
-async def get_audit_event(event_id: UUID) -> AuditEventRead:
+async def get_audit_event(event_id: UUID, organization_id: UUID) -> AuditEventRead:
     """Get a specific audit event."""
     async with SessionLocal() as db:
         event_repo = AuditEventRepository(db)
-        event = await event_repo.get_by_id(event_id)
+        event = await event_repo.get_by_id(event_id, organization_id)
 
         if not event:
             raise HTTPException(status_code=404, detail="Audit event not found")
@@ -419,16 +420,17 @@ async def get_audit_event(event_id: UUID) -> AuditEventRead:
             status=event.status,
             reason=event.reason,
             ip_address=event.ip_address,
+            user_agent=event.user_agent,
             created_at=event.created_at,
         )
 
 
 @router.get("/audit/summary", response_model=AuditEventSummary)
-async def get_audit_summary(org_id: UUID) -> AuditEventSummary:
+async def get_audit_summary(organization_id: UUID) -> AuditEventSummary:
     """Get audit summary for an organization."""
     async with SessionLocal() as db:
         event_repo = AuditEventRepository(db)
-        summary = await event_repo.get_summary(org_id)
+        summary = await event_repo.get_summary(organization_id)
 
         from typing import cast
 
@@ -441,12 +443,12 @@ async def get_audit_summary(org_id: UUID) -> AuditEventSummary:
 
 @router.get("/audit/events/device/{device_id}", response_model=AuditEventList)
 async def list_device_audit_events(
-    device_id: UUID, skip: int = 0, limit: int = 100
+    device_id: UUID, organization_id: UUID, skip: int = 0, limit: int = 100
 ) -> AuditEventList:
     """Get audit events for a specific device."""
     async with SessionLocal() as db:
         event_repo = AuditEventRepository(db)
-        events = await event_repo.list_by_resource(device_id, skip, limit)
+        events = await event_repo.list_by_resource(device_id, organization_id, skip, limit)
 
         return AuditEventList(
             items=[
@@ -463,6 +465,7 @@ async def list_device_audit_events(
                     status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
+                    user_agent=e.user_agent,
                     created_at=e.created_at,
                 )
                 for e in events
@@ -474,11 +477,13 @@ async def list_device_audit_events(
 
 
 @router.get("/audit/events/user/{user_id}", response_model=AuditEventList)
-async def list_user_audit_events(user_id: UUID, skip: int = 0, limit: int = 100) -> AuditEventList:
+async def list_user_audit_events(
+    user_id: UUID, organization_id: UUID, skip: int = 0, limit: int = 100
+) -> AuditEventList:
     """Get audit events for a specific user."""
     async with SessionLocal() as db:
         event_repo = AuditEventRepository(db)
-        events = await event_repo.list_by_actor(user_id, skip, limit)
+        events = await event_repo.list_by_actor(user_id, organization_id, skip, limit)
 
         return AuditEventList(
             items=[
@@ -495,6 +500,7 @@ async def list_user_audit_events(user_id: UUID, skip: int = 0, limit: int = 100)
                     status=e.status,
                     reason=e.reason,
                     ip_address=e.ip_address,
+                    user_agent=e.user_agent,
                     created_at=e.created_at,
                 )
                 for e in events

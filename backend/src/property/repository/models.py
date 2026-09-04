@@ -9,6 +9,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Index, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,7 +17,6 @@ from db import Base
 from integrations.models import IntegrationModel  # noqa: F401
 from property.domain import DeviceType
 from property.domain.access import AccessType
-from property.domain.audit import AuditAction, AuditActorType, AuditResourceType, AuditStatus
 from property.domain.command import CommandPriority, CommandStatus, CommandType
 
 
@@ -339,19 +339,22 @@ class AuditEventModel(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    organization_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    organization_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     actor_user_id: Mapped[UUID | None] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    actor_type: Mapped[AuditActorType] = mapped_column(Enum(AuditActorType), nullable=False)
-    action: Mapped[AuditAction] = mapped_column(Enum(AuditAction), nullable=False, index=True)
-    resource_type: Mapped[AuditResourceType] = mapped_column(
-        Enum(AuditResourceType), nullable=False, index=True
-    )
+    actor_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     resource_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
     resource_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    changes: Mapped[dict[str, object]] = mapped_column(JSON, default={}, nullable=False)
-    status: Mapped[AuditStatus] = mapped_column(Enum(AuditStatus), nullable=False)
+    changes: Mapped[dict[str, object]] = mapped_column(JSONB, default=dict, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False)
     reason: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
