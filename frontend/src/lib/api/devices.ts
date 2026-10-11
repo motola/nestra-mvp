@@ -50,7 +50,7 @@ export async function createBluetoothDevice(data: {
   integration_id: string;
   property_id: string;
   name: string;
-  mac_address: string;
+  connection_identifier: string;
   room_id?: string;
 }): Promise<Device> {
   const token = getToken();
@@ -65,15 +65,17 @@ export async function createBluetoothDevice(data: {
       body: JSON.stringify({
         property_id: data.property_id,
         name: data.name,
-        mac_address: data.mac_address,
+        connection_identifier: data.connection_identifier,
         room_id: data.room_id,
       }),
     },
   );
 
   if (!response.ok) {
+    const body = await response.json().catch(() => null);
     throw new Error(
-      `Failed to create Bluetooth device: ${response.statusText}`,
+      body?.detail ||
+        `Failed to create Bluetooth device: ${response.statusText}`,
     );
   }
 
@@ -133,7 +135,6 @@ export async function getDevice(deviceId: string): Promise<DeviceDetail> {
 export async function controlDevice(
   deviceId: string,
   data: {
-    organization_id: string;
     command: string;
     params?: Record<string, unknown>;
   },

@@ -85,7 +85,17 @@ class DeviceModel(Base):
         PGUUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True, index=True
     )
 
-    __table_args__ = (Index("idx_device_vendor_key", "vendor", "vendor_specific_id"),)
+    __table_args__ = (
+        Index("idx_device_vendor_key", "vendor", "vendor_specific_id"),
+        Index(
+            "uq_devices_org_integration_vendor_key",
+            "organization_id",
+            "integration_id",
+            "vendor",
+            "vendor_specific_id",
+            unique=True,
+        ),
+    )
 
 
 class CapabilityModel(Base):

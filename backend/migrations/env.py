@@ -10,6 +10,12 @@ from sqlalchemy.ext.asyncio import create_async_engine
 # Add src to path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+# Import every declarative module before reading Base.metadata.  Alembic
+# autogenerate otherwise silently sees only models imported by env.py itself.
+import identity.repository.models  # noqa: E402,F401
+import integrations.models  # noqa: E402,F401
+import occupancy.repository.models  # noqa: E402,F401
+import property.repository.models  # noqa: E402,F401
 from config import get_settings
 from db import Base
 

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 
+from db import SessionLocal, org_scope
+from dependencies import OrgDep
 from integrations.august import router as august_router
-from integrations.bluetooth import router as bluetooth_router
 from integrations.lifx import router as lifx_router
 from integrations.matter import router as matter_router
 from integrations.shelly import router as shelly_router
@@ -16,91 +16,29 @@ from occupancy.api.routes import router as occupancy_router
 from property.api.access_routes import router as access_router
 from property.api.capability_routes import router as capability_router
 from property.api.command_routes import router as command_router
-from property.api.device_routes import router as device_router
+from property.api.schemas import DeviceRead
+from property.persistence.device_repository import DeviceRepository
+from property.persistence.property_repository import PropertyRepository
 
 router = APIRouter()
 
 
-class DeviceResponse(BaseModel):
-    """Unified device response."""
-
-    id: str
-    name: str
-    vendor: str
-    online: bool
-
-
-@router.get("/properties/{property_id}/devices")
-async def get_property_devices(property_id: UUID) -> list[DeviceResponse]:
-    """Get all devices for a property across all integrations."""
-    devices: list[DeviceResponse] = []
-
-    # Aggregate from Shelly
-    from integrations.shelly import routes as shelly_routes
-
-    for shelly_device in shelly_routes._devices.values():
-        if shelly_device.property_id == property_id:
-            devices.append(
-                DeviceResponse(
-                    id=str(shelly_device.id),
-                    name=shelly_device.name,
-                    vendor="Shelly",
-                    online=shelly_device.online,
-                )
-            )
-
-    # Aggregate from Govee
-    from integrations.govee import routes as govee_routes
-
-    for govee_device in govee_routes._devices.values():
-        if govee_device.property_id == property_id:
-            devices.append(
-                DeviceResponse(
-                    id=str(govee_device.id),
-                    name=govee_device.name,
-                    vendor="Govee",
-                    online=govee_device.online,
-                )
-            )
-
-    # Aggregate from LIFX
-    from integrations.lifx import routes as lifx_routes
-
-    for lifx_device in lifx_routes._devices.values():
-        if lifx_device.property_id == property_id:
-            devices.append(
-                DeviceResponse(
-                    id=str(lifx_device.id),
-                    name=lifx_device.name,
-                    vendor="LIFX",
-                    online=lifx_device.online,
-                )
-            )
-
-    # Aggregate from Matter
-    from integrations.matter import routes as matter_routes
-
-    for matter_device in matter_routes._devices.values():
-        if matter_device.property_id == property_id:
-            devices.append(
-                DeviceResponse(
-                    id=str(matter_device.id),
-                    name=matter_device.name,
-                    vendor="Matter",
-                    online=matter_device.online,
-                )
-            )
-
-    return devices
+@router.get("/properties/{property_id}/devices", response_model=list[DeviceRead])
+async def get_property_devices(property_id: UUID, organization_id: OrgDep) -> list[DeviceRead]:
+    """Return persisted devices for a property in the authenticated tenant."""
+    async with SessionLocal() as db, org_scope(db, organization_id):
+        property_obj = await PropertyRepository(db).get_by_id(property_id)
+        if not property_obj or property_obj.organization_id != organization_id:
+            raise HTTPException(status_code=404, detail="Property not found")
+        devices = await DeviceRepository(db).find_by_property(property_id)
+        return [DeviceRead.model_validate(device) for device in devices]
 
 
 # Include all integration routers
 router.include_router(access_router)
-router.include_router(device_router)
 router.include_router(capability_router)
 router.include_router(command_router)
 router.include_router(occupancy_router)
-router.include_router(bluetooth_router)
 router.include_router(august_router)
 router.include_router(shelly_router)
 router.include_router(lifx_router)

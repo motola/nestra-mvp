@@ -6,13 +6,14 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from db import SessionLocal
+from db import SessionLocal, org_scope
+from dependencies import OrgDep
 from integrations.models import IntegrationModel
 from integrations.provider import get_provider
-from property.api.schemas import DeviceDetail
+from property.api.schemas import DeviceDetail, DeviceRead
 from property.audit.logger import AuditLogger
 from property.domain import Device, DeviceIntegration, DevicePlacement, DeviceType
 from property.persistence.capability_repository import DeviceCapabilityRepository
@@ -21,7 +22,7 @@ from property.persistence.device_placement_repository import DevicePlacementRepo
 from property.persistence.device_repository import DeviceRepository
 from property.persistence.property_repository import PropertyRepository
 
-router = APIRouter(prefix="/integrations", tags=["devices"])
+router = APIRouter(tags=["devices"])
 
 
 class BluetoothDeviceCreate(BaseModel):
@@ -29,7 +30,7 @@ class BluetoothDeviceCreate(BaseModel):
 
     property_id: UUID
     name: str
-    mac_address: str
+    connection_identifier: str
     room_id: UUID | None = None
 
 
@@ -46,29 +47,22 @@ class ShellyDeviceCreate(BaseModel):
 class DeviceControlRequest(BaseModel):
     """Request to control a device."""
 
-    organization_id: UUID
     command: str  # e.g., "turn_on", "turn_off", "set_brightness"
-    params: dict[str, object] = {}
+    params: dict[str, object] = Field(default_factory=dict)
 
 
-class DeviceResponse(BaseModel):
-    """Device response."""
-
-    id: UUID
-    vendor_name: str
-    device_type: str
-    online: bool
-
-
-@router.post("/{integration_id}/devices/bluetooth", response_model=list[DeviceResponse])
+@router.post("/integrations/{integration_id}/devices/bluetooth", response_model=list[DeviceRead])
 async def create_bluetooth_device(
-    integration_id: UUID, request: BluetoothDeviceCreate
-) -> list[DeviceResponse]:
+    integration_id: UUID, request: BluetoothDeviceCreate, organization_id: OrgDep
+) -> list[DeviceRead]:
     """Create a Bluetooth device through an integration."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         # Load integration and verify provider type
         result = await db.execute(
-            select(IntegrationModel).where(IntegrationModel.id == integration_id)
+            select(IntegrationModel).where(
+                IntegrationModel.id == integration_id,
+                IntegrationModel.organization_id == organization_id,
+            )
         )
         integration = result.scalar_one_or_none()
         if not integration:
@@ -106,12 +100,12 @@ async def create_bluetooth_device(
             property_id=request.property_id,
             integration_id=integration_id,
             vendor="bluetooth",
-            vendor_specific_id=request.mac_address,
+            vendor_specific_id=request.connection_identifier,
             vendor_name=request.name,
             device_type=DeviceType.SENSOR,
             online=True,
             raw_state={
-                "mac_address": request.mac_address,
+                "connection_identifier": request.connection_identifier,
                 "name": request.name,
             },
             last_sync=now,
@@ -123,14 +117,8 @@ async def create_bluetooth_device(
         if not stored_device.id:
             raise HTTPException(status_code=500, detail="Failed to create device")
 
-        # Log device creation
-        await audit_logger.log_device_created(
-            organization_id=integration.organization_id,
-            device_id=stored_device.id,
-            device_name=request.name,
-        )
-
-        # Create DevicePlacement (device location)
+        # Create or update DevicePlacement (device location). Retrying the same
+        # browser-selected device must not create duplicate relationship rows.
         placement = DevicePlacement(
             id=None,
             device_id=stored_device.id,
@@ -139,42 +127,73 @@ async def create_bluetooth_device(
             created_at=now,
             updated_at=now,
         )
-        await placement_repository.create(placement)
+        existing_placement = await placement_repository.get_by_device_id(stored_device.id)
+        if existing_placement:
+            await placement_repository.update_placement(placement)
+        else:
+            await placement_repository.create(placement)
 
         # Create DeviceIntegration (connectivity link)
         device_integration = DeviceIntegration(
             id=None,
             device_id=stored_device.id,
             integration_id=integration_id,
-            connection_identifier=request.mac_address,
+            connection_identifier=request.connection_identifier,
             discovered_at=now,
             last_synced_at=now,
             created_at=now,
             updated_at=now,
         )
-        await integration_repository.create(device_integration)
+        existing_link = await integration_repository.get_by_device_id(stored_device.id)
+        if existing_link:
+            device_integration.id = existing_link.id
+            await integration_repository.update(device_integration)
+        else:
+            await integration_repository.create(device_integration)
+
+        await audit_logger.log_device_created(
+            organization_id=integration.organization_id,
+            device_id=stored_device.id,
+            device_name=request.name,
+        )
 
         await db.commit()
 
         return [
-            DeviceResponse(
+            DeviceRead(
                 id=stored_device.id,
-                vendor_name=stored_device.vendor_name or "",
+                organization_id=stored_device.organization_id,
+                portfolio_id=stored_device.portfolio_id,
+                property_id=stored_device.property_id,
+                integration_id=stored_device.integration_id,
                 device_type=stored_device.device_type.value,
+                vendor=stored_device.vendor,
+                vendor_specific_id=stored_device.vendor_specific_id,
+                vendor_name=stored_device.vendor_name,
                 online=stored_device.online,
+                last_sync=stored_device.last_sync,
+                category=stored_device.category,
+                manufacturer=stored_device.manufacturer,
+                model=stored_device.model,
+                serial_number=stored_device.serial_number,
+                created_at=stored_device.created_at,
+                updated_at=stored_device.updated_at,
             )
         ]
 
 
-@router.post("/{integration_id}/devices/shelly", response_model=list[DeviceResponse])
+@router.post("/integrations/{integration_id}/devices/shelly", response_model=list[DeviceRead])
 async def create_shelly_device(
-    integration_id: UUID, request: ShellyDeviceCreate
-) -> list[DeviceResponse]:
+    integration_id: UUID, request: ShellyDeviceCreate, organization_id: OrgDep
+) -> list[DeviceRead]:
     """Create a Shelly device through an integration."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         # Load integration and verify provider type
         result = await db.execute(
-            select(IntegrationModel).where(IntegrationModel.id == integration_id)
+            select(IntegrationModel).where(
+                IntegrationModel.id == integration_id,
+                IntegrationModel.organization_id == organization_id,
+            )
         )
         integration = result.scalar_one_or_none()
         if not integration:
@@ -230,14 +249,7 @@ async def create_shelly_device(
         if not stored_device.id:
             raise HTTPException(status_code=500, detail="Failed to create device")
 
-        # Log device creation
-        await audit_logger.log_device_created(
-            organization_id=integration.organization_id,
-            device_id=stored_device.id,
-            device_name=request.name,
-        )
-
-        # Create DevicePlacement (device location)
+        # Create or update DevicePlacement (device location).
         placement = DevicePlacement(
             id=None,
             device_id=stored_device.id,
@@ -246,7 +258,11 @@ async def create_shelly_device(
             created_at=now,
             updated_at=now,
         )
-        await placement_repository.create(placement)
+        existing_placement = await placement_repository.get_by_device_id(stored_device.id)
+        if existing_placement:
+            await placement_repository.update_placement(placement)
+        else:
+            await placement_repository.create(placement)
 
         # Create DeviceIntegration (connectivity link)
         device_integration = DeviceIntegration(
@@ -259,24 +275,49 @@ async def create_shelly_device(
             created_at=now,
             updated_at=now,
         )
-        await integration_repository.create(device_integration)
+        existing_link = await integration_repository.get_by_device_id(stored_device.id)
+        if existing_link:
+            device_integration.id = existing_link.id
+            await integration_repository.update(device_integration)
+        else:
+            await integration_repository.create(device_integration)
+
+        await audit_logger.log_device_created(
+            organization_id=integration.organization_id,
+            device_id=stored_device.id,
+            device_name=request.name,
+        )
 
         await db.commit()
 
         return [
-            DeviceResponse(
+            DeviceRead(
                 id=stored_device.id,
-                vendor_name=stored_device.vendor_name or "",
+                organization_id=stored_device.organization_id,
+                portfolio_id=stored_device.portfolio_id,
+                property_id=stored_device.property_id,
+                integration_id=stored_device.integration_id,
                 device_type=stored_device.device_type.value,
+                vendor=stored_device.vendor,
+                vendor_specific_id=stored_device.vendor_specific_id,
+                vendor_name=stored_device.vendor_name,
                 online=stored_device.online,
+                last_sync=stored_device.last_sync,
+                category=stored_device.category,
+                manufacturer=stored_device.manufacturer,
+                model=stored_device.model,
+                serial_number=stored_device.serial_number,
+                created_at=stored_device.created_at,
+                updated_at=stored_device.updated_at,
             )
         ]
 
 
-@router.post("/{device_id}/control", response_model=dict[str, object])
+@router.post("/devices/{device_id}/control", response_model=dict[str, object])
 async def control_device(
     device_id: UUID,
     request: DeviceControlRequest,
+    organization_id: OrgDep,
 ) -> dict[str, object]:
     """Send control command to a device.
 
@@ -285,7 +326,7 @@ async def control_device(
     - Lights: turn_on, turn_off, set_brightness
     - Sensors: read_state
     """
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         repository = DeviceRepository(db)
 
         try:
@@ -297,7 +338,7 @@ async def control_device(
             raise HTTPException(status_code=404, detail="Device not found")
 
         # Verify device belongs to user's organization
-        if device.organization_id != request.organization_id:
+        if device.organization_id != organization_id:
             raise HTTPException(status_code=403, detail="Not authorized to control this device")
 
     # Execute command based on vendor and device type
@@ -350,9 +391,9 @@ async def execute_bluetooth_command(
     device: Device, command: str, params: dict[str, object]
 ) -> dict[str, object]:
     """Execute command on Bluetooth device."""
-    mac_address = device.raw_state.get("mac_address")
-    if not mac_address:
-        raise ValueError("Device MAC address not configured")
+    connection_identifier = device.raw_state.get("connection_identifier")
+    if not connection_identifier:
+        raise ValueError("Device connection identifier not configured")
 
     # Commands: read_state, notify, etc.
     if command == "read_state":
@@ -364,13 +405,13 @@ async def execute_bluetooth_command(
         raise ValueError(f"Unsupported command for Bluetooth: {command}")
 
 
-@router.get("/{device_id}", response_model=DeviceDetail)
+@router.get("/devices/{device_id}", response_model=DeviceDetail)
 async def get_device_detail(
     device_id: UUID,
-    organization_id: UUID,
+    organization_id: OrgDep,
 ) -> DeviceDetail:
     """Get detailed device information including placement, integrations, and capabilities."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         device_repository = DeviceRepository(db)
         placement_repository = DevicePlacementRepository(db)
         device_capability_repository = DeviceCapabilityRepository(db)

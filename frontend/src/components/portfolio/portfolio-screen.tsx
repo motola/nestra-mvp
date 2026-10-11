@@ -34,6 +34,7 @@ import { AddPortfolioForm } from "@/components/portfolio/add-portfolio-form";
 import { EditPortfolioForm } from "@/components/portfolio/edit-portfolio-form";
 import { PropertyForm } from "@/components/portfolio/property-form";
 import { logger } from "@/lib/logger";
+import { getPropertyDevices, type Device } from "@/lib/api/devices";
 
 // ─── API → display adapter ────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ const PROPERTY_TYPES: PropertyType[] = [
  * expect. Occupancy, device and alert counts come from subsystems that are not
  * exposed by the API yet, so they read as zero until those land.
  */
-function toDisplayProperty(p: ApiProperty): Property {
+function toDisplayProperty(p: ApiProperty, devices: Device[] = []): Property {
   return {
     id: p.id,
     portfolio: p.portfolio_id,
@@ -64,8 +65,8 @@ function toDisplayProperty(p: ApiProperty): Property {
     occupied: 0,
     alerts: 0,
     status: "ok",
-    devices: 0,
-    integrations: 0,
+    devices: devices.length,
+    integrations: new Set(devices.map((device) => device.integration_id)).size,
   };
 }
 
@@ -331,7 +332,7 @@ function PortfolioDetailView({
       <PageHeader
         eyebrow={portfolio.description?.toUpperCase() || "PORTFOLIO"}
         title={portfolio.name}
-        sub={`${props.length} properties · ${props.reduce((s, p) => s + p.units, 0)} units · ${props.reduce((s, p) => s + p.devices, 0)} devices`}
+        sub={`${props.length} propert${props.length === 1 ? "y" : "ies"} · ${props.reduce((s, p) => s + p.units, 0)} unit${props.reduce((s, p) => s + p.units, 0) === 1 ? "" : "s"} · ${props.reduce((s, p) => s + p.devices, 0)} device${props.reduce((s, p) => s + p.devices, 0) === 1 ? "" : "s"}`}
         primary={
           <Button
             variant="primary"
@@ -509,7 +510,23 @@ export function PortfolioScreen() {
         data.map((pf) => listProperties(pf.id, organizationId)),
       );
       setPortfolios(data);
-      setProperties(perPortfolio.flat().map(toDisplayProperty));
+      const apiProperties = perPortfolio.flat();
+      const devicesByProperty = await Promise.all(
+        apiProperties.map((property) =>
+          getPropertyDevices(property.id).catch((error) => {
+            logger.error(
+              `Failed to load devices for property ${property.id}:`,
+              error,
+            );
+            return [];
+          }),
+        ),
+      );
+      setProperties(
+        apiProperties.map((property, index) =>
+          toDisplayProperty(property, devicesByProperty[index]),
+        ),
+      );
     } catch (error) {
       console.error("Failed to load portfolios:", error);
     } finally {
@@ -574,7 +591,7 @@ export function PortfolioScreen() {
       <PageHeader
         eyebrow="WORKSPACE"
         title="Portfolios"
-        sub={`${portfolios.length} portfolios · ${properties.length} properties · ${totalUnits} units · ${totalDevices} devices`}
+        sub={`${portfolios.length} portfolio${portfolios.length === 1 ? "" : "s"} · ${properties.length} propert${properties.length === 1 ? "y" : "ies"} · ${totalUnits} unit${totalUnits === 1 ? "" : "s"} · ${totalDevices} device${totalDevices === 1 ? "" : "s"}`}
         primary={
           <Button
             variant="primary"

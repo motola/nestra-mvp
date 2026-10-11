@@ -10,6 +10,9 @@ concurrency:
   group: test-suite-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   # ── Backend unit tests ─────────────────────────────────────────────────────
 
@@ -45,7 +48,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://alphacon:alphacon@localhost:5432/alphacon_test
       REDIS_URL: redis://localhost:6379
-      SECRET_KEY: ci-test-secret-not-real
+      SECRET_KEY: ci-test-secret-not-real-32-bytes-minimum
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,6 +56,12 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[dev]"
+      - name: Validate migration history on PostgreSQL
+        run: alembic upgrade head
+      - name: Check domain, ORM, and database consistency
+        run: python scripts/check_db_consistency.py
+      - name: Exercise authenticated Bluetooth persistence contract
+        run: python scripts/check_bluetooth_contract.py
       - run: python -m unittest discover -s . -p "test_*.py" -v
 
   # ── Frontend unit tests ────────────────────────────────────────────────────
