@@ -253,7 +253,6 @@ function VendorCard({
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            organization_id: organization.id,
             provider_id: "shelly",
             connection_identifier: "shelly_cloud",
             display_name: "Shelly Cloud",
@@ -301,7 +300,6 @@ function VendorCard({
             Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            organization_id: organization.id,
             provider_id: "govee",
             connection_identifier: token,
             display_name: "Govee",
@@ -346,14 +344,11 @@ function VendorCard({
       let integrationId: string;
 
       // Try to find existing Bluetooth integration
-      const listRes = await fetch(
-        `${apiUrl}/integrations?organization_id=${organization.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+      const listRes = await fetch(`${apiUrl}/integrations`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+      });
 
       if (listRes.ok) {
         const integrations = await listRes.json();
@@ -372,7 +367,6 @@ function VendorCard({
               Authorization: `Bearer ${authToken}`,
             },
             body: JSON.stringify({
-              organization_id: organization.id,
               provider_id: "bluetooth",
               connection_identifier: "local",
               display_name: "Local Bluetooth",
@@ -400,11 +394,14 @@ function VendorCard({
             body: JSON.stringify({
               property_id: selectedProperty.id,
               name: device.name,
-              mac_address: device.id,
+              connection_identifier: device.id,
             }),
           })
-            .then((r) => {
-              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            .then(async (r) => {
+              if (!r.ok) {
+                const body = await r.json().catch(() => null);
+                throw new Error(body?.detail || `HTTP ${r.status}`);
+              }
               return r.json();
             })
             .then((data) => {
@@ -782,14 +779,11 @@ export function IntegrationsScreen() {
       try {
         const apiUrl =
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const response = await fetch(
-          `${apiUrl}/integrations?organization_id=${organizationId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${getToken()}`,
-            },
+        const response = await fetch(`${apiUrl}/integrations`, {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
           },
-        );
+        });
         if (response.ok) {
           const data: unknown = await response.json();
           const apiIntegrations = Array.isArray(data)
@@ -972,14 +966,11 @@ export function IntegrationsScreen() {
             const authToken = getToken();
 
             let integrationId: string;
-            const listRes = await fetch(
-              `${apiUrl}/integrations?organization_id=${organization.id}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${authToken}`,
-                },
+            const listRes = await fetch(`${apiUrl}/integrations`, {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
               },
-            );
+            });
 
             if (listRes.ok) {
               const integrations = await listRes.json();
@@ -997,7 +988,6 @@ export function IntegrationsScreen() {
                     Authorization: `Bearer ${authToken}`,
                   },
                   body: JSON.stringify({
-                    organization_id: organization.id,
                     provider_id: "bluetooth",
                     connection_identifier: "local",
                     display_name: "Local Bluetooth",
@@ -1028,12 +1018,15 @@ export function IntegrationsScreen() {
                     body: JSON.stringify({
                       property_id: selectedProperty.id,
                       name: device.name,
-                      mac_address: device.id,
+                      connection_identifier: device.id,
                     }),
                   },
                 )
-                  .then((r) => {
-                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                  .then(async (r) => {
+                    if (!r.ok) {
+                      const body = await r.json().catch(() => null);
+                      throw new Error(body?.detail || `HTTP ${r.status}`);
+                    }
                     return r.json();
                   })
                   .then((data) => {

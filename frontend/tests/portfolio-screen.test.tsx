@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { PortfolioScreen } from "../src/components/portfolio/portfolio-screen";
 import { PropertyProvider } from "../src/lib/property/provider";
 import { listPortfolios, listProperties } from "../src/lib/api/portfolios";
+import { getPropertyDevices } from "../src/lib/api/devices";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -28,6 +29,10 @@ vi.mock("@/lib/api/portfolios", () => ({
   createPortfolio: vi.fn(),
 }));
 
+vi.mock("@/lib/api/devices", () => ({
+  getPropertyDevices: vi.fn(),
+}));
+
 function renderScreen() {
   return render(
     <PropertyProvider>
@@ -40,6 +45,8 @@ describe("PortfolioScreen", () => {
   beforeEach(() => {
     vi.mocked(listPortfolios).mockReset();
     vi.mocked(listProperties).mockReset();
+    vi.mocked(getPropertyDevices).mockReset();
+    vi.mocked(getPropertyDevices).mockResolvedValue([]);
   });
 
   it("renders the empty state when the organization has no portfolios", async () => {
@@ -99,7 +106,7 @@ describe("PortfolioScreen", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("1 portfolios · 2 properties · 20 units · 0 devices"),
+        screen.getByText("1 portfolio · 2 properties · 20 units · 0 devices"),
       ).toBeDefined();
     });
   });

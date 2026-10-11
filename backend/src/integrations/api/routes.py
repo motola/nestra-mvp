@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
-from db import SessionLocal
+from db import SessionLocal, org_scope
+from dependencies import OrgDep
 from identity.repository.models import OrganizationModel
 from integrations.models import IntegrationModel
 from integrations.provider import get_provider
@@ -19,10 +19,10 @@ router = APIRouter(prefix="/integrations", tags=["integrations"])
 
 @router.get("", response_model=list[IntegrationResponse])
 async def list_integrations(
-    organization_id: UUID = Query(...),  # noqa: B008
+    organization_id: OrgDep,
 ) -> list[IntegrationResponse]:
     """List all integrations for an organization."""
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         result = await db.execute(
             select(IntegrationModel).where(
                 IntegrationModel.organization_id == organization_id,
@@ -48,7 +48,9 @@ async def list_integrations(
 
 
 @router.post("", response_model=IntegrationResponse)
-async def create_integration(request: IntegrationCreateRequest) -> IntegrationResponse:
+async def create_integration(
+    request: IntegrationCreateRequest, organization_id: OrgDep
+) -> IntegrationResponse:
     """Create a new integration for an organization."""
     # Validate provider exists
     provider = get_provider(request.provider_id)
@@ -58,10 +60,10 @@ async def create_integration(request: IntegrationCreateRequest) -> IntegrationRe
             detail=f"Unknown provider: {request.provider_id}",
         )
 
-    async with SessionLocal() as db:
+    async with SessionLocal() as db, org_scope(db, organization_id):
         # Validate organization exists
         org_result = await db.execute(
-            select(OrganizationModel).where(OrganizationModel.id == request.organization_id)
+            select(OrganizationModel).where(OrganizationModel.id == organization_id)
         )
         org = org_result.scalar_one_or_none()
         if not org:
@@ -70,7 +72,7 @@ async def create_integration(request: IntegrationCreateRequest) -> IntegrationRe
         # Check for duplicate integration
         dup_result = await db.execute(
             select(IntegrationModel).where(
-                IntegrationModel.organization_id == request.organization_id,
+                IntegrationModel.organization_id == organization_id,
                 IntegrationModel.provider_id == request.provider_id,
                 (IntegrationModel.connection_identifier == request.connection_identifier),
                 IntegrationModel.deleted_at.is_(None),
@@ -87,7 +89,7 @@ async def create_integration(request: IntegrationCreateRequest) -> IntegrationRe
 
         # Create integration
         integration = IntegrationModel(
-            organization_id=request.organization_id,
+            organization_id=organization_id,
             provider_id=request.provider_id,
             connection_identifier=request.connection_identifier,
             display_name=request.display_name or provider.name,

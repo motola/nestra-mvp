@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 class IntegrationCreateRequest(BaseModel):
     """Request to create an integration."""
 
-    organization_id: UUID
     provider_id: str
     account_identifier: str = ""
     connection_identifier: str | None = None

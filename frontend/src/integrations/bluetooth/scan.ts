@@ -42,7 +42,7 @@ export async function scanBluetoothDevices(): Promise<ScannedDevice[]> {
     return [
       {
         name: device.name || "Unknown Device",
-        mac_address: device.id, // BLE MAC or device ID
+        mac_address: device.id, // Opaque browser-scoped external identifier (not necessarily a MAC)
       },
     ];
   } catch (error) {

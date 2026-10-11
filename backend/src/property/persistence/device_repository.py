@@ -29,7 +29,12 @@ class DeviceRepository:
         On update, preserve display_name, id, created_at, organization_id.
         Merge: vendor_name, device_type, online, raw_state, last_sync → update.
         """
-        existing = await self._get_by_vendor_key(incoming.vendor, incoming.vendor_specific_id)
+        existing = await self._get_by_vendor_key(
+            incoming.organization_id,
+            incoming.integration_id,
+            incoming.vendor,
+            incoming.vendor_specific_id,
+        )
 
         if existing is None:
             incoming.id = uuid4()
@@ -121,13 +126,17 @@ class DeviceRepository:
         models = result.scalars().all()
         return [self._model_to_domain(m) for m in models]
 
-    async def _get_by_vendor_key(self, vendor: str, vendor_specific_id: str) -> DeviceModel | None:
-        """O(1) lookup by (vendor, vendor_specific_id) index."""
+    async def _get_by_vendor_key(
+        self, organization_id: UUID, integration_id: UUID, vendor: str, vendor_specific_id: str
+    ) -> DeviceModel | None:
+        """Tenant-safe lookup for one provider connection."""
         try:
             result = await self._session.execute(
                 select(DeviceModel).where(
                     DeviceModel.vendor == vendor,
                     DeviceModel.vendor_specific_id == vendor_specific_id,
+                    DeviceModel.organization_id == organization_id,
+                    DeviceModel.integration_id == integration_id,
                 )
             )
             return result.scalar_one_or_none()

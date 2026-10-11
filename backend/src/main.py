@@ -10,7 +10,6 @@ from identity.api.routes import router as identity_router
 from integrations.api.oauth import router as oauth_router
 from integrations.api.routes import router as integrations_router
 from integrations.govee.routes import router as govee_router
-from integrations.shelly.routes import router as shelly_router
 from integrations.wifi.routes import router as wifi_router
 from intelligence.api.routes import router as intelligence_router
 from property.api.device_routes import router as device_router
@@ -68,7 +67,6 @@ app.include_router(oauth_router)
 app.include_router(integrations_router)
 app.include_router(device_router)
 app.include_router(govee_router)
-app.include_router(shelly_router)
 app.include_router(portfolio_router)
 app.include_router(property_router)
 app.include_router(wifi_router)

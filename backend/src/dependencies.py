@@ -9,16 +9,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from config import Settings, get_settings
 
-__all__ = ["SettingsDep", "UserDep", "security", "get_current_user", "get_current_organization"]
+__all__ = [
+    "CredentialsDep",
+    "OrgDep",
+    "SettingsDep",
+    "UserDep",
+    "get_current_organization",
+    "get_current_user",
+    "security",
+]
 
 # Type alias used on every endpoint that needs access to app settings.
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 security = HTTPBearer()
+CredentialsDep = Annotated[HTTPAuthorizationCredentials, Depends(security)]
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials,
+    credentials: CredentialsDep,
     settings: SettingsDep,
 ) -> UUID:
     """Extract and verify JWT token, return user ID."""
@@ -39,7 +48,7 @@ async def get_current_user(
 
 
 async def get_current_organization(
-    credentials: HTTPAuthorizationCredentials,
+    credentials: CredentialsDep,
     settings: SettingsDep,
 ) -> UUID:
     """Extract organization ID from JWT token."""
